@@ -1,6 +1,6 @@
 IbPy - Interactive Brokers Python API
 =====================================
-IbPy 0.4 Released 01 Month 2004
+IbPy 0.4 Released 15 June 2004
 
 
 What is IbPy?
@@ -14,7 +14,7 @@ submit orders for stocks and futures, and more.
 What's new in this release?
 ------------------------------------------------------------------------------
 The focus of this release is compatibility with recent versions of the TWS
-application.  TWS Build 817.3 is the most current as of this writing, and IbPy
+application.  TWS Build 826.4 is the most current as of this writing, and IbPy
 functions as expected with it.
 
 The other notable features of this release are:
@@ -56,41 +56,11 @@ Brokers.  The typical sequence of operations is:
 
 To connect to TWS and interact with the brokers trading system, the Python
 developer defines methods or functions to act as callbacks and associates these
-with an Ib.Socket.SocketConnection object.  The following example is similar to
-the Demo.py module included with the release:
-
-    import Ib.Message
-    import Ib.Socket
-    import Ib.Type
-
-    class Example:
-        def account_value_updated(self, acct_msg):
-            fs = "Broker reports account data: %s is %s"
-            print fs % (acct_msg.key, acct_msg.value, )
-
-        def ticker_updated(self, tick_msg):
-            fs = "Broker reports ticker data: ticker id %s - %s is %s"
-            print fs % (tick_msg.ticker_id, tick_msg.field, tick_msg.value)
-
-    example = Example()
-    connection = Ib.Socket.build(client_id=1234)
-
-    connection.register(Ib.Message.Account, example.account_value_updated)
-    connection.register(Ib.Message.Ticker, example.ticker_updated)
-
-    connection.connect(("localhost", 7496))
-
-    ## request account updates from the broker
-    connection.request_account_updates()
-
-    ## request data for two different tickers
-    tickers = [(100, "MERQ"), (101, "MXIM"), ]
-    for ticker_id, symbol in tickers:
-        contract = Ib.Type.Contract(symbol=symbol)
-        connection.request_market_data(ticker_id, contract)
+with an Ib.Socket.SocketConnection object.  Refer to the Demo.py file in the
+distribution for a complete example.
 
 In lieu of IbPy documentation, developers are referred to the IbPy source code
-and the documentaion supplied by Interactive Brokers.
+and the documentation supplied by Interactive Brokers.
 
 
 What are the requirements?

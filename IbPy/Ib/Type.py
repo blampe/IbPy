@@ -16,7 +16,6 @@ class ComboLeg(object):
                  action='',
                  exchange='',
                  open_close=0):
-
         setattr_mapping(self, locals())
 
 
@@ -34,10 +33,8 @@ class Contract(object):
                  currency='', 
                  local_symbol='',
                  combo_legs=None):
-
         if combo_legs is None:
             combo_legs = []
-
         setattr_mapping(self, locals())
 
 
@@ -54,10 +51,8 @@ class ContractDetails(object):
                  order_types='', 
                  valid_exchanges='',
                  summary=None):
-
         if summary is None:
             summary = Contract()
-
         setattr_mapping(self, locals())
 
 
@@ -76,7 +71,6 @@ class ExecutionDetails(object):
                  shares=0, 
                  price=0.0, 
                  perm_id=0):
-
         setattr_mapping(self, locals())
 
 
@@ -92,7 +86,6 @@ class ExecutionFilter(object):
                  sec_type='',
                  exchange='',
                  side=''):
-
         setattr_mapping(self, locals())
 
 
@@ -123,7 +116,6 @@ class Order(object):
                  trigger_method=1,
                  ignore_rth=0,
                  hidden=0):
-
         origin_customer = 0
         origin_firm = 1
         setattr_mapping(self, locals())
@@ -133,5 +125,5 @@ def setattr_mapping(obj, mapping):
     """ setattr_mapping(object, mapping) -> add attributes from mapping to obj
 
     """
-    del mapping['self']
+    del(mapping['self'])
     obj.__dict__.update(mapping)
