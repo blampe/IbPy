@@ -3,12 +3,10 @@
 
 
 """
-
-
 __about__ = {
     'author' : 'Troy Melhase, troy@gci.net',
     'tws support' : 'Build 826.4, 2004/06/08 10:00',
-    'release' : '0.4',
+    'release' : '0.5a',
 
     'date' : '$Date$',
     'file' : '$Id$',
