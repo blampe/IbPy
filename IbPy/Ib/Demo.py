@@ -284,6 +284,7 @@ def next_connection_id(connection_id=0):
         yield connection_id
         connection_id += 1
 
+
 def next_ticker_id(ticker_id=100):
     """ next_ticker_id(...) -> a ticker id generator
 
