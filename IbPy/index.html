@@ -1,0 +1,226 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>IbPy - Interactive Brokers Python API</title>
+<!--
+blue #666699
+green #659797
+yellow #979764
+
+#97977b
+-->
+
+<style type="text/css">
+<!--
+TD.logo {
+           border : thick solid #666699;
+           background-color : #e9e9e9;
+           font : bold large Palatino, serif;
+           color : #659797; }
+
+TD.title {
+           font : bold large Palatino, serif;
+           color : #666699; }
+
+P.any {
+           font :  small Palatino, serif;
+           color : #000000; }
+
+EM.title {
+           font : bold large Palatino, serif;
+           color : #000000;
+           text-decoration : underline; }
+
+DIV.block {
+          font :  small Courier, mono;
+          margin : 24pt; }
+
+a:link, a:visited, a:active { 
+       color : #339999;
+       text-decoration : none;
+			 font-weight : bold; }
+
+a:hover {
+       text-decoration : none;
+       color : #4f78a0;
+			 background : #e9e9e9; }
+-->
+</style>
+</head>
+
+<body>
+<table summary="" cellpadding="10">
+<tr>
+<td class="logo" align="center">
+<p>IbPy</p>
+</td>
+<td class="title">
+<p>Interactive Brokers Python API</p>
+</td>
+</tr>
+</table>
+
+<PRE>
+IbPy - Interactive Brokers Python API
+==============================================================================
+IbPy 0.4 Released 04 July 2004
+
+
+What is IbPy?
+------------------------------------------------------------------------------
+IbPy is a third-party implementation of the API used for accessing the
+Interactive Brokers on-line trading system.  IbPy implements functionality
+that the Python programmer can use to connect to IB, request stock ticker
+data, submit orders for stocks and options, and more.
+
+
+Where can I get IbPy?
+------------------------------------------------------------------------------
+IbPy is available for download from SourceForge.net.
+
+    http://sourceforge.net/project/showfiles.php?group_id=53862
+
+Project page:
+
+    http://ibpy.sourceforge.net/
+
+
+What's new in this release?
+------------------------------------------------------------------------------
+Clients may define and use alternate reader threads.  This allows for
+integration with other threading models such as the threading system in PyQt.
+
+IbPy now supports the TWS API up to and including TWS Build 825.3.
+
+And of course, this release contains minor bug fixes, too.
+
+
+How do I use IbPy?
+------------------------------------------------------------------------------
+In order to use IbPy, the TWS application provided by IB must be installed and
+running.  See the note "What is TWS?" for more information.
+
+IbPy is used in the same manner as all socket clients supplied by Interactive
+Brokers.  The typical sequence of operations is:
+
+    1.    Start the browser-based or stand-alone TWS application
+    2.    In TWS, enable socket clients via the Configure -> API menu
+    3.    Connect to TWS from external application
+    4.    In TWS, accept the incoming connection
+    5.    External application requests ticker updates, sends orders, receives
+          account data, portfolio data, etc.
+
+To connect to TWS and interact with the brokers trading system, the Python
+developer defines methods or functions to act as callbacks and associates these
+with an Ib.Socket.SocketConnection object.  Refer to the included Demo.py
+file for more information.
+
+In lieu of IbPy documentation, developers are referred to the IbPy source code
+and the documentation supplied by Interactive Brokers.
+
+
+What are the requirements?
+------------------------------------------------------------------------------
+IbPy requires Python 2.3 or newer.
+
+TWS requires a web browser capable of executing Sun(R) Java(tm) applets.
+TWS can also be started directly with Sun(R) Java(tm) and the stand-alone
+package supplied by Interactive Brokers.
+
+
+What is Interactive Brokers?
+------------------------------------------------------------------------------
+From the "About The Interactive Brokers Group" page
+(http://interactivebrokers.com/html/companyInfo/about.html):
+
+The Interactive Brokers Group is a group of electronic brokerage and market
+making firms at the forefront of the electronic brokerage industry. We have
+revolutionized the securities and derivatives markets by providing investors
+with high-speed, direct access to stock, options and futures products
+worldwide. We specialize in providing investors with technology that offers
+efficient, fast access to the world's markets at the lowest possible cost.
+
+
+What is Python?
+------------------------------------------------------------------------------
+From the "What is Python?" page (http://python.org/doc/Summary.html):
+
+Python is an interpreted, interactive, object-oriented programming language.
+It is often compared to Tcl, Perl, Scheme or Java.
+
+Python combines remarkable power with very clear syntax. It has modules,
+classes, exceptions, very high level dynamic data types, and dynamic typing.
+There are interfaces to many system calls and libraries, as well as to various
+windowing systems (X11, Motif, Tk, Mac, MFC). New built-in modules are easily
+written in C or C++. Python is also usable as an extension language for
+applications that need a programmable interface.
+
+The Python implementation is portable: it runs on many brands of UNIX, on
+Windows, DOS, OS/2, Mac, Amiga... If your favorite system isn't listed here,
+it may still be supported, if there's a C compiler for it. Ask around on
+comp.lang.python -- or just try compiling Python yourself.
+
+The Python implementation is copyrighted but freely usable and distributable,
+even for commercial use.
+
+
+What is TWS?
+------------------------------------------------------------------------------
+From the page "Trader Execution and Clearing System Features"
+(http://interactivebrokers.com/html/companyInfo/market_ib.html):
+
+* IB's Trader Workstation can be run directly from your browser, or you can
+install it on your PC and run it from your desktop. This Java based
+application allows traders to quickly enter orders and see results.
+
+* Direct Access: Unlike other "online" brokers that send your order through
+an e-mail type system, IB offers a direct-access order entry system that
+transmits your order to the proper market center, usually within one second of
+entry.
+
+* Real-Time Streaming Quotes: Display real-time, streaming quotes for markets
+of interest to the investor. Quotes are live and change continuously as the
+markets change, no periodic manual update or "refresh" is required.
+
+
+What else?
+------------------------------------------------------------------------------
+IbPy is not a product of Interactive Brokers, nor am I affiliated with IB.  I
+am a satisfied IB customer, of course.
+
+IbPy is installed with distutils.  Refer to the Python distutils documentation
+for more information.  The digest version is:
+
+	# tar xzf IbPy-0.4.tar.gz
+	# cd IbPy-0.4
+	# python setup.py install
+
+The TWS demo system is available here:
+
+	http://interactivebrokers.com/cgi-pub/jtslink.pl?user_name=edemo
+
+The stand-alone TWS and other API software is available from IB:
+
+	http://interactivebrokers.com/
+
+IbPy is licensed under the BSD License.
+
+I'm very interested in your experience with IbPy.  Please drop me an note with
+any feedback you have.
+
+Troy Melhase
+mailto:troy@gci.net
+
+</PRE>
+
+<br />
+<br />
+
+Space and bandwidth for IbPy provided by SourceForge.
+
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=53862&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo"></a>
+
+</body>
+</html>
