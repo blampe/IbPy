@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-__version__ = {
+__about__ = {
     'author' : 'Troy Melhase, troy@gci.net',
     'date' : '$Date$',
     'file' : '$Id$',
-    'release' : '$Name$',
+    'tag' : '$Name$',
     'revision' : '$Revision$',
-    'tws support' : 'Build 806.4, 2003/09/18 12:00',
+    'tws support' : 'Build 825.3, 2004/05/20 15:00',
 }
