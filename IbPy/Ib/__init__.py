@@ -5,9 +5,8 @@
 """
 __about__ = {
     'author' : 'Troy Melhase, troy@gci.net',
-    'tws support' : 'Build 826.4, 2004/06/08 10:00',
-    'release' : '0.5a',
-
+    'tws support' : 'Build 851.9, 2005/09/20 16:00',
+    'release' : '0.5',
     'date' : '$Date$',
     'file' : '$Id$',
     'tag' : '$Name$',

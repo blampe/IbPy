@@ -18,6 +18,8 @@ import Ib.Message
 import Ib.Socket
 import Ib.Type
 
+outstream = file('/dev/null', 'w')
+
 
 class DemoHandler(object):
     """ DemoHandler() -> defines methods suitable for IbPy callbacks
@@ -31,13 +33,13 @@ class DemoHandler(object):
         """ connected(event) -> executed when IbPy connects to TWS
 
         """
-        print 'connected', event
+        print >> outstream, 'connected', event
 
     def disconnected(self, event):
         """ disconnected(event) -> executed when IbPy disconnects from TWS
 
         """
-        print 'disconnected', event
+        print >> outstream, 'disconnected', event
 
     def assert_event(self, event_type, event):
         """ assert_event(...) -> checks the events attributes
@@ -58,7 +60,7 @@ class DemoHandler(object):
         """
         self.assert_event(Ib.Message.Account, event)
         self.events.setdefault(co_name(), []).append(event)
-        print 'Account value changed: %s is %s' % (event.key, event.value, )
+        print >> outstream, 'Account value changed: %s is %s' % (event.key, event.value, )
 
     def error(self, event):
         """ error(event) -> called when TWS reports an error
@@ -67,7 +69,7 @@ class DemoHandler(object):
         self.assert_event(Ib.Message.Error, event)
         self.events.setdefault(co_name(), []).append(event)
         err = (event.error_id, event.error_code, event.error_msg, )
-        print 'An Error from TWS: %s %s %s' % err
+        print >> outstream, 'An Error from TWS: %s %s %s' % err
 
     def ticker_updated(self, event):
         """ ticker_updated(event) -> called when ticker price or size data has changed
@@ -91,7 +93,7 @@ class DemoHandler(object):
         self.assert_event(Ib.Message.OrderStatus, event)
         self.events.setdefault(co_name(), []).append(event)
         ordinfo = (event.order_id, event.message, )
-        print 'Order status changed:  order id %s, status %s' % ordinfo
+        print >> outstream, 'Order status changed:  order id %s, status %s' % ordinfo
 
     def open_order(self, event):
         """ open_order(event) -> called once for every existing order upon connection
@@ -189,7 +191,7 @@ class DemoApp(object):
         connection.request_all_open_orders()
         connection.request_auto_open_orders()
         connection.request_news_bulletins()
-        connection.request_managed_accounts()
+        ##connection.request_managed_accounts()
 
         exec_filter = Ib.Type.ExecutionFilter(sec_type='FUT')
         connection.request_executions(exec_filter)
@@ -197,7 +199,7 @@ class DemoApp(object):
         for ticker_id, symbol in self.tickers:
             contract = Ib.Type.Contract(symbol=symbol, sec_type='STK')
             connection.request_market_data(ticker_id, contract)
-            connection.request_market_depth(ticker_id, contract)
+            #connection.request_market_depth(ticker_id, contract)
 
     def demo_c_order(self):
         """ submit an order for some stock
@@ -212,7 +214,7 @@ class DemoApp(object):
                               limit_price=24.00)
         self.connection.place_order(self.handler.order_id, contract, order)
 
-    def demo_d_contract(self):
+    def __demo_d_contract(self):
         """ request market data and market details for a futures contract
 
         """
@@ -224,7 +226,7 @@ class DemoApp(object):
         self.connection.request_market_data(es_id, contract)
         self.connection.request_contract_details(contract)
 
-    def demo_e_combo_legs(self):
+    def __demo_e_combo_legs(self):
         """ submit an order for a futures contract with multiple combo legs
 
         """
@@ -239,7 +241,7 @@ class DemoApp(object):
         order = Ib.Type.Order(order_id=self.handler.order_id, quantity=1, limit_price=1200)
         self.connection.place_order(self.handler.order_id, self.es_contract, order)
 
-    def demo_f_cancelled_order(self):
+    def __demo_f_cancelled_order(self):
         """ submit a silly order and then cancel it
 
         """
@@ -285,7 +287,7 @@ def next_connection_id(connection_id=0):
         connection_id += 1
 
 
-def next_ticker_id(ticker_id=100):
+def next_ticker_id(ticker_id=3000):
     """ next_ticker_id(...) -> a ticker id generator
 
     """
@@ -307,7 +309,7 @@ if __name__ == '__main__':
         print >> sys.__stdout__, banner
     except (NameError, ):
         ## ... vs. the regular python shell
-        os.environ['PYTHONINSPECT'] = '1'
+        #os.environ['PYTHONINSPECT'] = '1'
         raw_input(banner)
 
     demo = DemoApp()
