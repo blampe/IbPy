@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import logging
+import os
 import sys
 
-logger_format = '%(asctime)s  %(levelname)-9.9s %(message)-70.70s  [%(module)s:%(lineno)d]'
+logger_format = '%(asctime)s  %(levelname)-9.9s %(message)-70.70s  %(module)s.py:%(lineno)d'
 logger_date_format = '%d-%b-%y %H:%M:%S'
-logger_level = logging.DEBUG
+logger_level = int(os.environ.get('IBPY_LOGLEVEL', logging.INFO))
 
 
 def logger(name='IbPy', level=logger_level, format=logger_format,

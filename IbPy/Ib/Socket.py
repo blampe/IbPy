@@ -13,7 +13,7 @@ import Ib.Type
 
 
 SERVER_VERSION = 1
-CLIENT_VERSION = 10
+CLIENT_VERSION = 17
 
 READER_START = -1
 READER_STOP = -2
@@ -58,25 +58,19 @@ class SocketReaderBase(object):
         self.active = 1
 
         while self.active:
-            ## swallow all exceptions for the client if/when
-            ## the connection closes.  this also swallows any
-            ## exceptions thrown by a reader function.
             try:
                 msg_id = ri()
                 if msg_id == -1:
                     continue
-                
-                logger.debug('reader %s msg id %s', readers[msg_id], msg_id)
-                readers[msg_id].read(ri, rf, rs)
 
+                reader = readers[msg_id]
+                logger.info('Message name=%s', reader)
+                reader.read(ri, rf, rs)
             except (Exception, ), ex:
-                logger.error('Exception %s during message dispatch', ex)
-                import traceback
-                traceback.print_exc()
-                self.last_exc = ex
                 self.active = 0
+                logger.error('Exception %s during message dispatch', ex)
                 readers[READER_STOP].dispatch(exception='%s' % (ex, ))
-                logger.error('Reader stop message dispatched')
+                logger.debug('Reader stop message dispatched')
 
     def read_integer(self):
         """ read_integer() -> read an integer from the socket
@@ -103,21 +97,20 @@ class SocketReaderBase(object):
 
         """
         buf_size = 1
-        read_bites = ['', ]
+        read_bites = []
         read_func = self.socket.recv
         unpack = struct.unpack
 
         while True:
             socket_read = read_func(buf_size)
             bite = unpack('!s', socket_read)[0]
-            #print '%s' % (ord(bite), ),
             if not ord(bite):
                 break
             read_bites.append(socket_read)
-        #print
-        print read_bites
-        string = ''.join(read_bites)
-        return string
+
+        read = ''.join(read_bites)
+        logger.debug('Socket read bytes %s', read_bites)
+        return read
 
 
 class SocketReader(threading.Thread, SocketReaderBase):
@@ -186,18 +179,18 @@ class SocketConnection(object):
         logger.debug('Creating reader of type %s for %s', self.reader_type, self)
         self.reader = self.reader_type(self.readers, self.socket)
 
-        logger.debug('Connecting object %s to address %s', self, address)
+        logger.info('Connecting object %s to address %s', self, address)
         self.socket.connect(address)
 
-        logger.debug('Sending client version %s', client_version)
+        logger.info('Sending client version %s', client_version)
         self.send(client_version)
 
-        logger.debug('Reading server version')
+        logger.info('Reading server version')
         self.server_version = self.reader.read_integer()
         logger.debug('Read server version %s', self.server_version)
 
         if self.server_version >= 3:
-            logger.debug('Sending client id %s for object %s', self.client_id, self)
+            logger.info('Sending client id %s for object %s', self.client_id, self)
             self.send(self.client_id)
 
         logger.debug('Starting reader for object %s', self)
@@ -400,7 +393,7 @@ class SocketConnection(object):
         if server_version >= 7:
             send(order.hidden)
 
-        if contract.sec_type.lower() == 'bag':
+        if server_version >= 8 and contract.sec_type.lower() == 'bag':
             ## version check is done here:
             self.send_combolegs(contract)
 
@@ -419,7 +412,8 @@ class SocketConnection(object):
         if server_version >= 13:
             map(send, (order.fa_group,
                        order.fa_method,
-                       order.fa_percentage))
+                       order.fa_percentage,
+                       order.fa_profile))
 
     def request_account_updates(self, subscribe=1, acct_code=''):
         """ request_account_updates() -> request account data updates
@@ -566,7 +560,8 @@ class SocketConnection(object):
                     map(send, (leg.con_id,
                                leg.ratio,
                                leg.action,
-                               leg.exchange))
+                               leg.exchange,
+                               leg.open_close))
             else:
                 send(0)
 

@@ -101,9 +101,7 @@ class Order(object):
 
     def __init__(self,
 
-                 ## 
                  # main order fields
-
                  order_id=0,
                  client_id=0,
                  perm_id=0,
@@ -114,9 +112,7 @@ class Order(object):
                  aux_price=0, 
                  shares_allocation='',
 
-                 ##
                  # extended order fields
-                 
                  tif='DAY', 
                  oca_group='',
                  account='', 
@@ -139,7 +135,6 @@ class Order(object):
                  fa_method='',
                  fa_percentage='',
                  primary_exchange=''):
-
         setattr_mapping(self, locals())
 
 

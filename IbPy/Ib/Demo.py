@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """ Ib.Demo -> a module not unlike a demo, a module not unlike a unittest
 
-The DemoHandler and DemoApp classes show a simplistic way of constructing an 
-application that uses IbPy.  The DemoApp class constructs an IbPy.Socket 
-connection, a DemoHandler, and makes the association between the two.
+The SimpleMessageHandler and AutomaticDemoApp classes show a simplistic way of
+constructing an application that uses IbPy.  The AutomaticDemoApp class
+constructs an IbPy.Socket connection, a SimpleMessageHandler, and makes the
+association between the two.
 
 These two classes also form a unit test of sorts.  I'm not exactly certain of 
 the best testing approach to take with IbPy and TWS, but this is allows me to
@@ -18,180 +19,160 @@ import Ib.Message
 import Ib.Socket
 import Ib.Type
 
-outstream = file('/dev/null', 'w')
 
-
-class DemoHandler(object):
-    """ DemoHandler() -> defines methods suitable for IbPy callbacks
+class SimpleMessageHandler:
+    """ SimpleMessageHandler() -> defines methods suitable for IbPy callbacks
 
     """
-    def __init__(self):
-        self.events = {}
-        self.order_id = 0
-
-    def connected(self, event):
-        """ connected(event) -> executed when IbPy connects to TWS
-
-        """
-        print >> outstream, 'connected', event
-
-    def disconnected(self, event):
-        """ disconnected(event) -> executed when IbPy disconnects from TWS
+    order_id = 0    
+    outstream = file('/dev/null', 'w')
+    
+    def connected(self, msg):
+        """ connected(msg) -> executed when IbPy connects to TWS
 
         """
-        print >> outstream, 'disconnected', event
+        print >> self.outstream, 'connected', msg
 
-    def assert_event(self, event_type, event):
-        """ assert_event(...) -> checks the events attributes
 
-        """
-        for slot in event_type.EventDetail.__slots__:
-            assert hasattr(event, slot)
-
-    ##
-    ## the reuse via copy and paste below is lame, true, but the intent is to
-    ## show how to implement separate handlers for the various types of IbPy
-    ## events, not to reuse code.
-    ## 
-
-    def account_updated(self, event):
-        """ account_updated(event) -> called when account values change
+    def disconnected(self, msg):
+        """ disconnected(msg) -> executed when IbPy disconnects from TWS
 
         """
-        self.assert_event(Ib.Message.Account, event)
-        self.events.setdefault(co_name(), []).append(event)
-        print >> outstream, 'Account value changed: %s is %s' % (event.key, event.value, )
+        print >> self.outstream, 'disconnected', msg
 
-    def error(self, event):
-        """ error(event) -> called when TWS reports an error
 
-        """
-        self.assert_event(Ib.Message.Error, event)
-        self.events.setdefault(co_name(), []).append(event)
-        err = (event.error_id, event.error_code, event.error_msg, )
-        print >> outstream, 'An Error from TWS: %s %s %s' % err
-
-    def ticker_updated(self, event):
-        """ ticker_updated(event) -> called when ticker price or size data has changed
+    def account_updated(self, msg):
+        """ account_updated(msg) -> called when account values change
 
         """
-        self.assert_event(Ib.Message.Ticker, event)
-        self.events.setdefault(co_name(), []).append(event)
+        print >> self.outstream, 'Account value changed: %s is %s' % (msg.key, msg.value, )
 
-    def next_order_id(self, event):
-        """ next_order_id(event) -> called to tell us the first usable order id
 
-        """
-        self.assert_event(Ib.Message.NextId, event)
-        self.events.setdefault(co_name(), []).append(event)
-        self.order_id = event.next_valid_id
-
-    def order_status(self, event):
-        """ order_status(event) -> called when the status of an order has changed
+    def error(self, msg):
+        """ error(msg) -> called when TWS reports an error
 
         """
-        self.assert_event(Ib.Message.OrderStatus, event)
-        self.events.setdefault(co_name(), []).append(event)
-        ordinfo = (event.order_id, event.message, )
-        print >> outstream, 'Order status changed:  order id %s, status %s' % ordinfo
+        err = (msg.error_id, msg.error_code, msg.error_msg, )
+        print >> self.outstream, 'An Error from TWS: %s %s %s' % err
 
-    def open_order(self, event):
-        """ open_order(event) -> called once for every existing order upon connection
 
-        """
-        self.assert_event(Ib.Message.OpenOrder, event)
-        self.events.setdefault(co_name(), []).append(event)
-
-    def contract_details(self, event):
-        """ contract_details(event) -> called with details on a contract
+    def ticker_updated(self, msg):
+        """ ticker_updated(msg) -> called when ticker price or size data has changed
 
         """
-        self.assert_event(Ib.Message.ContractDetails, event)
-        self.events.setdefault(co_name(), []).append(event)
+        print >> self.outstream, msg
 
-    def managed_accounts(self, event):
-        """ managed_accounts(event) -> called with a list of accounts manage
 
-        """
-        self.assert_event(Ib.Message.ManagedAccounts, event)
-        self.events.setdefault(co_name(), []).append(event)
-
-    def news_bulletin(self, event):
-        """ news_bulletin(event) -> called when there is news!
+    def next_order_id(self, msg):
+        """ next_order_id(msg) -> called to tell us the first usable order id
 
         """
-        self.assert_event(Ib.Message.NewsBulletin, event)
-        self.events.setdefault(co_name(), []).append(event)
+        self.order_id = msg.next_valid_id
+        print >> self.outstream, msg
 
-    def exec_details(self, event):
-        """ exec_details(event) -> called with execution details
 
-        """
-        self.assert_event(Ib.Message.ExecutionDetails, event)
-        self.events.setdefault(co_name(), []).append(event)
-
-    def portfolio_updated(self, event):
-        """ portfolio_updated(event) -> called when the portfolio has changed
+    def order_status(self, msg):
+        """ order_status(msg) -> called when order status has changed
 
         """
-        self.assert_event(Ib.Message.Portfolio, event)
-        self.events.setdefault(co_name(), []).append(event)
+        ordinfo = (msg.order_id, msg.message, )
+        print >> self.outstream, 'Order status changed:  order id %s, status %s' % ordinfo
 
-    def register_handler(self, conn):
-        """ register_handler(conn) -> register the methods of this object
+
+    def open_order(self, msg):
+        """ open_order(msg) -> called for every existing order
 
         """
-        conn.register(Ib.Message.Account, self.account_updated)
-        conn.register(Ib.Message.ContractDetails, self.contract_details)
-        conn.register(Ib.Message.Error, self.error)
-        conn.register(Ib.Message.ExecutionDetails, self.exec_details)
-        conn.register(Ib.Message.ManagedAccounts, self.managed_accounts)
-        conn.register(Ib.Message.NextId, self.next_order_id)
-        conn.register(Ib.Message.NewsBulletin, self.news_bulletin)
-        conn.register(Ib.Message.OpenOrder, self.open_order)
-        conn.register(Ib.Message.OrderStatus, self.order_status)
-        conn.register(Ib.Message.Portfolio, self.portfolio_updated)
-        conn.register(Ib.Message.ReaderStart, self.connected)
-        conn.register(Ib.Message.ReaderStop, self.disconnected)
-        conn.register(Ib.Message.Ticker, self.ticker_updated)
 
 
-class DemoApp(object):
-    """ DemoApp() -> 
+    def contract_details(self, msg):
+        """ contract_details(msg) -> called with details on a contract
+
+        """
+        print >> self.outstream, msg
+
+
+    def managed_accounts(self, msg):
+        """ managed_accounts(msg) -> called with a list of accounts manage
+
+        """
+
+
+    def news_bulletin(self, msg):
+        """ news_bulletin(msg) -> called when there is news!
+
+        """
+
+
+    def exec_details(self, msg):
+        """ exec_details(msg) -> called with execution details
+
+        """
+
+
+    def portfolio_updated(self, msg):
+        """ portfolio_updated(msg) -> called when the portfolio has changed
+
+        """
+
+
+class AutomaticDemoApp:
+    """ AutomaticDemoApp() -> something not unlike a demonstration.
 
     """
-    def __init__(self, dsn=('localhost', 7496), server_log_level=3, 
-                 settle_seconds=3):
-        self.server_log_level = server_log_level
-        self.settle_seconds = settle_seconds
+    def __init__(self, dsn=('localhost', 7496), log_level=3, snooze=3):
+        self.log_level = log_level
+        self.snooze = snooze
         self.tickers = [
             (next_ticker_id(), 'AAPL'),
             (next_ticker_id(), 'MXIM'),
         ]
 
-        self.connection = connection = Ib.Socket.build(next_connection_id())
-        self.handler = handler = DemoHandler()
-        handler.register_handler(connection)
-        connection.connect(dsn)
+        self.connection = Ib.Socket.build(next_connection_id())
+        self.build_handler()
+        self.connection.connect(dsn)
 
         ## get and execute all the demo methods
-        names = [getattr(self, n) for n in dir(self) if n.startswith('demo_')]
-        names.sort()
-        for func in names:
+        funcs = [getattr(self, n) for n in dir(self) if n.startswith('demo_')]
+        funcs.sort()
+        for func in funcs:
             func()
+
+
+    def build_handler(self):
+        """ build_handler(conn) -> create a handler and register its methods
+
+        """
+        handler = self.handler = SimpleMessageHandler()
+        register = self.connection.register
+
+        register(Ib.Message.Account, handler.account_updated)
+        register(Ib.Message.ContractDetails, handler.contract_details)
+        register(Ib.Message.Error, handler.error)
+        register(Ib.Message.ExecutionDetails, handler.exec_details)
+        register(Ib.Message.ManagedAccounts, handler.managed_accounts)
+        register(Ib.Message.NextId, handler.next_order_id)
+        register(Ib.Message.NewsBulletin, handler.news_bulletin)
+        register(Ib.Message.OpenOrder, handler.open_order)
+        register(Ib.Message.OrderStatus, handler.order_status)
+        register(Ib.Message.Portfolio, handler.portfolio_updated)
+        register(Ib.Message.ReaderStart, handler.connected)
+        register(Ib.Message.ReaderStop, handler.disconnected)
+        register(Ib.Message.Ticker, handler.ticker_updated)
+
 
     def demo_b_request(self):
         """ make requests for account data, ticker data, etc.
 
         """
         connection = self.connection
-        connection.set_server_log_level(self.server_log_level)
+        connection.set_server_log_level(self.log_level)
         connection.request_account_updates()
         connection.request_open_orders()
         connection.request_all_open_orders()
         connection.request_auto_open_orders()
         connection.request_news_bulletins()
-        ##connection.request_managed_accounts()
+        ## connection.request_managed_accounts()
 
         exec_filter = Ib.Type.ExecutionFilter(sec_type='FUT')
         connection.request_executions(exec_filter)
@@ -199,14 +180,15 @@ class DemoApp(object):
         for ticker_id, symbol in self.tickers:
             contract = Ib.Type.Contract(symbol=symbol, sec_type='STK')
             connection.request_market_data(ticker_id, contract)
-            #connection.request_market_depth(ticker_id, contract)
+            connection.request_market_depth(ticker_id, contract)
+
 
     def demo_c_order(self):
         """ submit an order for some stock
 
         """
         ## have to snooze in order to get the next order id
-        time.sleep(self.settle_seconds) 
+        time.sleep(self.snooze) 
 
         self.handler.order_id += 1
         contract = Ib.Type.Contract(symbol=self.tickers[0][1], sec_type='STK')
@@ -214,19 +196,21 @@ class DemoApp(object):
                               limit_price=24.00)
         self.connection.place_order(self.handler.order_id, contract, order)
 
-    def __demo_d_contract(self):
+
+    def demo_d_contract(self):
         """ request market data and market details for a futures contract
 
         """
         self.es_id = es_id = next_ticker_id()
         self.es_contract = contract = \
             Ib.Type.Contract(symbol='ES', sec_type='FUT', exchange='GLOBEX',
-                             expiry='200403')
+                             expiry='200603')
 
         self.connection.request_market_data(es_id, contract)
         self.connection.request_contract_details(contract)
 
-    def __demo_e_combo_legs(self):
+
+    def demo_e_combo_legs(self):
         """ submit an order for a futures contract with multiple combo legs
 
         """
@@ -241,7 +225,8 @@ class DemoApp(object):
         order = Ib.Type.Order(order_id=self.handler.order_id, quantity=1, limit_price=1200)
         self.connection.place_order(self.handler.order_id, self.es_contract, order)
 
-    def __demo_f_cancelled_order(self):
+
+    def demo_f_cancelled_order(self):
         """ submit a silly order and then cancel it
 
         """
@@ -249,10 +234,11 @@ class DemoApp(object):
         contract = Ib.Type.Contract(symbol=self.tickers[0][1], sec_type='STK')
         order = Ib.Type.Order(order_id=self.handler.order_id, quantity=1, limit_price=3.00)
         self.connection.place_order(self.handler.order_id, contract, order)
-        time.sleep(self.settle_seconds)
+        time.sleep(self.snooze)
         self.connection.cancel_order(self.handler.order_id)
 
-    def cancel_some_requests(self):
+
+    def demo_g_cancel_some_requests(self):
         """ cancel_some_requests() -> stop the market data and market depth feeds
 
         """
@@ -264,52 +250,38 @@ class DemoApp(object):
 
         connection.cancel_news_bulletins()
 
+
     def disconnect(self):
-        """ if this was a testcase subclass this would be named tearDown
+        """ disconnect() -> tell the socket to disconnect
 
         """
         self.connection.disconnect()
 
 
-def co_name(index=1):
-    """ co_name(index=1) -> the name of the caller indicated by the frame index
-
-    """
-    return sys._getframe(index).f_code.co_name
-
-
-def next_connection_id(connection_id=0):
-    """ next_connection_id(...) -> a connection id generator
-
-    """
+def ids(next):
+    """ ids(...) -> an id generator """
     while True:
-        yield connection_id
-        connection_id += 1
+        yield next
+        next += 1
 
 
-def next_ticker_id(ticker_id=3000):
-    """ next_ticker_id(...) -> a ticker id generator
-
-    """
-    while True:
-        yield ticker_id
-        ticker_id += 1
-
-
-## module-level singletons
-next_connection_id = next_connection_id().next
-next_ticker_id = next_ticker_id().next
+## one id generator for connections and another for tickers
+next_connection_id = ids(0).next
+next_ticker_id = ids(3000).next
 
 
 if __name__ == '__main__':
-    banner = 'start tws and login before continuing'
     try:
-        ## support for the enhanced ipython shell...
         __IP
-        print >> sys.__stdout__, banner
     except (NameError, ):
-        ## ... vs. the regular python shell
-        #os.environ['PYTHONINSPECT'] = '1'
-        raw_input(banner)
+        os.environ['PYTHONINSPECT'] = '1'
 
-    demo = DemoApp()
+    if int(os.environ.get('IBPY_LOGLEVEL', 20)) in range(1, 21):
+        raw_input('Logger will print all messages.  Press enter.')
+    else:
+        SimpleMessageHandler.outstream = sys.stdout
+
+    raw_input('Start TWS and login before continuing.  Press enter when ready.')
+
+    ## see?  it runs by itself.
+    demo = AutomaticDemoApp()
