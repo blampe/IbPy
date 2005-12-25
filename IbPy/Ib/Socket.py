@@ -243,7 +243,6 @@ class SocketConnection(object):
         self.send_combolegs(contract)            
         logger.debug('Market data request for ticker %s %s sent', ticker_id, contract.symbol)
 
-
     def request_contract_details(self, contract):
         """ request_contract_details(contract) -> request contract details
 
@@ -273,8 +272,6 @@ class SocketConnection(object):
                 contract.currency, 
                 contract.local_symbol, )
         map(send, data)        
-        
-
 
     def request_market_depth(self, ticker_id, contract):
         """ request_market_depth(ticker_id, contract) -> request market depth
@@ -305,7 +302,6 @@ class SocketConnection(object):
                 contract.currency,
                 contract.local_symbol)
         map(send, data)
-
 
     def cancel_market_data(self, ticker_id):
         """ cancel_market_data(ticker_id) -> cancel market data
