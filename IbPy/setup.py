@@ -46,7 +46,7 @@ setup(
     author_email = 'troy@gci.net',
     url = 'http://ibpy.sf.net/',
     license = 'BSD License',
-    packages = ['Ib', ],
+    packages = ['ib', ],
     classifiers = filter(None, classifiers.split('\n')),
     long_description = '\n'.join(doclines[2:]),
     platforms = ['any'],
