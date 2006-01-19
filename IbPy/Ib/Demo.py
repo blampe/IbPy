@@ -15,9 +15,9 @@ import os
 import sys
 import time
 
-import Ib.Message
-import Ib.Socket
-import Ib.Type
+import ib.message
+import ib.socket
+import ib.type
 
 
 class SimpleMessageHandler:
@@ -128,7 +128,7 @@ class AutomaticDemoApp:
             (next_ticker_id(), 'MXIM'),
         ]
 
-        self.connection = Ib.Socket.build(next_connection_id())
+        self.connection = ib.socket.build(next_connection_id())
         self.build_handler()
         self.connection.connect(dsn)
 
@@ -146,19 +146,19 @@ class AutomaticDemoApp:
         handler = self.handler = SimpleMessageHandler()
         register = self.connection.register
 
-        register(Ib.Message.Account, handler.account_updated)
-        register(Ib.Message.ContractDetails, handler.contract_details)
-        register(Ib.Message.Error, handler.error)
-        register(Ib.Message.ExecutionDetails, handler.exec_details)
-        register(Ib.Message.ManagedAccounts, handler.managed_accounts)
-        register(Ib.Message.NextId, handler.next_order_id)
-        register(Ib.Message.NewsBulletin, handler.news_bulletin)
-        register(Ib.Message.OpenOrder, handler.open_order)
-        register(Ib.Message.OrderStatus, handler.order_status)
-        register(Ib.Message.Portfolio, handler.portfolio_updated)
-        register(Ib.Message.ReaderStart, handler.connected)
-        register(Ib.Message.ReaderStop, handler.disconnected)
-        register(Ib.Message.Ticker, handler.ticker_updated)
+        register(ib.message.Account, handler.account_updated)
+        register(ib.message.ContractDetails, handler.contract_details)
+        register(ib.message.Error, handler.error)
+        register(ib.message.ExecutionDetails, handler.exec_details)
+        register(ib.message.ManagedAccounts, handler.managed_accounts)
+        register(ib.message.NextId, handler.next_order_id)
+        register(ib.message.NewsBulletin, handler.news_bulletin)
+        register(ib.message.OpenOrder, handler.open_order)
+        register(ib.message.OrderStatus, handler.order_status)
+        register(ib.message.Portfolio, handler.portfolio_updated)
+        register(ib.message.ReaderStart, handler.connected)
+        register(ib.message.ReaderStop, handler.disconnected)
+        register(ib.message.Ticker, handler.ticker_updated)
 
 
     def demo_b_request(self):
@@ -174,11 +174,11 @@ class AutomaticDemoApp:
         connection.request_news_bulletins()
         ## connection.request_managed_accounts()
 
-        exec_filter = Ib.Type.ExecutionFilter(sec_type='FUT')
+        exec_filter = ib.type.ExecutionFilter(sec_type='FUT')
         connection.request_executions(exec_filter)
 
         for ticker_id, symbol in self.tickers:
-            contract = Ib.Type.Contract(symbol=symbol, sec_type='STK')
+            contract = ib.type.Contract(symbol=symbol, sec_type='STK')
             connection.request_market_data(ticker_id, contract)
             connection.request_market_depth(ticker_id, contract)
 
@@ -191,8 +191,8 @@ class AutomaticDemoApp:
         time.sleep(self.snooze) 
 
         self.handler.order_id += 1
-        contract = Ib.Type.Contract(symbol=self.tickers[0][1], sec_type='STK')
-        order = Ib.Type.Order(order_id=self.handler.order_id, quantity=200, 
+        contract = ib.type.Contract(symbol=self.tickers[0][1], sec_type='STK')
+        order = ib.type.Order(order_id=self.handler.order_id, quantity=200, 
                               limit_price=24.00)
         self.connection.place_order(self.handler.order_id, contract, order)
 
@@ -203,7 +203,7 @@ class AutomaticDemoApp:
         """
         self.es_id = es_id = next_ticker_id()
         self.es_contract = contract = \
-            Ib.Type.Contract(symbol='ES', sec_type='FUT', exchange='GLOBEX',
+            ib.type.Contract(symbol='ES', sec_type='FUT', exchange='GLOBEX',
                              expiry='200603')
 
         self.connection.request_market_data(es_id, contract)
@@ -215,14 +215,14 @@ class AutomaticDemoApp:
 
         """
         es_id = self.es_id
-        cleg = Ib.Type.ComboLeg
+        cleg = ib.type.ComboLeg
         legs = [
             cleg(es_id, ratio=1, action='BUY', exchange='GLOBEX', open_close=0),
             cleg(es_id, ratio=2, action='BUY', exchange='GLOBEX', open_close=1),
             cleg(es_id, ratio=3, action='SELL', exchange='GLOBEX', open_close=2),
         ]
         self.handler.order_id += 1
-        order = Ib.Type.Order(order_id=self.handler.order_id, quantity=1, limit_price=1200)
+        order = ib.type.Order(order_id=self.handler.order_id, quantity=1, limit_price=1200)
         self.connection.place_order(self.handler.order_id, self.es_contract, order)
 
 
@@ -231,8 +231,8 @@ class AutomaticDemoApp:
 
         """
         self.handler.order_id += 1
-        contract = Ib.Type.Contract(symbol=self.tickers[0][1], sec_type='STK')
-        order = Ib.Type.Order(order_id=self.handler.order_id, quantity=1, limit_price=3.00)
+        contract = ib.type.Contract(symbol=self.tickers[0][1], sec_type='STK')
+        order = ib.type.Order(order_id=self.handler.order_id, quantity=1, limit_price=3.00)
         self.connection.place_order(self.handler.order_id, contract, order)
         time.sleep(self.snooze)
         self.connection.cancel_order(self.handler.order_id)

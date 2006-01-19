@@ -5,11 +5,11 @@
     data into MessageDetail objects.  The types inherit the dispatch method, which
     they use to send the MessageDetail objects to registered listeners.
 """
-import Ib.Logger
-import Ib.Type
+import ib.logger
+import ib.type
 
 
-logger = Ib.Logger.logger()
+logger = ib.logger.logger()
 
 
 class SocketReader(object):
@@ -142,7 +142,7 @@ class ContractDetails(SocketReader):
         """ read(...) -> read a contract details message
 
         """
-        details = Ib.Type.ContractDetails()
+        details = ib.type.ContractDetails()
 
         version = read_int()
         details.summary.symbol = read_str()
@@ -211,8 +211,8 @@ class ExecutionDetails(SocketReader):
         """ read(...) -> read an execution details message
 
         """
-        contract = Ib.Type.Contract()
-        details = Ib.Type.ExecutionDetails()
+        contract = ib.type.Contract()
+        details = ib.type.ExecutionDetails()
 
         version = read_int()
         order_id = read_int()
@@ -387,8 +387,8 @@ class OpenOrder(SocketReader):
         """ read(...) -> read an open order message
 
         """
-        contract = Ib.Type.Contract()
-        order = Ib.Type.Order()
+        contract = ib.type.Contract()
+        order = ib.type.Order()
 
         version = read_int()
         order.order_id = read_int()
@@ -522,7 +522,7 @@ class Portfolio(SocketReader):
         """ read(...) -> read a portfolio update message
 
         """
-        contract = Ib.Type.Contract()
+        contract = ib.type.Contract()
 
         version = read_int()
         contract.symbol = read_str()
@@ -646,7 +646,7 @@ class TickerPrice(Ticker):
         
         if version >= 2:
             size_tick_type = None
-            types = Ib.Type
+            types = ib.type
 
             ## this is better expressed as a dictionary lookup,
             ## but for now i'm more interested in tracking this

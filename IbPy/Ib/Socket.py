@@ -7,9 +7,9 @@ import socket
 import struct
 import threading
 
-import Ib.Logger
-import Ib.Message
-import Ib.Type
+import ib.logger
+import ib.message
+import ib.type
 
 
 SERVER_VERSION = 1
@@ -30,7 +30,7 @@ READER_STOP = -2
  REQ_AUTO_OPEN_ORDERS, REQ_ALL_OPEN_ORDERS, REQ_MANAGED_ACCTS,
  REQ_FA, REPLACE_FA) = range(1, 20)
 
-logger = Ib.Logger.logger()
+logger = ib.logger.logger()
 
 
 class SocketReaderBase(object):
@@ -137,24 +137,24 @@ class SocketConnection(object):
         and doing something with it.
     """
     reader_types = {
-        ACCT_VALUE : Ib.Message.AccountValue,
-        ACCT_UPDATE_TIME : Ib.Message.AccountTime,
-        CONTRACT_DATA : Ib.Message.ContractDetails,
-        ERR_MSG : Ib.Message.Error,
-        EXECUTION_DATA : Ib.Message.ExecutionDetails,
-        RECEIVE_FA : Ib.Message.ReceiveFa,
-        MANAGED_ACCTS : Ib.Message.ManagedAccounts,
-        MARKET_DEPTH : Ib.Message.MarketDepth,
-        MARKET_DEPTH_L2 : Ib.Message.MarketDepthLevel2,
-        NEWS_BULLETINS : Ib.Message.NewsBulletin,
-        NEXT_VALID_ID : Ib.Message.NextId,
-        OPEN_ORDER : Ib.Message.OpenOrder,
-        ORDER_STATUS : Ib.Message.OrderStatus,
-        PORTFOLIO_VALUE : Ib.Message.Portfolio,
-        READER_START : Ib.Message.ReaderStart,
-        READER_STOP : Ib.Message.ReaderStop,
-        TICK_PRICE : Ib.Message.TickerPrice,
-        TICK_SIZE : Ib.Message.TickerSize,
+        ACCT_VALUE : ib.message.AccountValue,
+        ACCT_UPDATE_TIME : ib.message.AccountTime,
+        CONTRACT_DATA : ib.message.ContractDetails,
+        ERR_MSG : ib.message.Error,
+        EXECUTION_DATA : ib.message.ExecutionDetails,
+        RECEIVE_FA : ib.message.ReceiveFa,
+        MANAGED_ACCTS : ib.message.ManagedAccounts,
+        MARKET_DEPTH : ib.message.MarketDepth,
+        MARKET_DEPTH_L2 : ib.message.MarketDepthLevel2,
+        NEWS_BULLETINS : ib.message.NewsBulletin,
+        NEXT_VALID_ID : ib.message.NextId,
+        OPEN_ORDER : ib.message.OpenOrder,
+        ORDER_STATUS : ib.message.OrderStatus,
+        PORTFOLIO_VALUE : ib.message.Portfolio,
+        READER_START : ib.message.ReaderStart,
+        READER_STOP : ib.message.ReaderStop,
+        TICK_PRICE : ib.message.TickerPrice,
+        TICK_SIZE : ib.message.TickerSize,
     }
 
     def __init__(self, client_id, reader_type):
@@ -437,7 +437,7 @@ class SocketConnection(object):
 
         if self.server_version >= 9:
             if exec_filter is None:
-                exec_filter = Ib.Type.ExecutionFilter()
+                exec_filter = ib.type.ExecutionFilter()
 
             map(send, (exec_filter.client_id,
                        exec_filter.acct_code,
