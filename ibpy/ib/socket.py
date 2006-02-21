@@ -13,22 +13,26 @@ import ib.type
 
 
 SERVER_VERSION = 1
-CLIENT_VERSION = 17
+CLIENT_VERSION = 23
 
 READER_START = -1
 READER_STOP = -2
 
-(TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER,  ACCT_VALUE,
+(TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
  PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
  EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
- MANAGED_ACCTS, RECEIVE_FA) = range(1, 17)
-
+ MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
+ SCANNER_PARAMETERS, SCANNER_DATA) = range(1, 21)
+ 
 (REQ_MKT_DATA, CANCEL_MKT_DATA, PLACE_ORDER, CANCEL_ORDER,
  REQ_OPEN_ORDERS, REQ_ACCOUNT_DATA, REQ_EXECUTIONS, REQ_IDS,
  REQ_CONTRACT_DATA, REQ_MKT_DEPTH, CANCEL_MKT_DEPTH,
  REQ_NEWS_BULLETINS, CANCEL_NEWS_BULLETINS, SET_SERVER_LOGLEVEL,
- REQ_AUTO_OPEN_ORDERS, REQ_ALL_OPEN_ORDERS, REQ_MANAGED_ACCTS,
- REQ_FA, REPLACE_FA) = range(1, 20)
+ REQ_AUTO_OPEN_ORDERS, REQ_ALL_OPEN_ORDERS, REQ_MANAGED_ACCTS, REQ_FA,
+ REPLACE_FA, REQ_HISTORICAL_DATA, EXERCISE_OPTIONS,
+ REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
+ REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA, ) = range(1, 26)
+
 
 logger = ib.logger.logger()
 
@@ -46,7 +50,10 @@ class SocketReaderBase(object):
         self.readers = readers
         self.socket = socket
         logger.debug('Created %s with fd %s', self, socket.fileno())
-        
+        self.tokens = []
+        self.lastdata = ''
+
+
     def run(self):
         """ run() -> read socket data encoded by TWS 
 
@@ -92,7 +99,7 @@ class SocketReaderBase(object):
         except (ValueError, ):
             return 0.0
 
-    def read_string(self):
+    def read_string_old(self):
         """ read_string() -> read and unpack a string from the socket
 
         """
@@ -111,6 +118,27 @@ class SocketReaderBase(object):
         read = ''.join(read_bites)
         logger.debug('Socket read bytes %s', read_bites)
         return read
+
+
+    def read_string(self):
+        """ read_string() -> read and unpack a string from the socket
+
+        """
+        #do we need to get more tokens from the socket?
+        buf_size = 2000
+        while len(self.tokens)==0:
+            data = self.socket.recv(buf_size)
+            tokens = data.split('\x00')
+            #.lastdata is the previous incomplete token
+            tokens[0] = self.lastdata + tokens[0]
+            self.lastdata = tokens.pop(-1)
+            logger.debug('Socket read %d bytes, %d tokens',
+                         len(data), len(tokens))
+            self.tokens.extend(tokens)
+            if len(self.tokens) > 0: break
+
+        #ok, let's return the first token        
+        return self.tokens.pop(0)
 
 
 class SocketReader(threading.Thread, SocketReaderBase):
@@ -155,6 +183,11 @@ class SocketConnection(object):
         READER_STOP : ib.message.ReaderStop,
         TICK_PRICE : ib.message.TickerPrice,
         TICK_SIZE : ib.message.TickerSize,
+        HISTORICAL_DATA : ib.message.HistoricalData,
+        BOND_CONTRACT_DATA : ib.message.BondContractData,
+        SCANNER_PARAMETERS : ib.message.ScannerParameters,
+        SCANNER_DATA : ib.message.ScannerData,
+        
     }
 
     def __init__(self, client_id, reader_type):
@@ -188,6 +221,10 @@ class SocketConnection(object):
         logger.info('Reading server version')
         self.server_version = self.reader.read_integer()
         logger.debug('Read server version %s', self.server_version)
+
+        if self.server_version>=20:
+            tws_time = self.reader.read_string()
+            logger.info('Received server TwsTime=%s', tws_time)
 
         if self.server_version >= 3:
             logger.info('Sending client id %s for object %s', self.client_id, self)
@@ -333,7 +370,7 @@ class SocketConnection(object):
         """
         server_version = self.server_version
         send = self.send
-        message_version = 15
+        message_version = 18
 
         map(send, (PLACE_ORDER,
                    message_version,
@@ -410,6 +447,37 @@ class SocketConnection(object):
                        order.fa_method,
                        order.fa_percentage,
                        order.fa_profile))
+
+        # institutional short saleslot data 0 for retail, 1 or 2 for
+        #institutions populate only when shortSaleSlot = 2.
+        if server_version >= 18:                    
+            map(send, (order.shortSaleSlot,         
+                       order.designatedLocation))   
+
+        if server_version >= 19:
+            map(send, (order.fa_group,
+                       order.ocaType,
+                       order.rthOnly,
+                       order.rule80A,
+                       order.settlingFirm,
+                       order.allOrNone,
+                       order.minQty,
+                       order.percentOffset,
+                       order.eTradeOnly,
+                       order.firmQuoteOnly,
+                       order.nbboPriceCap,
+                       # AUCTION_MATCH, AUCTION_IMPROVEMENT,
+                       # AUCTION_TRANSPARENT
+                       order.auctionStrategy, 
+                       order.startingPrice,
+                       order.stockRefPrice,
+                       order.delta,
+                       order.stockRangeLower,
+                       order.stockRangeUpper,))
+
+        if server_version >= 22:
+            send(order.overridePercentageConstraints)
+
 
     def request_account_updates(self, subscribe=1, acct_code=''):
         """ request_account_updates() -> request account data updates
@@ -533,6 +601,137 @@ class SocketConnection(object):
 
         message_version = 1
         map(self.send, (REPLACE_FA, message_version, fa_type, xml))
+
+
+    def reqHistoricalData(self, ticker_id, contract, endDateTime,
+                         durationStr, barSizeSetting, whatToShow,
+                         useRTH, formatDate):
+        """
+
+        """
+        if self.server_version < 16:
+            ## TODO:  log or raise
+            return
+
+        message_version = 3
+        map(self.send, (REQ_HISTORICAL_DATA,
+                        message_version,
+                        ticker_id,
+                        contract.symbol,
+                        contract.sec_type,
+                        contract.expiry,
+                        contract.strike,
+                        contract.right,
+                        contract.multiplier,
+                        contract.exchange,
+                        contract.primary_exchange,
+                        contract.currency,
+                        contract.local_symbol))
+        if self.server_version >= 20:
+            map(self.send, (endDateTime,
+                            barSizeSetting))
+        map(self.send, (durationStr,
+                        useRTH,
+                        whatToShow))
+        if self.server_version >= 16:
+            map(self.send, (formatDate,))
+        if contract.combo_legs:
+            raise exceptions.NotImplementedError
+        else:
+            self.send(0)
+
+
+    def cancelHistoricalData(self, ticker_id):
+        """ cancelHistoricalData(ticker_id) ->
+
+        """
+        if self.server_version < 24:
+            ## TODO:  log or raise
+            return
+        message_version = 1
+        map(self.send, (CANCEL_HISTORICAL_DATA, message_version, ticker_id))
+
+
+    def reqScannerParameters(self):
+        """ reqScannerParameters() ->
+
+        """
+        if self.server_version < 24:
+            ## TODO:  log or raise
+            return
+        message_version = 1
+        map(self.send, (REQ_SCANNER_PARAMETERS, message_version))
+
+
+    def reqScannerSubscription(self, ticker_id, subscription):
+        """ reqScannerSubscription(subscription) ->
+
+        """
+        if self.server_version < 24:
+            ## TODO:  log or raise
+            return
+        message_version = 1
+        map(self.send, (REQ_SCANNER_SUBSCRIPTION,
+                        message_version,
+                        ticker_id,
+                        subscription.numberOfRows,
+                        subscription.instrument,
+                        subscription.locationCode,
+                        subscription.scanCode,
+                        subscription.abovePrice,
+                        subscription.belowPrice,
+                        subscription.aboveVolume,
+                        subscription.marketCapAbove,
+                        subscription.marketCapBelow,
+                        subscription.moodyRatingAbove,
+                        subscription.moodyRatingBelow,
+                        subscription.spRatingAbove,
+                        subscription.spRatingBelow,
+                        subscription.maturityDateAbove,
+                        subscription.maturityDateBelow,
+                        subscription.couponRateAbove,
+                        subscription.couponRateBelow,
+                        subscription.excludeConvertible))
+
+
+    def cancelScannerSubscription(self, ticker_id):
+        """ cancelScannerSubscription(ticker_id) ->
+
+        """
+        if self.server_version < 24:
+            ## TODO:  log or raise
+            return
+        message_version = 1
+        map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, message_version, ticker_id))
+
+
+    def exerciseOptions(self, ticker_id, contract, exerciseAction, exerciseQuantity, account, override):
+        """ exerciseOptions(ticker_id, contract, exerciseAction,
+        exerciseQuantity, account, override) ->
+
+
+        """
+        if self.server_version < 21:
+            ## TODO:  log or raise
+            return
+        message_version = 1
+        map(self.send, (EXERCISE_OPTIONS,
+                        message_version,
+                        ticker_id,
+                        contract.symbol,
+                        contract.sec_type,
+                        contract.expiry,
+                        contract.strike,
+                        contract.right,
+                        contract.multiplier,
+                        contract.exchange,
+                        contract.currency,
+                        contract.local_symbol,
+                        exerciseAction,
+                        exerciseQuantity,
+                        account,
+                        override))
+
 
     def send(self, data, packfunc=struct.pack, eof=struct.pack('!i', 0)[3]):
         """ send(data) -> send a value to TWS

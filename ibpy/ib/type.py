@@ -39,6 +39,11 @@ class Contract(object):
             combo_legs = []
         setattr_mapping(self, locals())
 
+    def __str__(self):
+        return 'Contract(%s %s %s %s %s %s %s)' % \
+               (self.symbol, self.sec_type, self.expiry, self.strike,
+                self.right, self.exchange, self.local_symbol)
+
 
 class ContractDetails(object):
     """ ContractDetails(...) -> contract details 
@@ -56,6 +61,9 @@ class ContractDetails(object):
         if summary is None:
             summary = Contract()
         setattr_mapping(self, locals())
+
+    def __str__(self):
+        return 'Details(%s)' % (self.summary, )
 
 
 class ExecutionDetails(object):
@@ -134,7 +142,59 @@ class Order(object):
                  fa_profile='',
                  fa_method='',
                  fa_percentage='',
-                 primary_exchange=''):
+                 primary_exchange='',
+
+                 shortSaleSlot=0,
+                 designatedLocation='',
+                 #1 = CANCEL_WITH_BLOCK, 2 = REDUCE_WITH_BLOCK, 3 =
+                 #REDUCE_NON_BLOCK
+                 ocaType=0,    
+                 rthOnly=0,
+                 rule80A='',
+                 settlingFirm='',
+                 allOrNone=0,
+                 minQty='',
+                 percentOffset='',
+                 eTradeOnly=1,
+                 firmQuoteOnly=1,
+                 nbboPriceCap='',
+                 #AUCTION_MATCH, AUCTION_IMPROVEMENT,
+                 #AUCTION_TRANSPARENT
+                 auctionStrategy='',   
+                 startingPrice='',
+                 stockRefPrice='',
+                 delta='',
+                 stockRangeLower='',
+                 stockRangeUpper='',
+                 overridePercentageConstraints=0,
+                 ):
+        setattr_mapping(self, locals())
+
+
+class ScannerSubscription(object):
+    """ ScannerSubscription(...) -> scanner subscription parameters 
+
+    """
+    dblmax= ''
+    intmax = ''
+    def __init__(self,
+                 numberOfRows=0,
+                 instrument='',
+                 locationCode='',
+                 scanCode='',
+                 abovePrice=dblmax,
+                 belowPrice=dblmax,
+                 aboveVolume=intmax,
+                 marketCapAbove=dblmax,
+                 moodyRatingAbove='',
+                 moodyRatingBelow='',
+                 spRatingAbove='',
+                 spRatingBelow='',
+                 maturityDateAbove='',
+                 maturityDateBelow='',
+                 couponRateAbove=dblmax,
+                 couponRateBelow=dblmax,
+                 excludeConvertible=0):
         setattr_mapping(self, locals())
 
 

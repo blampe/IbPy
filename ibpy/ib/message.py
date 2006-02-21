@@ -160,6 +160,8 @@ class ContractDetails(SocketReader):
         details.multiplier = read_str()
         details.order_types = read_str()
         details.valid_exchanges = read_str()
+        if version >= 2:
+            details.price_magnifier = read_int()            
         self.dispatch(details=details)
 
 
@@ -437,9 +439,35 @@ class OpenOrder(SocketReader):
             order.fa_percentage = read_str()
             order.fa_profile = read_str()
 
-        if True:
-            ## boy, it would be nice to know wtf is going on here
-            order.unknwon_read = read_str()
+        if version >= 8:
+            order.goodTillDate = read_str()
+
+        if version >= 9:
+            order.rule80A = read_str()
+            order.percentOffset = read_float()
+            order.settlingFirm = read_str()
+            order.shortSaleSlot = read_int()
+            order.designatedLocation = read_str()
+            order.auctionStrategy = read_int()
+            order.startingPrice = read_float()
+            order.stockRefPrice = read_float()
+            order.delta = read_float()
+            order.stockRangeLower = read_float()
+            order.stockRangeUpper = read_float()
+            order.displaySize = read_int()
+            order.rthOnly = read_int()
+            order.blockOrder = read_int()
+            order.sweepToFill = read_int()
+            order.allOrNone = read_int()
+            order.minQty= read_int()
+            order.ocaType = read_int()
+            order.eTradeOnly = read_int()
+            order.firmQuoteOnly = read_int()
+            order.nbboPriceCap = read_float()
+
+        if version >= 10:
+            order.parentId = read_int()
+            order.triggerMethod = read_int()
 
         self.dispatch(order_id=order.order_id, 
                       contract=contract, 
@@ -728,3 +756,122 @@ class ReceiveFa(SocketReader):
         
         self.dispatch(data_type=data_type,
                       xml=xml)
+
+
+class HistoricalData(SocketReader):
+    """ HistoricalData() -> reads some type of message
+
+    """
+    class MessageDetail(SocketDetail):
+        __slots__ = ('version', 'ticker_id', 'rows' )
+
+    def read(self, read_int, read_float, read_str):
+        """ read(...) -> read a type of message
+
+        """
+        version = read_int()
+        ticker_id = read_int()
+        nitems = read_int()
+        rows = []
+        for i in range(nitems):
+            #read date,open,high,low,close,volume,wap,hasgaps
+            row=[read_str(), read_float(), read_float(), read_float(), read_float(),
+                 read_int(), read_float(), read_str().lower()=='true']
+            rows.append(row)
+        self.dispatch(version=version, ticker_id=ticker_id, rows=rows)
+
+
+class BondContractData(SocketReader):
+    """ BondContractData() -> reads some type of message
+
+    """
+    class MessageDetail(SocketDetail):
+        __slots__ = ('details', )
+
+    def read(self, read_int, read_float, read_str):
+        """ read(...) -> read a type of message
+
+        """
+        details = ib.type.ContractDetails()
+        readBoolFromInt = read_int
+        readDouble = read_float
+        readstr = read_str
+
+        version = read_int()
+        details.summary.symbol = readStr()
+        details.summary.secType = readStr()
+        details.summary.cusip = readStr()
+        details.summary.coupon = readDouble()
+        details.summary.maturity = readStr()
+        details.summary.issueDate  = readStr()
+        details.summary.ratings = readStr()
+        details.summary.bondType = readStr()
+        details.summary.couponType = readStr()
+        details.summary.convertible = readBoolFromInt()
+        details.summary.callable = readBoolFromInt()
+        details.summary.putable = readBoolFromInt()
+        details.summary.descAppend = readStr()
+        details.summary.exchange = readStr()
+        details.summary.currency = readStr()
+        details.market_name = readStr()
+        details.trading_class = readStr()
+        details.con_id = readInt()
+        details.min_tick = readDouble()
+        details.order_types = readStr()
+        details.valid_exchanges = readStr()
+        self.dispatch(details=details)
+
+
+class ScannerParameters(SocketReader):
+    """ ScannerParameters() -> reads some type of message
+
+    """
+    class MessageDetail(SocketDetail):
+        __slots__ = ('xml', )
+
+    def read(self, read_int, read_float, read_str):
+        """ read(...) -> read a type of message
+
+        """
+        version = read_int()
+        xml = read_str()
+        self.dispatch(xml=xml)
+
+
+class ScannerData(SocketReader):
+    """ ReceiveFa() -> reads some type of message
+
+    """
+    class MessageDetail(SocketDetail):
+        __slots__ = ('ticker_id', 'rows', )
+
+    def read(self, read_int, read_float, read_str):
+        """ read(...) -> read a type of message
+
+        """
+        version = read_int()
+        ticker_id = read_int()
+        nelements = read_int()
+        rows = []
+
+        for i in range(nelements):
+            rank = read_int()
+            contract = ib.type.ContractDetails()
+            contract.summary.symbol = read_str()
+            contract.summary.secType = read_str()
+            contract.summary.expiry = read_str()
+            contract.summary.strike = read_float()
+            contract.summary.right = read_str()
+            contract.summary.exchange = read_str()
+            contract.summary.currency = read_str()
+            contract.summary.localSymbol = read_str()
+            contract.marketName = read_str()
+            contract.tradingClass = read_str()
+            distance = read_str()
+            benchmark = read_str()
+            projection = read_str()
+            rows.append(dict(rank=rank, contract=contract, distance=distance,
+                             benchmark=benchmark, projection=projection))
+
+        self.dispatch(ticker_id=ticker_id, rows=rows)
+

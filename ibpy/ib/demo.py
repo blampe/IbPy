@@ -25,7 +25,7 @@ class SimpleMessageHandler:
 
     """
     order_id = 0    
-    outstream = file('/dev/null', 'w')
+    outstream = file('ibpy_demo_output.txt', 'w')
     
     def connected(self, msg):
         """ connected(msg) -> executed when IbPy connects to TWS
@@ -116,6 +116,10 @@ class SimpleMessageHandler:
         """
 
 
+    def historical_data(self, msg):
+        print >> self.outstream, msg
+
+
 class AutomaticDemoApp:
     """ AutomaticDemoApp() -> something not unlike a demonstration.
 
@@ -159,8 +163,8 @@ class AutomaticDemoApp:
         register(ib.message.ReaderStart, handler.connected)
         register(ib.message.ReaderStop, handler.disconnected)
         register(ib.message.Ticker, handler.ticker_updated)
-
-
+        register(ib.message.HistoricalData, handler.historical_data)
+        
     def demo_b_request(self):
         """ make requests for account data, ticker data, etc.
 
@@ -208,6 +212,16 @@ class AutomaticDemoApp:
 
         self.connection.request_market_data(es_id, contract)
         self.connection.request_contract_details(contract)
+
+
+    def demo_d_historicaldata(self):
+        """ request historical market data
+
+        """
+        id = next_ticker_id()
+        contract = ib.type.Contract(symbol='MSFT', sec_type='STK', exchange='SMART')
+        endDateTime = time.strftime('%Y%m%d %H:%M:%S')
+        self.connection.reqHistoricalData(id, contract, endDateTime, '300 S', 5, 'BID', 1, 1)
 
 
     def demo_e_combo_legs(self):
