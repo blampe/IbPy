@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-""" Ib.Socket -> Interactive Brokers socket connection and threaded reader
+""" ib.socket -> Interactive Brokers socket connection and threaded reader
 
 
 """
-import socket
+import _socket as socket
 import struct
 import threading
 

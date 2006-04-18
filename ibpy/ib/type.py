@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Ib.Type -> data types
+""" ib.type -> data types
 
 """
 (BID_SIZE, BID_PRICE, ASK_PRICE, ASK_SIZE, LAST_PRICE, LAST_SIZE, HIGH_PRICE,
