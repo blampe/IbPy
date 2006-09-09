@@ -679,13 +679,14 @@ class TickerPrice(Ticker):
             ## this is better expressed as a dictionary lookup,
             ## but for now i'm more interested in tracking this
             ## as close as possible to ib code
-            
-            if price_type == types.BID_PRICE:
-                size_tick_type = types.BID_SIZE
-            elif price_type == types.ASK_PRICE:
-                size_tick_type = types.ASK_SIZE
-            elif price_type == types.LAST_PRICE:
-                size_tick_type = types.LAST_SIZE
+
+            ticktype = types.TickType
+            if price_type == ticktype.BID_PRICE:
+                size_tick_type = ticktype.BID_SIZE
+            elif price_type == ticktype.ASK_PRICE:
+                size_tick_type = ticktype.ASK_SIZE
+            elif price_type == ticktype.LAST_PRICE:
+                size_tick_type = ticktype.LAST_SIZE
 
             if size_tick_type is not None:
                 self.sizer.dispatch(ticker_id=ticker_id,

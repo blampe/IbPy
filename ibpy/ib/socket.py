@@ -13,7 +13,10 @@ import ib.type
 
 
 SERVER_VERSION = 1
-CLIENT_VERSION = 23
+CLIENT_VERSION = 27
+
+BAG_SEC_TYPE = 'BAG'
+GROUPS, PROFILES, ALIASES = range(1, 4)
 
 READER_START = -1
 READER_STOP = -2
@@ -33,6 +36,7 @@ READER_STOP = -2
  REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
  REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA, ) = range(1, 26)
 
+EOF = struct.pack('!i', 0)[3]):
 
 logger = ib.logger.logger()
 
@@ -266,19 +270,16 @@ class SocketConnection(object):
 
         if server_version >= 15:
             send(contract.multiplier)
-
         send(contract.exchange)
-
         if server_version >= 14:
             send(contract.primary_exchange)
-
         send(contract.currency)
-
         if server_version >= 2:
             send(contract.local_symbol)
 
-        self.send_combolegs(contract)            
+        self.send_combolegs(contract)
         logger.debug('Market data request for ticker %s %s sent', ticker_id, contract.symbol)
+
 
     def request_contract_details(self, contract):
         """ request_contract_details(contract) -> request contract details
@@ -287,8 +288,9 @@ class SocketConnection(object):
         server_version = self.server_version
         need_version = 4
         if server_version < need_version:
-            ## TODO:  log or raise
-            logger.warning('Did not send request for contract details server version mismatch %s %s', need_version, server_version)
+            msg = ('Did not send request for contract details '
+                   'server version mismatch %s %s')
+            logger.warning(msg, need_version, server_version)
             return
 
         send = self.send
@@ -310,18 +312,21 @@ class SocketConnection(object):
                 contract.local_symbol, )
         map(send, data)        
 
-    def request_market_depth(self, ticker_id, contract):
+
+    def request_market_depth(self, ticker_id, contract, numRows=1):
         """ request_market_depth(ticker_id, contract) -> request market depth
 
         """
         server_version = self.server_version
+        need_version = 6
         send = self.send
-        
-        if server_version < 6:
-            ## TODO:  log or raise
+        if server_version < need_version:
+            msg = ('Did not send request for market depth '
+                   'server version mismatch %s %s')
+            logger.warning(msg, need_version, server_version)
             return
         
-        message_version = 2
+        message_version = 3
         data = (REQ_MKT_DEPTH,
                 message_version,
                 ticker_id,
@@ -339,6 +344,9 @@ class SocketConnection(object):
                 contract.currency,
                 contract.local_symbol)
         map(send, data)
+        if server_version >= 19:
+            send(numRows)
+
 
     def cancel_market_data(self, ticker_id):
         """ cancel_market_data(ticker_id) -> cancel market data
@@ -349,6 +357,7 @@ class SocketConnection(object):
                 message_version,
                 ticker_id)
         map(self.send, data)
+
 
     def cancel_market_depth(self, ticker_id):
         """ cancel_market_depth(ticker_id) -> cancel market depth
@@ -370,7 +379,7 @@ class SocketConnection(object):
         """
         server_version = self.server_version
         send = self.send
-        message_version = 18
+        message_version = 20
 
         map(send, (PLACE_ORDER,
                    message_version,
@@ -382,17 +391,12 @@ class SocketConnection(object):
                    contract.expiry,
                    contract.strike,
                    contract.right))
-
         if server_version >= 15:
             send(contract.multiplier)
-
         send(contract.exchange)
-
         if server_version >= 14:
             send(contract.primary_exchange)
-
         send(contract.currency)
-
         if server_version >= 2:
             send(contract.local_symbol)
 
@@ -426,9 +430,7 @@ class SocketConnection(object):
         if server_version >= 7:
             send(order.hidden)
 
-        if server_version >= 8 and contract.sec_type.lower() == 'bag':
-            ## version check is done here:
-            self.send_combolegs(contract)
+        self.send_combolegs(contract)
 
         if server_version >= 9:
             send(order.shares_allocation)
@@ -448,35 +450,46 @@ class SocketConnection(object):
                        order.fa_percentage,
                        order.fa_profile))
 
-        # institutional short saleslot data 0 for retail, 1 or 2 for
-        #institutions populate only when shortSaleSlot = 2.
-        if server_version >= 18:                    
-            map(send, (order.shortSaleSlot,         
-                       order.designatedLocation))   
+        # institutional short sale slot fields.
+        if server_version >= 18:  
+            map(send, (order.shortSaleSlot,         # 0 only for retail, 1 or 2 only for institution.
+                       order.designatedLocation))   # only populate when order.shortSaleSlot = 2
 
         if server_version >= 19:
-            map(send, (order.fa_group,
+            map(send, (
+                       #order.fa_group,
                        order.ocaType,
                        order.rthOnly,
                        order.rule80A,
                        order.settlingFirm,
-                       order.allOrNone,
-                       order.minQty,
-                       order.percentOffset,
-                       order.eTradeOnly,
-                       order.firmQuoteOnly,
-                       order.nbboPriceCap,
-                       # AUCTION_MATCH, AUCTION_IMPROVEMENT,
-                       # AUCTION_TRANSPARENT
-                       order.auctionStrategy, 
-                       order.startingPrice,
-                       order.stockRefPrice,
-                       order.delta,
-                       order.stockRangeLower,
-                       order.stockRangeUpper,))
-
+                       order.allOrNone))
+            map(send, (order.minQty, order.percentOffset,))
+            map(send, (order.eTradeOnly, order.firmQuoteOnly,))
+            map(send, (order.nbboPriceCap, order.auctionStrategy, 
+                          order.startingPrice, order.stockRefPrice,
+                          order.delta))
+            if server_version == 26:
+                if order.order_type == 'VOL':
+                    lower = order.stockRangeLower
+                    upper = order.stockRangeUpper
+                else:
+                    upper = lower = ''
+                map(send (upper, lower))
+        
         if server_version >= 22:
             send(order.overridePercentageConstraints)
+
+        if server_version >= 26:
+            map(send, (order.volatility, order.volatility_type))
+            if server_version < 28:
+                send(order.deltaNeutralOrderType == 'MKT' and 1)
+            else:
+                send(order.deltaNeutralOrderType)
+                send(order.deltaNeutralAuxPrice)
+            send(order.continuousUpdate)
+            if server_version == 26:
+                map(send, (upper, lower))
+            send(order.referencePriceType)
 
 
     def request_account_updates(self, subscribe=1, acct_code=''):
@@ -610,7 +623,7 @@ class SocketConnection(object):
 
         """
         if self.server_version < 16:
-            ## TODO:  log or raise
+            logger.warning('Server version mismatch.')
             return
 
         message_version = 3
@@ -633,12 +646,9 @@ class SocketConnection(object):
         map(self.send, (durationStr,
                         useRTH,
                         whatToShow))
-        if self.server_version >= 16:
-            map(self.send, (formatDate,))
-        if contract.combo_legs:
-            raise exceptions.NotImplementedError
-        else:
-            self.send(0)
+        if self.server_version > 16:
+            self.send(formatDate)
+        self.send_combolegs(contract)
 
 
     def cancelHistoricalData(self, ticker_id):
@@ -646,7 +656,7 @@ class SocketConnection(object):
 
         """
         if self.server_version < 24:
-            ## TODO:  log or raise
+            logger.warning('Server version mismatch.')
             return
         message_version = 1
         map(self.send, (CANCEL_HISTORICAL_DATA, message_version, ticker_id))
@@ -657,7 +667,7 @@ class SocketConnection(object):
 
         """
         if self.server_version < 24:
-            ## TODO:  log or raise
+            logger.warning('Server version mismatch.')
             return
         message_version = 1
         map(self.send, (REQ_SCANNER_PARAMETERS, message_version))
@@ -668,9 +678,9 @@ class SocketConnection(object):
 
         """
         if self.server_version < 24:
-            ## TODO:  log or raise
+            logger.warning('Server version mismatch.')            
             return
-        message_version = 1
+        message_version = 3
         map(self.send, (REQ_SCANNER_SUBSCRIPTION,
                         message_version,
                         ticker_id,
@@ -692,6 +702,11 @@ class SocketConnection(object):
                         subscription.couponRateAbove,
                         subscription.couponRateBelow,
                         subscription.excludeConvertible))
+        if self.server_version >= 25:
+            map(self.send, (subscription.averageOptionVolumeAbove,
+                            subscription.scannerSetttingPairs))
+        if self.server_version >= 27:
+            map(self.send, (subscription.stockTypeFilter))
 
 
     def cancelScannerSubscription(self, ticker_id):
@@ -705,14 +720,13 @@ class SocketConnection(object):
         map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, message_version, ticker_id))
 
 
-    def exerciseOptions(self, ticker_id, contract, exerciseAction, exerciseQuantity, account, override):
-        """ exerciseOptions(ticker_id, contract, exerciseAction,
-        exerciseQuantity, account, override) ->
-
+    def exerciseOptions(self, ticker_id, contract, exerciseAction,
+                        exerciseQuantity, account, override):
+        """ exerciseOptions(...) ->
 
         """
         if self.server_version < 21:
-            ## TODO:  log or raise
+            logger.warning('Exercise Option API not supported')
             return
         message_version = 1
         map(self.send, (EXERCISE_OPTIONS,
@@ -733,14 +747,15 @@ class SocketConnection(object):
                         override))
 
 
-    def send(self, data, packfunc=struct.pack, eof=struct.pack('!i', 0)[3]):
+    def send(self, data, packfunc=struct.pack):
         """ send(data) -> send a value to TWS
 
         """
         sendfunc = self.socket.send
         for k in str(data):
             sendfunc(packfunc('!i', ord(k))[3])
-        sendfunc(eof)
+        sendfunc(EOF)
+
 
     def send_combolegs(self, contract):
         """ send_combolegs(contract) -> helper to send a contracts combo legs
@@ -748,7 +763,7 @@ class SocketConnection(object):
         """
         send = self.send
 
-        if self.server_version >= 8:
+        if self.server_version >= 8 and contract.sec_type.lower() == BAG_SEC_TYPE:
             if contract.combo_legs:
                 send(len(contract.combo_legs))
                 for leg in contract.combo_legs:
