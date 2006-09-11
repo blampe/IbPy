@@ -36,7 +36,7 @@ READER_STOP = -2
  REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
  REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA, ) = range(1, 26)
 
-EOF = struct.pack('!i', 0)[3]):
+EOF = struct.pack('!i', 0)[3]
 
 logger = ib.logger.logger()
 
@@ -480,7 +480,7 @@ class SocketConnection(object):
             send(order.overridePercentageConstraints)
 
         if server_version >= 26:
-            map(send, (order.volatility, order.volatility_type))
+            map(send, (order.volatility, order.volatilityType))
             if server_version < 28:
                 send(order.deltaNeutralOrderType == 'MKT' and 1)
             else:
