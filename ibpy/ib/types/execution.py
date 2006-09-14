@@ -12,9 +12,9 @@ class Execution(object):
     def __init__(self, 
                  orderId=0,
                  clientId=0,
-                 exec_id='',
+                 execId='',
                  time='',
-                 acct_number='',
+                 acctNumber='',
                  exchange='',
                  side='',
                  shares=0, 
@@ -22,3 +22,11 @@ class Execution(object):
                  permId=0,
                  liquidation=0):
         setattr_mapping(self, locals())
+
+
+    def __eq__(self, other):
+        if other is None:
+            retun False
+        if self is other:
+            return True
+        return self.execId == other.execId

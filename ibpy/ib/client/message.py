@@ -237,9 +237,9 @@ class Execution(SocketReader):
         contract.localSymbol = read_str()
 
         details.orderId = orderId
-        details.exec_id = read_str()
+        details.execId = read_str()
         details.time = read_str()
-        details.acct_number = read_str()
+        details.acctNumber = read_str()
         details.exchange = read_str()
         details.side = read_str()
         details.shares = read_int()
