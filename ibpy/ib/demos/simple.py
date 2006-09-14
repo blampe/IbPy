@@ -16,8 +16,8 @@ import sys
 import time
 
 import ib.message
-import ib.socket
-import ib.type
+import ib.reader
+import ib.types
 
 
 class SimpleMessageHandler:
@@ -132,7 +132,7 @@ class AutomaticDemoApp:
             (next_ticker_id(), 'MXIM'),
         ]
 
-        self.connection = ib.socket.build(next_connection_id())
+        self.connection = ib.reader.build(next_connection_id())
         self.build_handler()
         self.connection.connect(dsn)
 
@@ -178,11 +178,11 @@ class AutomaticDemoApp:
         connection.request_news_bulletins()
         ## connection.request_managed_accounts()
 
-        exec_filter = ib.type.ExecutionFilter(sec_type='FUT')
+        exec_filter = ib.types.ExecutionFilter(sec_type='FUT')
         connection.request_executions(exec_filter)
 
         for ticker_id, symbol in self.tickers:
-            contract = ib.type.Contract(symbol=symbol, sec_type='STK')
+            contract = ib.types.Contract(symbol=symbol, sec_type='STK')
             connection.request_market_data(ticker_id, contract)
             connection.request_market_depth(ticker_id, contract)
 
@@ -195,8 +195,8 @@ class AutomaticDemoApp:
         time.sleep(self.snooze) 
 
         self.handler.order_id += 1
-        contract = ib.type.Contract(symbol=self.tickers[0][1], sec_type='STK')
-        order = ib.type.Order(order_id=self.handler.order_id, quantity=200, 
+        contract = ib.types.Contract(symbol=self.tickers[0][1], sec_type='STK')
+        order = ib.types.Order(order_id=self.handler.order_id, quantity=200, 
                               limit_price=24.00)
         self.connection.place_order(self.handler.order_id, contract, order)
 
@@ -207,7 +207,7 @@ class AutomaticDemoApp:
         """
         self.es_id = es_id = next_ticker_id()
         self.es_contract = contract = \
-            ib.type.Contract(symbol='ES', sec_type='FUT', exchange='GLOBEX',
+            ib.types.Contract(symbol='ES', sec_type='FUT', exchange='GLOBEX',
                              expiry='200603')
 
         self.connection.request_market_data(es_id, contract)
@@ -219,7 +219,7 @@ class AutomaticDemoApp:
 
         """
         id = next_ticker_id()
-        contract = ib.type.Contract(symbol='MSFT', sec_type='STK', exchange='SMART')
+        contract = ib.types.Contract(symbol='MSFT', sec_type='STK', exchange='SMART')
         endDateTime = time.strftime('%Y%m%d %H:%M:%S')
         self.connection.reqHistoricalData(id, contract, endDateTime, '300 S', 5, 'BID', 1, 1)
 
@@ -229,14 +229,14 @@ class AutomaticDemoApp:
 
         """
         es_id = self.es_id
-        cleg = ib.type.ComboLeg
+        cleg = ib.types.ComboLeg
         legs = [
             cleg(es_id, ratio=1, action='BUY', exchange='GLOBEX', open_close=0),
             cleg(es_id, ratio=2, action='BUY', exchange='GLOBEX', open_close=1),
             cleg(es_id, ratio=3, action='SELL', exchange='GLOBEX', open_close=2),
         ]
         self.handler.order_id += 1
-        order = ib.type.Order(order_id=self.handler.order_id, quantity=1, limit_price=1200)
+        order = ib.types.Order(order_id=self.handler.order_id, quantity=1, limit_price=1200)
         self.connection.place_order(self.handler.order_id, self.es_contract, order)
 
 
@@ -245,8 +245,8 @@ class AutomaticDemoApp:
 
         """
         self.handler.order_id += 1
-        contract = ib.type.Contract(symbol=self.tickers[0][1], sec_type='STK')
-        order = ib.type.Order(order_id=self.handler.order_id, quantity=1, limit_price=3.00)
+        contract = ib.types.Contract(symbol=self.tickers[0][1], sec_type='STK')
+        order = ib.types.Order(order_id=self.handler.order_id, quantity=1, limit_price=3.00)
         self.connection.place_order(self.handler.order_id, contract, order)
         time.sleep(self.snooze)
         self.connection.cancel_order(self.handler.order_id)

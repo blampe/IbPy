@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Ib.Logger -> Logging module for use elsewhere in this package.
+""" ib.lib -> library for bits used elsewhere in this package.
 
 """
 import logging
@@ -32,3 +32,17 @@ def logger(name='IbPy', level=logger_level, format=logger_format,
         return logging
 
 
+def getattrs(obj, seq):
+    values = [getattr(obj, k) for k in seq]
+    try:
+        return [v.lower() for v in values]
+    except (AttributeError, ):
+        return values
+
+
+def setattr_mapping(obj, mapping):
+    """ setattr_mapping(object, mapping) -> add attributes from mapping to obj
+
+    """
+    del(mapping['self'])
+    obj.__dict__.update(mapping)

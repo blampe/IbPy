@@ -3,13 +3,13 @@
 
 
 """
-import _socket as socket
+import socket
 import struct
 import threading
 
-import ib.logger
+import ib.lib
 import ib.message
-import ib.type
+import ib.types
 
 
 SERVER_VERSION = 1
@@ -38,7 +38,7 @@ READER_STOP = -2
 
 EOF = struct.pack('!i', 0)[3]
 
-logger = ib.logger.logger()
+logger = ib.lib.logger()
 
 
 class SocketReaderBase(object):
@@ -518,7 +518,7 @@ class SocketConnection(object):
 
         if self.server_version >= 9:
             if exec_filter is None:
-                exec_filter = ib.type.ExecutionFilter()
+                exec_filter = ib.types.ExecutionFilter()
 
             map(send, (exec_filter.client_id,
                        exec_filter.acct_code,
@@ -526,7 +526,7 @@ class SocketConnection(object):
                        exec_filter.symbol,
                        exec_filter.sec_type,
                        exec_filter.exchange,
-                        exec_filter.side))
+                       exec_filter.side))
 
     def cancel_order(self, order_id):
         """ cancel_order(order_id) -> cancel order specified by order_id

@@ -5,11 +5,11 @@
     data into MessageDetail objects.  The types inherit the dispatch method, which
     they use to send the MessageDetail objects to registered listeners.
 """
-import ib.logger
-import ib.type
+import ib.lib
+import ib.types
 
 
-logger = ib.logger.logger()
+logger = ib.lib.logger()
 
 
 class SocketReader(object):
@@ -142,7 +142,7 @@ class ContractDetails(SocketReader):
         """ read(...) -> read a contract details message
 
         """
-        details = ib.type.ContractDetails()
+        details = ib.types.ContractDetails()
 
         version = read_int()
         details.summary.symbol = read_str()
@@ -213,8 +213,8 @@ class ExecutionDetails(SocketReader):
         """ read(...) -> read an execution details message
 
         """
-        contract = ib.type.Contract()
-        details = ib.type.ExecutionDetails()
+        contract = ib.types.Contract()
+        details = ib.types.ExecutionDetails()
 
         version = read_int()
         order_id = read_int()
@@ -389,8 +389,8 @@ class OpenOrder(SocketReader):
         """ read(...) -> read an open order message
 
         """
-        contract = ib.type.Contract()
-        order = ib.type.Order()
+        contract = ib.types.Contract()
+        order = ib.types.Order()
 
         version = read_int()
         order.order_id = read_int()
@@ -550,7 +550,7 @@ class Portfolio(SocketReader):
         """ read(...) -> read a portfolio update message
 
         """
-        contract = ib.type.Contract()
+        contract = ib.types.Contract()
 
         version = read_int()
         contract.symbol = read_str()
@@ -674,7 +674,7 @@ class TickerPrice(Ticker):
         
         if version >= 2:
             size_tick_type = None
-            types = ib.type
+            types = ib.types
 
             ## this is better expressed as a dictionary lookup,
             ## but for now i'm more interested in tracking this
@@ -793,7 +793,7 @@ class BondContractData(SocketReader):
         """ read(...) -> read a type of message
 
         """
-        details = ib.type.ContractDetails()
+        details = ib.types.ContractDetails()
         readBoolFromInt = read_int
         readDouble = read_float
         readstr = read_str
@@ -857,7 +857,7 @@ class ScannerData(SocketReader):
 
         for i in range(nelements):
             rank = read_int()
-            contract = ib.type.ContractDetails()
+            contract = ib.types.ContractDetails()
             contract.summary.symbol = read_str()
             contract.summary.secType = read_str()
             contract.summary.expiry = read_str()
