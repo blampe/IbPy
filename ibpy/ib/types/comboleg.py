@@ -17,7 +17,7 @@ class ComboLeg(object):
                  ratio=0,
                  action='',
                  exchange='',
-                 open_close=0):
+                 openClose=0):
         setattr_mapping(self, locals())
 
     def __eq__(self, other):
@@ -25,5 +25,5 @@ class ComboLeg(object):
             return True
         if not other:
             return False
-        syms = ('action', 'exchange', 'con_id', 'ratio', 'open_close')
+        syms = ('action', 'exchange', 'con_id', 'ratio', 'openClose')
         return getattrs(self, syms) == getattrs(other, syms)

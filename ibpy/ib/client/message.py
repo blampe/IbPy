@@ -165,7 +165,7 @@ class ContractDetails(SocketReader):
         details.con_id = read_int()
         details.min_tick = read_float()
         details.multiplier = read_str()
-        details.order_types = read_str()
+        details.orderTypes = read_str()
         details.valid_exchanges = read_str()
         if version >= 2:
             details.price_magnifier = read_int()            
@@ -209,12 +209,12 @@ class ExecutionDetails(SocketReader):
 
     Generated detail instance:
 
-    msg.order_id - order id specified in the call to place order
+    msg.orderId - order id specified in the call to place order
     msg.contract - description of the executed contract 
     msg.details - addition order execution details
     """
     class detail(Message):
-        __slots__ = ('order_id', 'contract', 'details', )
+        __slots__ = ('orderId', 'contract', 'details', )
 
 
     def read(self, read_int, read_float, read_str):
@@ -225,7 +225,7 @@ class ExecutionDetails(SocketReader):
         details = ib.types.ExecutionDetails()
 
         version = read_int()
-        order_id = read_int()
+        orderId = read_int()
 
         contract.symbol = read_str()
         contract.sec_type = read_str()
@@ -236,7 +236,7 @@ class ExecutionDetails(SocketReader):
         contract.currency = read_str()
         contract.local_symbol = read_str()
 
-        details.order_id = order_id
+        details.orderId = orderId
         details.exec_id = read_str()
         details.time = read_str()
         details.acct_number = read_str()
@@ -246,15 +246,15 @@ class ExecutionDetails(SocketReader):
         details.price = read_float()
 
         if version >= 2:
-            details.perm_id = read_int()
+            details.permId = read_int()
 
         if version >= 3:
-            details.client_id = read_int()
+            details.clientId = read_int()
 
         if version >= 4:
             details.liquidation = read_int()
 
-        self.dispatch(order_id=order_id,
+        self.dispatch(orderId=orderId,
                       contract=contract,
                       details=details)
 
@@ -390,12 +390,12 @@ class OpenOrder(SocketReader):
 
     Generated detail instance:
 
-    msg.order_id - the order id assigned by the broker
+    msg.orderId - the order id assigned by the broker
     msg.contract - describes the contract
     msg.order - details of the open order
     """
     class detail(Message):
-        __slots__ = ('order_id', 'contract', 'order', )
+        __slots__ = ('orderId', 'contract', 'order', )
 
 
     def read(self, read_int, read_float, read_str):
@@ -406,7 +406,7 @@ class OpenOrder(SocketReader):
         order = ib.types.Order()
 
         version = read_int()
-        order.order_id = read_int()
+        order.orderId = read_int()
         
         contract.symbol = read_str()
         contract.sec_type = read_str()
@@ -420,37 +420,37 @@ class OpenOrder(SocketReader):
             contract.local_symbol = read_str()
             
         order.action = read_str()
-        order.quantity = read_int()
-        order.order_type = read_str()
-        order.limit_price = read_float()
-        order.aux_price = read_float()
+        order.totalQuantity = read_int()
+        order.orderType = read_str()
+        order.lmtPrice = read_float()
+        order.auxPrice = read_float()
         order.tif = read_str()
-        order.oca_group = read_str()
+        order.ocaGroup = read_str()
         order.account = read_str()
-        order.open_close = read_str()
+        order.openClose = read_str()
         order.origin = read_int()
-        order.order_ref = read_str()
+        order.orderRef = read_str()
 
         if version >= 3:
-            order.client_id = read_int()
+            order.clientId = read_int()
 
         if version >= 4:
-            order.perm_id = read_int()
-            order.ignore_rth = (read_int() == 1)
+            order.permId = read_int()
+            order.ignoreRth = (read_int() == 1)
             order.hidden = (read_int() == 1)
-            order.discretionary_amount = read_float()
+            order.discretionaryAmt = read_float()
 
         if version >= 5:
-            order.good_after_time = read_str()
+            order.goodAfterTime = read_str()
 
         if version >= 6:
-            order.shares_allocation = read_str()
+            order.sharesAllocation = read_str()
 
         if version >= 7:
-            order.fa_group = read_str()
-            order.fa_method = read_str()
-            order.fa_percentage = read_str()
-            order.fa_profile = read_str()
+            order.faGroup = read_str()
+            order.faMethod = read_str()
+            order.faPercentage = read_str()
+            order.faProfile = read_str()
 
         if version >= 8:
             order.goodTillDate = read_str()
@@ -482,7 +482,7 @@ class OpenOrder(SocketReader):
             order.parentId = read_int()
             order.triggerMethod = read_int()
 
-        self.dispatch(order_id=order.order_id, 
+        self.dispatch(orderId=order.orderId, 
                       contract=contract, 
                       order=order)
 
@@ -492,19 +492,19 @@ class OrderStatus(SocketReader):
 
     Generated detail instance:
 
-    msg.order_id - order id specified previously 
+    msg.orderId - order id specified previously 
     msg.message - order status
     msg.filled - number of shares executed
     msg.remaining - number of shares still outstanding
     msg.avg_fill_price - average price of executed shares 
-    msg.perm_id - permanent id maintained by the broker
-    msg.parent_id - parent id for bracket or auto trailing stop orders
+    msg.permId - permanent id maintained by the broker
+    msg.parentId - parent id for bracket or auto trailing stop orders
     msg.last_fill_price - price of the last shares executed
     """
     class detail(Message):
-        __slots__ = ('order_id', 'message', 'filled', 'remaining',
-                     'perm_id', 'parent_id', 'last_fill_price',
-                     'avg_fill_price', 'client_id')
+        __slots__ = ('orderId', 'message', 'filled', 'remaining',
+                     'permId', 'parentId', 'last_fill_price',
+                     'avg_fill_price', 'clientId')
 
 
     def read(self, read_int, read_float, read_str):
@@ -512,37 +512,37 @@ class OrderStatus(SocketReader):
 
         """
         version = read_int()
-        order_id = read_int()
+        orderId = read_int()
         message = read_str()
         filled = read_int()
         remaining = read_int()
         avg_fill_price = read_float()
 
-        perm_id = 0
+        permId = 0
         if version >= 2:
-            perm_id = read_int()
+            permId = read_int()
 
-        parent_id = 0
+        parentId = 0
         if version >= 3:
-            parent_id = read_int()
+            parentId = read_int()
 
         last_fill_price = 0
         if version >= 4:
             last_fill_price = read_float()
 
-        client_id = 0
+        clientId = 0
         if version >= 5:
-            client_id = read_int()
+            clientId = read_int()
 
-        self.dispatch(order_id=order_id,
+        self.dispatch(orderId=orderId,
                       message=message,
                       filled=filled,
                       remaining=remaining,
                       avg_fill_price=avg_fill_price,
-                      perm_id=perm_id,
-                      parent_id=parent_id,
+                      permId=permId,
+                      parentId=parentId,
                       last_fill_price=last_fill_price,
-                      client_id=client_id)
+                      clientId=clientId)
 
 
 class Portfolio(SocketReader):
@@ -695,7 +695,7 @@ class TickerPrice(Ticker):
             ## but for now i'm more interested in tracking this
             ## as close as possible to ib code
 
-            ticktype = types.TickType
+            ticktype = types.Tick
             if price_type == ticktype.BID_PRICE:
                 size_tick_type = ticktype.BID_SIZE
             elif price_type == ticktype.ASK_PRICE:
@@ -837,7 +837,7 @@ class BondContractData(SocketReader):
         details.trading_class = readStr()
         details.con_id = readInt()
         details.min_tick = readDouble()
-        details.order_types = readStr()
+        details.orderTypes = readStr()
         details.valid_exchanges = readStr()
         self.dispatch(details=details)
 

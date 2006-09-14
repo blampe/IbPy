@@ -205,8 +205,8 @@ class SocketConnection(object):
     }
 
 
-    def __init__(self, client_id, reader_type):
-        self.client_id = client_id
+    def __init__(self, clientId, reader_type):
+        self.clientId = clientId
         self.server_version = 0
         self.reader_type = reader_type
 
@@ -243,8 +243,8 @@ class SocketConnection(object):
             logger.info('Received server TwsTime=%s', tws_time)
 
         if self.server_version >= 3:
-            logger.info('Sending client id %s for object %s', self.client_id, self)
-            self.send(self.client_id)
+            logger.info('Sending client id %s for object %s', self.clientId, self)
+            self.send(self.clientId)
 
         logger.debug('Starting reader for object %s', self)
         self.reader.start()
@@ -287,7 +287,7 @@ class SocketConnection(object):
             send(contract.multiplier)
         send(contract.exchange)
         if server_version >= 14:
-            send(contract.primary_exchange)
+            send(contract.primaryExch)
         send(contract.currency)
         if server_version >= 2:
             send(contract.local_symbol)
@@ -390,8 +390,8 @@ class SocketConnection(object):
         map(self.send, data)
 
 
-    def place_order(self, order_id, contract, order):
-        """ place_order(order_id, contract, order) -> place an order
+    def place_order(self, orderId, contract, order):
+        """ place_order(orderId, contract, order) -> place an order
 
         """
         server_version = self.server_version
@@ -400,7 +400,7 @@ class SocketConnection(object):
 
         map(send, (PLACE_ORDER,
                    message_version,
-                   order_id))
+                   orderId))
 
         ## contract fields
         map(send, (contract.symbol,
@@ -412,37 +412,37 @@ class SocketConnection(object):
             send(contract.multiplier)
         send(contract.exchange)
         if server_version >= 14:
-            send(contract.primary_exchange)
+            send(contract.primaryExch)
         send(contract.currency)
         if server_version >= 2:
             send(contract.local_symbol)
 
         ## main order fields
         map(send, (order.action,
-                   order.quantity,
-                   order.order_type,
-                   order.limit_price,
-                   order.aux_price))
+                   order.totalQuantity,
+                   order.orderType,
+                   order.lmtPrice,
+                   order.auxPrice))
 
         ## extended order fields
         map(send, (order.tif,
-                   order.oca_group,
+                   order.ocaGroup,
                    order.account,
-                   order.open_close,
+                   order.openClose,
                    order.origin,
-                   order.order_ref,
+                   order.orderRef,
                    order.transmit))
 
         if server_version >= 4:
-            send(order.parent_id)
+            send(order.parentId)
 
         ## more extended order fields
         if server_version >= 5:
-            map(send, (order.block_order,
-                       order.sweep_to_fill,
-                       order.display_size,
-                       order.trigger_method,
-                       order.ignore_rth))
+            map(send, (order.blockOrder,
+                       order.sweepToFill,
+                       order.displaySize,
+                       order.triggerMethod,
+                       order.ignoreRth))
 
         if server_version >= 7:
             send(order.hidden)
@@ -450,22 +450,22 @@ class SocketConnection(object):
         self.send_combolegs(contract)
 
         if server_version >= 9:
-            send(order.shares_allocation)
+            send(order.sharesAllocation)
             
         if server_version >= 10:
-            send(order.discretionary_amount)
+            send(order.discretionaryAmt)
 
         if server_version >= 11:
-            send(order.good_after_time)
+            send(order.goodAfterTime)
 
         if server_version >= 12:
-            send(order.good_till_date)
+            send(order.goodTillDate)
 
         if server_version >= 13:
-            map(send, (order.fa_group,
-                       order.fa_method,
-                       order.fa_percentage,
-                       order.fa_profile))
+            map(send, (order.faGroup,
+                       order.faMethod,
+                       order.faPercentage,
+                       order.faProfile))
 
         # institutional short sale slot fields.
         if server_version >= 18:  
@@ -474,7 +474,7 @@ class SocketConnection(object):
 
         if server_version >= 19:
             map(send, (
-                       #order.fa_group,
+                       #order.faGroup,
                        order.ocaType,
                        order.rthOnly,
                        order.rule80A,
@@ -486,7 +486,7 @@ class SocketConnection(object):
                           order.startingPrice, order.stockRefPrice,
                           order.delta))
             if server_version == 26:
-                if order.order_type == 'VOL':
+                if order.orderType == 'VOL':
                     lower = order.stockRangeLower
                     upper = order.stockRangeUpper
                 else:
@@ -538,7 +538,7 @@ class SocketConnection(object):
             if exec_filter is None:
                 exec_filter = ib.types.ExecutionFilter()
 
-            map(send, (exec_filter.client_id,
+            map(send, (exec_filter.clientId,
                        exec_filter.acct_code,
                        exec_filter.time,
                        exec_filter.symbol,
@@ -547,14 +547,14 @@ class SocketConnection(object):
                        exec_filter.side))
 
 
-    def cancel_order(self, order_id):
-        """ cancel_order(order_id) -> cancel order specified by order_id
+    def cancel_order(self, orderId):
+        """ cancel_order(orderId) -> cancel order specified by orderId
 
         """
         message_version = 1
         map(self.send, (CANCEL_ORDER,
                         message_version,
-                        order_id))
+                        orderId))
 
 
     def request_open_orders(self):
@@ -666,7 +666,7 @@ class SocketConnection(object):
                         contract.right,
                         contract.multiplier,
                         contract.exchange,
-                        contract.primary_exchange,
+                        contract.primaryExch,
                         contract.currency,
                         contract.local_symbol))
         if self.server_version >= 20:
@@ -800,7 +800,7 @@ class SocketConnection(object):
                                leg.ratio,
                                leg.action,
                                leg.exchange,
-                               leg.open_close))
+                               leg.openClose))
             else:
                 send(0)
 
@@ -827,9 +827,9 @@ class SocketConnection(object):
                     pass
 
 
-def build(client_id=0, reader_type=None):
-    """ build(client_id) -> creates a new ib socket connection
+def build(clientId=0, reader_type=None):
+    """ build(clientId) -> creates a new ib socket connection
 
     """
     reader_type = reader_type or SocketReader
-    return SocketConnection(client_id=client_id, reader_type=reader_type)
+    return SocketConnection(clientId=clientId, reader_type=reader_type)

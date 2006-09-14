@@ -40,15 +40,46 @@ class Contract_Test(unittest.TestCase, TypeTestMixin):
         self.c00 = ib.types.Contract()
 
         syms = dict(symbol='GOOG', sec_type='STK', exchange='SMART',
-                    primary_exchange='SMART', currency='USD')
+                    primaryExch='SMART', currency='USD')
         self.c1 = ib.types.Contract(**syms)
         self.c10 = ib.types.Contract(**syms)
 
         syms = dict(symbol='GOOG', sec_type='STK', exchange='SMART',
-                    primary_exchange='SMART', currency='EUR')
+                    primaryExch='SMART', currency='EUR')
         self.c2 = ib.types.Contract(syms)
         self.c20 = ib.types.Contract(symbol='GOOG')
-    
+
+class ScannerSubscription_Test(unittest.TestCase):
+    def setUp(self):
+        self.scansub = ib.types.ScannerSubscription()
+
+    def test_empty(self):
+        scansub = self.scansub
+        self.failUnlessEqual(scansub.numberOfRows, -1)
+
+
+class Tick_Test(unittest.TestCase):
+    def setUp(self):
+        self.tick = ib.types.Tick()
+
+    def test_friendly_strings(self):
+        tick = self.tick
+        self.failUnlessEqual(tick[tick.BID_SIZE], 'bidSize')
+        self.failUnlessEqual(tick[tick.BID], 'bidPrice')
+        self.failUnlessEqual(tick[tick.ASK], 'askPrice')
+        self.failUnlessEqual(tick[tick.ASK_SIZE], 'askSize')
+        self.failUnlessEqual(tick[tick.LAST], 'lastPrice')
+        self.failUnlessEqual(tick[tick.LAST_SIZE], 'lastSize')
+        self.failUnlessEqual(tick[tick.HIGH], 'high')
+        self.failUnlessEqual(tick[tick.LOW], 'low')
+        self.failUnlessEqual(tick[tick.VOLUME], 'volume')
+        self.failUnlessEqual(tick[tick.CLOSE], 'close')
+        self.failUnlessEqual(tick[tick.BID_OPTION], 'bidOptComp')
+        self.failUnlessEqual(tick[tick.ASK_OPTION], 'askOptComp')
+        self.failUnlessEqual(tick[tick.LAST_OPTION], 'lastOptComp')
+        self.failUnlessEqual(tick[None], 'unknown')
+        self.failUnlessEqual(tick[-1], 'unknown')        
+        
     
 if __name__ == '__main__':
     unittest.main()

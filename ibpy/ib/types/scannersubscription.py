@@ -9,28 +9,30 @@ class ScannerSubscription(object):
     """ ScannerSubscription(...) -> scanner subscription parameters 
 
     """
-    dblmax= ''
-    intmax = ''
+    doubleMax= ''
+    integerMax = ''
+
+
     def __init__(self,
                  numberOfRows=-1,
                  instrument='',
                  locationCode='',
                  scanCode='',
-                 abovePrice=dblmax,
-                 belowPrice=dblmax,
-                 aboveVolume=intmax,
-                 averageOptionVolumeAbove=intmax,
-                 marketCapAbove=dblmax,
-                 marketCapBelow=dblmax,                 
+                 abovePrice=doubleMax,
+                 belowPrice=doubleMax,
+                 aboveVolume=integerMax,
+                 averageOptionVolumeAbove=integerMax,
+                 marketCapAbove=doubleMax,
+                 marketCapBelow=doubleMax,                 
                  moodyRatingAbove='',
                  moodyRatingBelow='',
                  spRatingAbove='',
                  spRatingBelow='',
                  maturityDateAbove='',
                  maturityDateBelow='',
-                 couponRateAbove=dblmax,
-                 couponRateBelow=dblmax,
-                 excludeConvertible=0,
+                 couponRateAbove=doubleMax,
+                 couponRateBelow=doubleMax,
+                 excludeConvertible='',
                  scannerSettingPairs='',
                  stockTypeFilter=''):
         setattr_mapping(self, locals())

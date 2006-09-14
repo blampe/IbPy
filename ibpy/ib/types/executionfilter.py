@@ -10,7 +10,7 @@ class ExecutionFilter(object):
 
     """
     def __init__(self,
-                 client_id=0,
+                 clientId=0,
                  acct_code='',
                  time='',
                  symbol='',

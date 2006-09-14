@@ -10,8 +10,8 @@ class ExecutionDetails(object):
 
     """
     def __init__(self, 
-                 order_id=0,
-                 client_id=0,
+                 orderId=0,
+                 clientId=0,
                  exec_id='',
                  time='',
                  acct_number='',
@@ -19,6 +19,6 @@ class ExecutionDetails(object):
                  side='',
                  shares=0, 
                  price=0.0, 
-                 perm_id=0,
+                 permId=0,
                  liquidation=0):
         setattr_mapping(self, locals())

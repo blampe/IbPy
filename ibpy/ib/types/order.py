@@ -9,46 +9,58 @@ class Order(object):
     """ Order(...) -> an order 
 
     """
-    origin_customer = 0
-    origin_firm = 1
+    CUSTOMER = 0
+    FIRM = 1
+    OPT_UNKNOWN = '?'
+    OPT_BROKER_DEALER = 'b'
+    OPT_CUSTOMER = 'c'
+    OPT_FIRM = 'f'
+    OPT_ISEMM = 'm'
+    OPT_FARMM = 'n'
+    OPT_SPECIALIST = 'y'
+    AUCTION_MATCH = 1
+    AUCTION_IMPROVEMENT = 2
+    AUCTION_TRANSPARENT = 3
+    EMPTY_STR = ''
+
 
     def __init__(self,
 
-                 # main order fields
-                 order_id=0,
-                 client_id=0,
-                 perm_id=0,
-                 action='BUY',
-                 quantity=0, 
-                 order_type='LMT', 
-                 limit_price=0, 
-                 aux_price=0, 
-                 shares_allocation='',
+                 ## main order fields
+                 orderId=0,
+                 clientId=0,
+                 permId=0,
+                 action='',
+                 totalQuantity=0, 
+                 orderType='',
+                 lmtPrice=0, 
+                 auxPrice=0, 
+                 sharesAllocation='',
 
                  # extended order fields
                  tif='DAY', 
-                 oca_group='',
+                 ocaGroup='',
                  account='', 
-                 open_close='O',
-                 origin=origin_customer,
-                 order_ref='',
+                 openClose='O',
+                 origin=CUSTOMER,
+                 orderRef='',
                  transmit=1, 
-                 parent_id=0,
-                 block_order=0,
-                 sweep_to_fill=0,
-                 display_size=0,
-                 trigger_method=1,
-                 ignore_rth=0,
+                 parentId=0,
+                 blockOrder=0,
+                 sweepToFill=0,
+                 displaySize=0,
+                 triggerMethod=1,
+                 ignoreRth=0,
                  hidden=0,
-                 discretionary_amount=0,
-                 good_after_time='',
-                 good_till_date='',
+                 discretionaryAmt=0,
+                 goodAfterTime='',
+                 goodTillDate='',
 
-                 fa_group='',
-                 fa_profile='',
-                 fa_method='',
-                 fa_percentage='',
-                 primary_exchange='',
+                 faGroup='',
+                 faProfile='',
+                 faMethod='',
+                 faPercentage='',
+                 primaryExch='',
                  shortSaleSlot=0,
                  designatedLocation='',
 
@@ -58,19 +70,19 @@ class Order(object):
                  rule80A='',
                  settlingFirm='',
                  allOrNone=0,
-                 minQty='',
-                 percentOffset='',
+                 minQty=0,
+                 percentOffset=0.0,
                  eTradeOnly=1,
                  firmQuoteOnly=1,
-                 nbboPriceCap='',
+                 nbboPriceCap=0.0,
 
                  # box orders
-                 auctionStrategy='',   
-                 startingPrice='',
-                 stockRefPrice='',
-                 delta='',
-                 stockRangeLower='',
-                 stockRangeUpper='',
+                 auctionStrategy=0,
+                 startingPrice=0.0,
+                 stockRefPrice=0.0,
+                 delta=0.0,
+                 stockRangeLower=0.0,
+                 stockRangeUpper=0.0,
 
                  # volatility orders
                  volatility=0.0,
@@ -82,18 +94,19 @@ class Order(object):
                  ):
         setattr_mapping(self, locals())
 
+
     def __eq__(self, other):
         if self is other:
             return True
         if not other:
             return False
-        if self.perm_id == other.perm_id:
+        if self.permId == other.permId:
             return True
-        syms = ('order_id', 'client_id', 'quantity', 'limit_price',
-                'aux_price', 'origin', 'transmit', 'parent_id',
-                'block_order', 'sweep_to_fill', 'display_size',
-                'trigger_method', 'ignore_rth', 'hidden',
-                'discretionary_amount', 'shortSaleSlot',
+        syms = ('orderId', 'clientId', 'totalQuantity', 'lmtPrice',
+                'auxPrice', 'origin', 'transmit', 'parentId',
+                'blockOrder', 'sweepToFill', 'displaySize',
+                'triggerMethod', 'ignoreRth', 'hidden',
+                'discretionaryAmt', 'shortSaleSlot',
                 'designatedLocation', 'ocaType', 'rthOnly',
                 'allOrNone', 'minQty', 'percentOffset',
                 'eTradeOnly', 'firmQuoteOnly', 'nbboPriceCap',
@@ -104,8 +117,8 @@ class Order(object):
         if getattrs(self, syms) != getattrs(other, syms):
             return False
 
-        syms = ('order_type', 'tif', 'oca_group', 'account',
-                'open_close', 'order_ref', 'good_after_time',
-                'good_till_date', 'primary_exchange', 'rule80A',
+        syms = ('orderType', 'tif', 'ocaGroup', 'account',
+                'openClose', 'orderRef', 'goodAfterTime',
+                'goodTillDate', 'primaryExch', 'rule80A',
                 'settlingFirm', 'detalNeutralOrderType')
         return getattrs(self, syms) == getattrs(other, syms)

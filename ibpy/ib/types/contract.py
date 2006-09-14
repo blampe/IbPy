@@ -20,7 +20,7 @@ class Contract(object):
                  currency='', 
                  local_symbol='',
                  combo_legs=None,
-                 primary_exchange='',
+                 primaryExch='',
                  cusip='',
                  ratings='',
                  desc_append='',
@@ -55,7 +55,7 @@ class Contract(object):
         if self.sec_type.lower() != other.sec_type.lower():
             return False
 
-        syms = ('symbol', 'exchange', 'primary_exchange', 'currency')
+        syms = ('symbol', 'exchange', 'primaryExch', 'currency')
         if getattrs(self, syms) != getattrs(other, syms):
             return False
 

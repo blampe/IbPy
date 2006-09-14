@@ -16,7 +16,7 @@ class ContractDetails(object):
                  con_id=0, 
                  min_tick=0.0,
                  multiplier='',
-                 order_types='', 
+                 orderTypes='', 
                  valid_exchanges=''):
         if summary is None:
             summary = Contract()

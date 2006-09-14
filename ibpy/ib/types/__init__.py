@@ -10,4 +10,4 @@ from ib.types.executiondetails import ExecutionDetails
 from ib.types.executionfilter import ExecutionFilter
 from ib.types.order import Order
 from ib.types.scannersubscription import ScannerSubscription
-from ib.types.ticker import TickType
+from ib.types.ticker import Tick

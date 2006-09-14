@@ -24,7 +24,7 @@ class SimpleMessageHandler:
     """ SimpleMessageHandler() -> defines methods suitable for IbPy callbacks
 
     """
-    order_id = 0    
+    orderId = 0    
     outstream = file('ibpy_demo_output.txt', 'w')
     
     def connected(self, msg):
@@ -63,11 +63,11 @@ class SimpleMessageHandler:
         print >> self.outstream, msg
 
 
-    def next_order_id(self, msg):
-        """ next_order_id(msg) -> called to tell us the first usable order id
+    def next_orderId(self, msg):
+        """ next_orderId(msg) -> called to tell us the first usable order id
 
         """
-        self.order_id = msg.next_valid_id
+        self.orderId = msg.next_valid_id
         print >> self.outstream, msg
 
 
@@ -75,7 +75,7 @@ class SimpleMessageHandler:
         """ order_status(msg) -> called when order status has changed
 
         """
-        ordinfo = (msg.order_id, msg.message, )
+        ordinfo = (msg.orderId, msg.message, )
         print >> self.outstream, 'Order status changed:  order id %s, status %s' % ordinfo
 
 
@@ -155,7 +155,7 @@ class AutomaticDemoApp:
         register(ib.client.message.Error, handler.error)
         register(ib.client.message.ExecutionDetails, handler.exec_details)
         register(ib.client.message.ManagedAccounts, handler.managed_accounts)
-        register(ib.client.message.NextId, handler.next_order_id)
+        register(ib.client.message.NextId, handler.next_orderId)
         register(ib.client.message.NewsBulletin, handler.news_bulletin)
         register(ib.client.message.OpenOrder, handler.open_order)
         register(ib.client.message.OrderStatus, handler.order_status)
@@ -194,11 +194,11 @@ class AutomaticDemoApp:
         ## have to snooze in order to get the next order id
         time.sleep(self.snooze) 
 
-        self.handler.order_id += 1
+        self.handler.orderId += 1
         contract = ib.types.Contract(symbol=self.tickers[0][1], sec_type='STK')
-        order = ib.types.Order(order_id=self.handler.order_id, quantity=200, 
-                              limit_price=24.00)
-        self.connection.place_order(self.handler.order_id, contract, order)
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=200, 
+                              lmtPrice=24.00)
+        self.connection.place_order(self.handler.orderId, contract, order)
 
 
     def demo_d_contract(self):
@@ -231,25 +231,25 @@ class AutomaticDemoApp:
         es_id = self.es_id
         cleg = ib.types.ComboLeg
         legs = [
-            cleg(es_id, ratio=1, action='BUY', exchange='GLOBEX', open_close=0),
-            cleg(es_id, ratio=2, action='BUY', exchange='GLOBEX', open_close=1),
-            cleg(es_id, ratio=3, action='SELL', exchange='GLOBEX', open_close=2),
+            cleg(es_id, ratio=1, action='BUY', exchange='GLOBEX', openClose=0),
+            cleg(es_id, ratio=2, action='BUY', exchange='GLOBEX', openClose=1),
+            cleg(es_id, ratio=3, action='SELL', exchange='GLOBEX', openClose=2),
         ]
-        self.handler.order_id += 1
-        order = ib.types.Order(order_id=self.handler.order_id, quantity=1, limit_price=1200)
-        self.connection.place_order(self.handler.order_id, self.es_contract, order)
+        self.handler.orderId += 1
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=1200)
+        self.connection.place_order(self.handler.orderId, self.es_contract, order)
 
 
     def demo_f_cancelled_order(self):
         """ submit a silly order and then cancel it
 
         """
-        self.handler.order_id += 1
+        self.handler.orderId += 1
         contract = ib.types.Contract(symbol=self.tickers[0][1], sec_type='STK')
-        order = ib.types.Order(order_id=self.handler.order_id, quantity=1, limit_price=3.00)
-        self.connection.place_order(self.handler.order_id, contract, order)
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=3.00)
+        self.connection.place_order(self.handler.orderId, contract, order)
         time.sleep(self.snooze)
-        self.connection.cancel_order(self.handler.order_id)
+        self.connection.cancel_order(self.handler.orderId)
 
 
     def demo_g_cancel_some_requests(self):
