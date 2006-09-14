@@ -26,7 +26,7 @@ class Execution(object):
 
     def __eq__(self, other):
         if other is None:
-            retun False
+            return False
         if self is other:
             return True
         return self.execId == other.execId
