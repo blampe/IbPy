@@ -39,12 +39,12 @@ class Contract_Test(unittest.TestCase, TypeTestMixin):
         self.c0 = ib.types.Contract()
         self.c00 = ib.types.Contract()
 
-        syms = dict(symbol='GOOG', sec_type='STK', exchange='SMART',
+        syms = dict(symbol='GOOG', secType='STK', exchange='SMART',
                     primaryExch='SMART', currency='USD')
         self.c1 = ib.types.Contract(**syms)
         self.c10 = ib.types.Contract(**syms)
 
-        syms = dict(symbol='GOOG', sec_type='STK', exchange='SMART',
+        syms = dict(symbol='GOOG', secType='STK', exchange='SMART',
                     primaryExch='SMART', currency='EUR')
         self.c2 = ib.types.Contract(syms)
         self.c20 = ib.types.Contract(symbol='GOOG')

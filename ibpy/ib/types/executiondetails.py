@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-""" Defines the ExecutionDetails class.
+""" Defines the Execution class.
 
 """
 from ib.lib import setattr_mapping
 
 
-class ExecutionDetails(object):
-    """ ExecutionDetails(...) -> execution details 
+class Execution(object):
+    """ Execution(...) -> execution details 
 
     """
     def __init__(self, 

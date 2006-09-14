@@ -153,7 +153,7 @@ class AutomaticDemoApp:
         register(ib.client.message.Account, handler.account_updated)
         register(ib.client.message.ContractDetails, handler.contract_details)
         register(ib.client.message.Error, handler.error)
-        register(ib.client.message.ExecutionDetails, handler.exec_details)
+        register(ib.client.message.Execution, handler.exec_details)
         register(ib.client.message.ManagedAccounts, handler.managed_accounts)
         register(ib.client.message.NextId, handler.next_orderId)
         register(ib.client.message.NewsBulletin, handler.news_bulletin)
@@ -178,11 +178,11 @@ class AutomaticDemoApp:
         connection.request_news_bulletins()
         ## connection.request_managed_accounts()
 
-        exec_filter = ib.types.ExecutionFilter(sec_type='FUT')
+        exec_filter = ib.types.ExecutionFilter(secType='FUT')
         connection.request_executions(exec_filter)
 
         for ticker_id, symbol in self.tickers:
-            contract = ib.types.Contract(symbol=symbol, sec_type='STK')
+            contract = ib.types.Contract(symbol=symbol, secType='STK')
             connection.request_market_data(ticker_id, contract)
             connection.request_market_depth(ticker_id, contract)
 
@@ -195,7 +195,7 @@ class AutomaticDemoApp:
         time.sleep(self.snooze) 
 
         self.handler.orderId += 1
-        contract = ib.types.Contract(symbol=self.tickers[0][1], sec_type='STK')
+        contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK')
         order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=200, 
                               lmtPrice=24.00)
         self.connection.place_order(self.handler.orderId, contract, order)
@@ -207,7 +207,7 @@ class AutomaticDemoApp:
         """
         self.es_id = es_id = next_ticker_id()
         self.es_contract = contract = \
-            ib.types.Contract(symbol='ES', sec_type='FUT', exchange='GLOBEX',
+            ib.types.Contract(symbol='ES', secType='FUT', exchange='GLOBEX',
                              expiry='200603')
 
         self.connection.request_market_data(es_id, contract)
@@ -219,12 +219,12 @@ class AutomaticDemoApp:
 
         """
         id = next_ticker_id()
-        contract = ib.types.Contract(symbol='MSFT', sec_type='STK', exchange='SMART')
+        contract = ib.types.Contract(symbol='MSFT', secType='STK', exchange='SMART')
         endDateTime = time.strftime('%Y%m%d %H:%M:%S')
         self.connection.reqHistoricalData(id, contract, endDateTime, '300 S', 5, 'BID', 1, 1)
 
 
-    def demo_e_combo_legs(self):
+    def demo_e_comboLegs(self):
         """ submit an order for a futures contract with multiple combo legs
 
         """
@@ -245,7 +245,7 @@ class AutomaticDemoApp:
 
         """
         self.handler.orderId += 1
-        contract = ib.types.Contract(symbol=self.tickers[0][1], sec_type='STK')
+        contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK')
         order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=3.00)
         self.connection.place_order(self.handler.orderId, contract, order)
         time.sleep(self.snooze)

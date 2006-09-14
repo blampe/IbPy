@@ -184,7 +184,7 @@ class SocketConnection(object):
         ACCT_UPDATE_TIME : ib.client.message.AccountTime,
         CONTRACT_DATA : ib.client.message.ContractDetails,
         ERR_MSG : ib.client.message.Error,
-        EXECUTION_DATA : ib.client.message.ExecutionDetails,
+        EXECUTION_DATA : ib.client.message.Execution,
         RECEIVE_FA : ib.client.message.ReceiveFa,
         MANAGED_ACCTS : ib.client.message.ManagedAccounts,
         MARKET_DEPTH : ib.client.message.MarketDepth,
@@ -277,7 +277,7 @@ class SocketConnection(object):
                 message_version, 
                 ticker_id, 
                 contract.symbol,
-                contract.sec_type, 
+                contract.secType, 
                 contract.expiry, 
                 contract.strike,
                 contract.right)
@@ -290,7 +290,7 @@ class SocketConnection(object):
             send(contract.primaryExch)
         send(contract.currency)
         if server_version >= 2:
-            send(contract.local_symbol)
+            send(contract.localSymbol)
 
         self.send_combolegs(contract)
         logger.debug('Market data request for ticker %s %s sent',
@@ -314,7 +314,7 @@ class SocketConnection(object):
         data = (REQ_CONTRACT_DATA, 
                 message_version, 
                 contract.symbol,
-                contract.sec_type, 
+                contract.secType, 
                 contract.expiry, 
                 contract.strike,
                 contract.right)
@@ -325,7 +325,7 @@ class SocketConnection(object):
 
         data = (contract.exchange, 
                 contract.currency, 
-                contract.local_symbol, )
+                contract.localSymbol, )
         map(send, data)        
 
 
@@ -347,7 +347,7 @@ class SocketConnection(object):
                 message_version,
                 ticker_id,
                 contract.symbol,
-                contract.sec_type,
+                contract.secType,
                 contract.expiry,
                 contract.strike,
                 contract.right)
@@ -358,7 +358,7 @@ class SocketConnection(object):
 
         data = (contract.exchange,
                 contract.currency,
-                contract.local_symbol)
+                contract.localSymbol)
         map(send, data)
         if server_version >= 19:
             send(numRows)
@@ -404,7 +404,7 @@ class SocketConnection(object):
 
         ## contract fields
         map(send, (contract.symbol,
-                   contract.sec_type,
+                   contract.secType,
                    contract.expiry,
                    contract.strike,
                    contract.right))
@@ -415,7 +415,7 @@ class SocketConnection(object):
             send(contract.primaryExch)
         send(contract.currency)
         if server_version >= 2:
-            send(contract.local_symbol)
+            send(contract.localSymbol)
 
         ## main order fields
         map(send, (order.action,
@@ -542,7 +542,7 @@ class SocketConnection(object):
                        exec_filter.acct_code,
                        exec_filter.time,
                        exec_filter.symbol,
-                       exec_filter.sec_type,
+                       exec_filter.secType,
                        exec_filter.exchange,
                        exec_filter.side))
 
@@ -660,7 +660,7 @@ class SocketConnection(object):
                         message_version,
                         ticker_id,
                         contract.symbol,
-                        contract.sec_type,
+                        contract.secType,
                         contract.expiry,
                         contract.strike,
                         contract.right,
@@ -668,7 +668,7 @@ class SocketConnection(object):
                         contract.exchange,
                         contract.primaryExch,
                         contract.currency,
-                        contract.local_symbol))
+                        contract.localSymbol))
         if self.server_version >= 20:
             map(self.send, (endDateTime,
                             barSizeSetting))
@@ -762,14 +762,14 @@ class SocketConnection(object):
                         message_version,
                         ticker_id,
                         contract.symbol,
-                        contract.sec_type,
+                        contract.secType,
                         contract.expiry,
                         contract.strike,
                         contract.right,
                         contract.multiplier,
                         contract.exchange,
                         contract.currency,
-                        contract.local_symbol,
+                        contract.localSymbol,
                         exerciseAction,
                         exerciseQuantity,
                         account,
@@ -792,11 +792,11 @@ class SocketConnection(object):
         """
         send = self.send
 
-        if self.server_version >= 8 and contract.sec_type.lower() == BAG_SEC_TYPE:
-            if contract.combo_legs:
-                send(len(contract.combo_legs))
-                for leg in contract.combo_legs:
-                    map(send, (leg.con_id,
+        if self.server_version >= 8 and contract.secType.lower() == BAG_SEC_TYPE:
+            if contract.comboLegs:
+                send(len(contract.comboLegs))
+                for leg in contract.comboLegs:
+                    map(send, (leg.conId,
                                leg.ratio,
                                leg.action,
                                leg.exchange,

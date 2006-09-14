@@ -14,7 +14,7 @@ class ExecutionFilter(object):
                  acct_code='',
                  time='',
                  symbol='',
-                 sec_type='',
+                 secType='',
                  exchange='',
                  side=''):
         setattr_mapping(self, locals())

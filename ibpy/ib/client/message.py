@@ -153,20 +153,20 @@ class ContractDetails(SocketReader):
 
         version = read_int()
         details.summary.symbol = read_str()
-        details.summary.sec_type = read_str()
+        details.summary.secType = read_str()
         details.summary.expiry = read_str()
         details.summary.strike = read_float()
         details.summary.right = read_str()
         details.summary.exchange = read_str()
         details.summary.currency = read_str()
-        details.summary.local_symbol = read_str()
-        details.market_name = read_str()
-        details.trading_class = read_str()
-        details.con_id = read_int()
-        details.min_tick = read_float()
+        details.summary.localSymbol = read_str()
+        details.marketName = read_str()
+        details.tradingClass = read_str()
+        details.conId = read_int()
+        details.minTick = read_float()
         details.multiplier = read_str()
         details.orderTypes = read_str()
-        details.valid_exchanges = read_str()
+        details.validExchanges = read_str()
         if version >= 2:
             details.price_magnifier = read_int()            
         self.dispatch(details=details)
@@ -204,8 +204,8 @@ class Error(SocketReader):
                       error_msg=error_msg)
 
 
-class ExecutionDetails(SocketReader):
-    """ ExecutionDetails() -> reads execution detail messages
+class Execution(SocketReader):
+    """ Execution() -> reads execution detail messages
 
     Generated detail instance:
 
@@ -222,19 +222,19 @@ class ExecutionDetails(SocketReader):
 
         """
         contract = ib.types.Contract()
-        details = ib.types.ExecutionDetails()
+        details = ib.types.Execution()
 
         version = read_int()
         orderId = read_int()
 
         contract.symbol = read_str()
-        contract.sec_type = read_str()
+        contract.secType = read_str()
         contract.expiry = read_str()
         contract.strike = read_float()
         contract.right = read_str()
         contract.exchange = read_str()
         contract.currency = read_str()
-        contract.local_symbol = read_str()
+        contract.localSymbol = read_str()
 
         details.orderId = orderId
         details.exec_id = read_str()
@@ -409,7 +409,7 @@ class OpenOrder(SocketReader):
         order.orderId = read_int()
         
         contract.symbol = read_str()
-        contract.sec_type = read_str()
+        contract.secType = read_str()
         contract.expiry = read_str()
         contract.strike = read_float()
         contract.right = read_str()
@@ -417,7 +417,7 @@ class OpenOrder(SocketReader):
         contract.currency = read_str()
 
         if version >= 2:
-            contract.local_symbol = read_str()
+            contract.localSymbol = read_str()
             
         order.action = read_str()
         order.totalQuantity = read_int()
@@ -569,14 +569,14 @@ class Portfolio(SocketReader):
 
         version = read_int()
         contract.symbol = read_str()
-        contract.sec_type = read_str()
+        contract.secType = read_str()
         contract.expiry = read_str()
         contract.strike = read_float()
         contract.right = read_str()
         contract.currency = read_str()
 
         if version >= 2:
-            contract.local_symbol = read_str()
+            contract.localSymbol = read_str()
             
         position = read_int()
         market_price = read_float()
@@ -833,12 +833,12 @@ class BondContractData(SocketReader):
         details.summary.descAppend = readStr()
         details.summary.exchange = readStr()
         details.summary.currency = readStr()
-        details.market_name = readStr()
-        details.trading_class = readStr()
-        details.con_id = readInt()
-        details.min_tick = readDouble()
+        details.marketName = readStr()
+        details.tradingClass = readStr()
+        details.conId = readInt()
+        details.minTick = readDouble()
         details.orderTypes = readStr()
-        details.valid_exchanges = readStr()
+        details.validExchanges = readStr()
         self.dispatch(details=details)
 
 

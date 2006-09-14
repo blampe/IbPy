@@ -11,36 +11,36 @@ class Contract(object):
     """
     def __init__(self,
                  symbol='',
-                 sec_type='',
+                 secType='',
                  expiry='',
                  strike=0.0,
                  right='',
                  multiplier='',
                  exchange='',
                  currency='', 
-                 local_symbol='',
-                 combo_legs=None,
+                 localSymbol='',
+                 comboLegs=None,
                  primaryExch='',
                  cusip='',
                  ratings='',
-                 desc_append='',
-                 bond_type='',
-                 coupon_type='',
+                 descAppend='',
+                 bondType='',
+                 couponType='',
                  callable=False,
                  putable=False,
                  coupon=0.0,
                  convertible=False,
                  maturity='',
-                 issue_date=''):
-        if combo_legs is None:
-            combo_legs = []
+                 issueDate=''):
+        if comboLegs is None:
+            comboLegs = []
         setattr_mapping(self, locals())
 
 
     def __str__(self):
         return 'Contract(%s %s %s %s %s %s %s)' % \
-               (self.symbol, self.sec_type, self.expiry, self.strike,
-                self.right, self.exchange, self.local_symbol)
+               (self.symbol, self.secType, self.expiry, self.strike,
+                self.right, self.exchange, self.localSymbol)
 
 
     def __eq__(self, other):
@@ -50,26 +50,26 @@ class Contract(object):
             return False
         if self is other:
             return True
-        if len(self.combo_legs) != len(other.combo_legs):
+        if len(self.comboLegs) != len(other.comboLegs):
             return False
-        if self.sec_type.lower() != other.sec_type.lower():
+        if self.secType.lower() != other.secType.lower():
             return False
 
         syms = ('symbol', 'exchange', 'primaryExch', 'currency')
         if getattrs(self, syms) != getattrs(other, syms):
             return False
 
-        if self.sec_type == 'BOND':
+        if self.secType == 'BOND':
             syms = ('putable', 'callable', 'convertible', 'coupon',
-                    'cuspi', 'ratings', 'desc_append', 'bond_type',
-                    'coupon_type', 'maturity', 'issue_date')
+                    'cuspi', 'ratings', 'descAppend', 'bondType',
+                    'couponType', 'maturity', 'issueDate')
             iseq = getattrs(self, syms) == getattrs(other, syms)
         else:
-            syms = ('expiry', 'right', 'multiplier', 'local_symbol')
+            syms = ('expiry', 'right', 'multiplier', 'localSymbol')
             iseq = getattrs(self, syms) == getattrs(other, syms)
 
-        if iseq and self.combo_legs:
-            for thisleg, otherleg in zip(self.combo_legs, other.combo_legs):
+        if iseq and self.comboLegs:
+            for thisleg, otherleg in zip(self.comboLegs, other.comboLegs):
                 if thisleg != otherleg:
                     iseq = False
         return iseq
