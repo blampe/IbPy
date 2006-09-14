@@ -509,7 +509,7 @@ class SocketConnection(object):
             send(order.referencePriceType)
 
 
-    def request_account_updates(self, subscribe=1, acct_code=''):
+    def request_account_updates(self, subscribe=1, acctCode=''):
         """ request_account_updates() -> request account data updates
 
         """
@@ -521,7 +521,7 @@ class SocketConnection(object):
                    subscribe))
 
         if self.server_version >= 9:
-            send(acct_code)
+            send(acctCode)
 
 
     def request_executions(self, exec_filter=None):
@@ -539,7 +539,7 @@ class SocketConnection(object):
                 exec_filter = ib.types.ExecutionFilter()
 
             map(send, (exec_filter.clientId,
-                       exec_filter.acct_code,
+                       exec_filter.acctCode,
                        exec_filter.time,
                        exec_filter.symbol,
                        exec_filter.secType,

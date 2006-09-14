@@ -2,7 +2,7 @@
 """ Defines the ExecutionFilter class.
 
 """
-from ib.lib import setattr_mapping
+from ib.lib import setattr_mapping, getattrs
 
 
 class ExecutionFilter(object):
@@ -11,10 +11,18 @@ class ExecutionFilter(object):
     """
     def __init__(self,
                  clientId=0,
-                 acct_code='',
+                 acctCode='',
                  time='',
                  symbol='',
                  secType='',
                  exchange='',
                  side=''):
         setattr_mapping(self, locals())
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+        if self is other:
+            return True
+        syms = ('acctCode', 'time', 'symbol', 'secType', 'exchange', 'side')
+        return getattrs(self, syms) == getattrs(other, syms)
