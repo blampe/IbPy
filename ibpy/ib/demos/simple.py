@@ -15,9 +15,9 @@ import os
 import sys
 import time
 
-import ib.message
-import ib.reader
 import ib.types
+import ib.client.message
+import ib.client.reader
 
 
 class SimpleMessageHandler:
@@ -132,7 +132,7 @@ class AutomaticDemoApp:
             (next_ticker_id(), 'MXIM'),
         ]
 
-        self.connection = ib.reader.build(next_connection_id())
+        self.connection = ib.client.reader.build(next_connection_id())
         self.build_handler()
         self.connection.connect(dsn)
 
@@ -150,20 +150,20 @@ class AutomaticDemoApp:
         handler = self.handler = SimpleMessageHandler()
         register = self.connection.register
 
-        register(ib.message.Account, handler.account_updated)
-        register(ib.message.ContractDetails, handler.contract_details)
-        register(ib.message.Error, handler.error)
-        register(ib.message.ExecutionDetails, handler.exec_details)
-        register(ib.message.ManagedAccounts, handler.managed_accounts)
-        register(ib.message.NextId, handler.next_order_id)
-        register(ib.message.NewsBulletin, handler.news_bulletin)
-        register(ib.message.OpenOrder, handler.open_order)
-        register(ib.message.OrderStatus, handler.order_status)
-        register(ib.message.Portfolio, handler.portfolio_updated)
-        register(ib.message.ReaderStart, handler.connected)
-        register(ib.message.ReaderStop, handler.disconnected)
-        register(ib.message.Ticker, handler.ticker_updated)
-        register(ib.message.HistoricalData, handler.historical_data)
+        register(ib.client.message.Account, handler.account_updated)
+        register(ib.client.message.ContractDetails, handler.contract_details)
+        register(ib.client.message.Error, handler.error)
+        register(ib.client.message.ExecutionDetails, handler.exec_details)
+        register(ib.client.message.ManagedAccounts, handler.managed_accounts)
+        register(ib.client.message.NextId, handler.next_order_id)
+        register(ib.client.message.NewsBulletin, handler.news_bulletin)
+        register(ib.client.message.OpenOrder, handler.open_order)
+        register(ib.client.message.OrderStatus, handler.order_status)
+        register(ib.client.message.Portfolio, handler.portfolio_updated)
+        register(ib.client.message.ReaderStart, handler.connected)
+        register(ib.client.message.ReaderStop, handler.disconnected)
+        register(ib.client.message.Ticker, handler.ticker_updated)
+        register(ib.client.message.HistoricalData, handler.historical_data)
         
     def demo_b_request(self):
         """ make requests for account data, ticker data, etc.

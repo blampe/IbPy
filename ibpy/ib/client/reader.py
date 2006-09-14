@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" ib.socket -> Interactive Brokers socket connection and threaded reader
+""" ib.client.reader -> Interactive Brokers socket connection and reader
 
 
 """
@@ -8,8 +8,8 @@ import struct
 import threading
 
 import ib.lib
-import ib.message
 import ib.types
+import ib.client.message
 
 
 SERVER_VERSION = 1
@@ -21,20 +21,24 @@ GROUPS, PROFILES, ALIASES = range(1, 4)
 READER_START = -1
 READER_STOP = -2
 
-(TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
- PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
- EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
- MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
- SCANNER_PARAMETERS, SCANNER_DATA) = range(1, 21)
+(
+TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
+PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
+EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
+MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
+SCANNER_PARAMETERS, SCANNER_DATA
+) = range(1, 21)
  
-(REQ_MKT_DATA, CANCEL_MKT_DATA, PLACE_ORDER, CANCEL_ORDER,
- REQ_OPEN_ORDERS, REQ_ACCOUNT_DATA, REQ_EXECUTIONS, REQ_IDS,
- REQ_CONTRACT_DATA, REQ_MKT_DEPTH, CANCEL_MKT_DEPTH,
- REQ_NEWS_BULLETINS, CANCEL_NEWS_BULLETINS, SET_SERVER_LOGLEVEL,
- REQ_AUTO_OPEN_ORDERS, REQ_ALL_OPEN_ORDERS, REQ_MANAGED_ACCTS, REQ_FA,
- REPLACE_FA, REQ_HISTORICAL_DATA, EXERCISE_OPTIONS,
- REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
- REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA, ) = range(1, 26)
+(
+REQ_MKT_DATA, CANCEL_MKT_DATA, PLACE_ORDER, CANCEL_ORDER,
+REQ_OPEN_ORDERS, REQ_ACCOUNT_DATA, REQ_EXECUTIONS, REQ_IDS,
+REQ_CONTRACT_DATA, REQ_MKT_DEPTH, CANCEL_MKT_DEPTH,
+REQ_NEWS_BULLETINS, CANCEL_NEWS_BULLETINS, SET_SERVER_LOGLEVEL,
+REQ_AUTO_OPEN_ORDERS, REQ_ALL_OPEN_ORDERS, REQ_MANAGED_ACCTS, REQ_FA,
+REPLACE_FA, REQ_HISTORICAL_DATA, EXERCISE_OPTIONS,
+REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
+REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA,
+) = range(1, 26)
 
 EOF = struct.pack('!i', 0)[3]
 
@@ -62,7 +66,7 @@ class SocketReaderBase(object):
         """ run() -> read socket data encoded by TWS 
 
         """
-        logger.debug('Begin run %s', self)
+        logger.debug('Begin %s', self)
         ri, rf, rs = self.read_integer, self.read_float, self.read_string
         readers = self.readers
         readers[READER_START].dispatch()
@@ -73,9 +77,12 @@ class SocketReaderBase(object):
                 msg_id = ri()
                 if msg_id == -1:
                     continue
-
                 reader = readers[msg_id]
-                logger.info('Message name=%s', reader)
+                if str(reader) == 'Error':
+                    log = logger.warning
+                else:
+                    log = logger.info
+                log(reader)
                 reader.read(ri, rf, rs)
             except (Exception, ), ex:
                 self.active = 0
@@ -83,15 +90,17 @@ class SocketReaderBase(object):
                 readers[READER_STOP].dispatch(exception='%s' % (ex, ))
                 logger.debug('Reader stop message dispatched')
 
+
     def read_integer(self):
         """ read_integer() -> read an integer from the socket
 
         """
-        ivalue = self.read_string()
+        value = self.read_string()
         try:
-            return int(ivalue)
+            return int(value)
         except (ValueError, ):
             return 0
+
 
     def read_float(self):
         """ read_float() -> read and unpack a float from the socket
@@ -103,7 +112,8 @@ class SocketReaderBase(object):
         except (ValueError, ):
             return 0.0
 
-    def read_string_old(self):
+
+    def read_string__(self):
         """ read_string() -> read and unpack a string from the socket
 
         """
@@ -154,6 +164,7 @@ class SocketReader(threading.Thread, SocketReaderBase):
         SocketReaderBase.__init__(self, readers, socket)
         self.setDaemon(True)
 
+
     def run(self):
         SocketReaderBase.run(self)
 
@@ -161,38 +172,38 @@ class SocketReader(threading.Thread, SocketReaderBase):
 class SocketConnection(object):
     """ SocketConnection(reader, socket) -> useful wrapper of a socket for IB
 
-        This type defines methods for requesting ticker data, account data, etc.
+    This type defines methods for requesting ticker data, account data, etc.
 
-        When called to connect, this type constructs a python socket, connects 
-        it to TWS, and if successful, creates and starts a reader object.  The
-        reader object is then responsible for slurping data from the connection 
-        and doing something with it.
+    When called to connect, this type constructs a python socket, connects 
+    it to TWS, and if successful, creates and starts a reader object.  The
+    reader object is then responsible for slurping data from the connection 
+    and doing something with it.
     """
     reader_types = {
-        ACCT_VALUE : ib.message.AccountValue,
-        ACCT_UPDATE_TIME : ib.message.AccountTime,
-        CONTRACT_DATA : ib.message.ContractDetails,
-        ERR_MSG : ib.message.Error,
-        EXECUTION_DATA : ib.message.ExecutionDetails,
-        RECEIVE_FA : ib.message.ReceiveFa,
-        MANAGED_ACCTS : ib.message.ManagedAccounts,
-        MARKET_DEPTH : ib.message.MarketDepth,
-        MARKET_DEPTH_L2 : ib.message.MarketDepthLevel2,
-        NEWS_BULLETINS : ib.message.NewsBulletin,
-        NEXT_VALID_ID : ib.message.NextId,
-        OPEN_ORDER : ib.message.OpenOrder,
-        ORDER_STATUS : ib.message.OrderStatus,
-        PORTFOLIO_VALUE : ib.message.Portfolio,
-        READER_START : ib.message.ReaderStart,
-        READER_STOP : ib.message.ReaderStop,
-        TICK_PRICE : ib.message.TickerPrice,
-        TICK_SIZE : ib.message.TickerSize,
-        HISTORICAL_DATA : ib.message.HistoricalData,
-        BOND_CONTRACT_DATA : ib.message.BondContractData,
-        SCANNER_PARAMETERS : ib.message.ScannerParameters,
-        SCANNER_DATA : ib.message.ScannerData,
-        
+        ACCT_VALUE : ib.client.message.AccountValue,
+        ACCT_UPDATE_TIME : ib.client.message.AccountTime,
+        CONTRACT_DATA : ib.client.message.ContractDetails,
+        ERR_MSG : ib.client.message.Error,
+        EXECUTION_DATA : ib.client.message.ExecutionDetails,
+        RECEIVE_FA : ib.client.message.ReceiveFa,
+        MANAGED_ACCTS : ib.client.message.ManagedAccounts,
+        MARKET_DEPTH : ib.client.message.MarketDepth,
+        MARKET_DEPTH_L2 : ib.client.message.MarketDepthLevel2,
+        NEWS_BULLETINS : ib.client.message.NewsBulletin,
+        NEXT_VALID_ID : ib.client.message.NextId,
+        OPEN_ORDER : ib.client.message.OpenOrder,
+        ORDER_STATUS : ib.client.message.OrderStatus,
+        PORTFOLIO_VALUE : ib.client.message.Portfolio,
+        READER_START : ib.client.message.ReaderStart,
+        READER_STOP : ib.client.message.ReaderStop,
+        TICK_PRICE : ib.client.message.TickerPrice,
+        TICK_SIZE : ib.client.message.TickerSize,
+        HISTORICAL_DATA : ib.client.message.HistoricalData,
+        BOND_CONTRACT_DATA : ib.client.message.BondContractData,
+        SCANNER_PARAMETERS : ib.client.message.ScannerParameters,
+        SCANNER_DATA : ib.client.message.ScannerData,
     }
+
 
     def __init__(self, client_id, reader_type):
         self.client_id = client_id
@@ -202,9 +213,10 @@ class SocketConnection(object):
         readers = self.reader_types.items()
         self.readers = dict([(msgid, reader()) for msgid, reader in readers])
 
-        # this enables the ticker price message handler to call our tick
-        # size handlder
+        # this enables the ticker price message handler to call our
+        # tick size handlder
         self.readers[TICK_PRICE].sizer = self.readers[TICK_SIZE]
+
 
     def connect(self, address, client_version=CLIENT_VERSION):
         """ connect((host, port)) -> construct a socket and connect it to TWS
@@ -237,23 +249,26 @@ class SocketConnection(object):
         logger.debug('Starting reader for object %s', self)
         self.reader.start()
 
+
     def disconnect(self):
         """ disconnect() -> close the socket.
 
-            This causes an exception if the socket is active, but that exception
-            gets caught by the stop reader.
+        This causes an exception if the socket is active, but that
+        exception gets caught by the stop reader.
         """
         logger.debug('Closing socket on object %s', self)
         self.socket.close()
         logger.debug('Socked closed on object %s', self)
 
+
     def request_market_data(self, ticker_id, contract):
         """ request_market_data(ticker_id, contract) -> request market data
 
-            ticker_id will be used by the broker to refer to the market 
-            instrument in subsequent communication.
+        The ticker_id value will be used by the broker to refer to the
+        market instrument in subsequent communication.
         """
-        logger.debug('Requesting market data for ticker %s %s', ticker_id, contract.symbol)
+        logger.debug('Requesting market data for ticker %s %s',
+                     ticker_id, contract.symbol)
         send = self.send
         server_version = self.server_version
         
@@ -278,7 +293,8 @@ class SocketConnection(object):
             send(contract.local_symbol)
 
         self.send_combolegs(contract)
-        logger.debug('Market data request for ticker %s %s sent', ticker_id, contract.symbol)
+        logger.debug('Market data request for ticker %s %s sent',
+                     ticker_id, contract.symbol)
 
 
     def request_contract_details(self, contract):
@@ -372,6 +388,7 @@ class SocketConnection(object):
                 message_version,
                 ticker_id)
         map(self.send, data)
+
 
     def place_order(self, order_id, contract, order):
         """ place_order(order_id, contract, order) -> place an order
@@ -506,6 +523,7 @@ class SocketConnection(object):
         if self.server_version >= 9:
             send(acct_code)
 
+
     def request_executions(self, exec_filter=None):
         """ request_executions() -> request order execution data
 
@@ -528,6 +546,7 @@ class SocketConnection(object):
                        exec_filter.exchange,
                        exec_filter.side))
 
+
     def cancel_order(self, order_id):
         """ cancel_order(order_id) -> cancel order specified by order_id
 
@@ -537,6 +556,7 @@ class SocketConnection(object):
                         message_version,
                         order_id))
 
+
     def request_open_orders(self):
         """ request_open_orders() -> request order data
 
@@ -544,19 +564,22 @@ class SocketConnection(object):
         message_version = 1
         map(self.send, (REQ_OPEN_ORDERS, message_version))
 
+
     def request_ids(self, count):
         """ request_ids() -> request ids
 
         """
         message_version = 1
         map(self.send, (REQ_IDS, message_version, count))
-        
+
+
     def request_news_bulletins(self, all=True):
         """ request_news_bulletins(all=True) -> request news bulletin updates
 
         """
         message_version = 1
         map(self.send, (REQ_NEWS_BULLETINS, message_version, int(all)))
+
 
     def cancel_news_bulletins(self):
         """ cancel_news_bulletins() -> cancel news bulletin updates
@@ -565,12 +588,14 @@ class SocketConnection(object):
         message_version = 1
         map(self.send, (CANCEL_NEWS_BULLETINS, message_version))
 
+
     def set_server_log_level(self, level):
         """ set_server_log_level(level=[1..4]) -> set the server log verbosity
 
         """
         message_version = 1
         map(self.send, (SET_SERVER_LOGLEVEL, message_version, level))
+
 
     def request_auto_open_orders(self, auto_bind=True):
         """ request_auto_open_orders() -> request auto open orders
@@ -579,6 +604,7 @@ class SocketConnection(object):
         message_version = 1
         map(self.send, (REQ_AUTO_OPEN_ORDERS, message_version, int(auto_bind)))
 
+
     def request_all_open_orders(self):
         """ request_all_open_orders() -> request all open orders
 
@@ -586,12 +612,14 @@ class SocketConnection(object):
         message_version = 1
         map(self.send, (REQ_ALL_OPEN_ORDERS, message_version))
 
+
     def request_managed_accounts(self):
         """ request_managed_accounts() -> request managed accounts
 
         """
         message_version = 1
         map(self.send, (REQ_MANAGED_ACCTS, message_version))
+
 
     def request_fa(self, fa_type):
         """ request_fa(fa_type) -> request fa of some type
@@ -603,6 +631,7 @@ class SocketConnection(object):
 
         message_version = 1
         map(self.send, (REQ_FA, message_version, fa_type))
+
 
     def replace_fa(self, fa_type, xml):
         """ replace_fa(fa_type, xml) -> replace fa
@@ -775,6 +804,7 @@ class SocketConnection(object):
             else:
                 send(0)
 
+
     def register(self, message_type, listener):
         """ register(listener) -> add callable listener to message receivers
 
@@ -783,6 +813,7 @@ class SocketConnection(object):
             if isinstance(msg_reader , (message_type, )):
                 if not msg_reader.listeners.count(listener):
                     msg_reader.listeners.append(listener)
+
 
     def deregister(self, message_type, listener):
         """ deregister(listener) -> remove listener from message receivers

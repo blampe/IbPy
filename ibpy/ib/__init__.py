@@ -1,10 +1,7 @@
 #!/usr/bin/env python
-""" Ib -> the IbPy package initialization script
-
+""" ib package marker.
 
 """
-__about__ = {
-    'author' : 'Troy Melhase, troy@gci.net',
-    'tws support' : 'Build 861.5, Aug 16, 2006 5:34:18 PM',
-    'release' : '0.6',
-}
+__author__ = 'Troy Melhase, troy@gci.net'
+__twsbuild__ = 'Build 861.5, Aug 16, 2006 5:34:18 PM'
+__version__ = '0.6'
