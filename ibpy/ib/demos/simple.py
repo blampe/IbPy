@@ -170,21 +170,21 @@ class AutomaticDemoApp:
 
         """
         connection = self.connection
-        connection.set_server_log_level(self.log_level)
-        connection.request_account_updates()
-        connection.request_open_orders()
-        connection.request_all_open_orders()
-        connection.request_auto_open_orders()
-        connection.request_news_bulletins()
-        ## connection.request_managed_accounts()
+        connection.setServerLogLevel(self.log_level)
+        connection.reqAccountUpdates()
+        connection.reqOpenOrders()
+        connection.reqAllOpenOrders()
+        connection.reqAutoOpenOrders()
+        connection.reqNewsBulletins()
+        ## connection.reqManagedAccts()
 
         exec_filter = ib.types.ExecutionFilter(secType='FUT')
-        connection.request_executions(exec_filter)
+        connection.reqExecutions(exec_filter)
 
         for tickerId, symbol in self.tickers:
             contract = ib.types.Contract(symbol=symbol, secType='STK')
-            connection.request_market_data(tickerId, contract)
-            connection.request_market_depth(tickerId, contract)
+            connection.reqMktData(tickerId, contract)
+            connection.reqMktDepth(tickerId, contract)
 
 
     def demo_c_order(self):
@@ -198,7 +198,7 @@ class AutomaticDemoApp:
         contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK')
         order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=200, 
                               lmtPrice=24.00)
-        self.connection.place_order(self.handler.orderId, contract, order)
+        self.connection.placeOrder(self.handler.orderId, contract, order)
 
 
     def demo_d_contract(self):
@@ -210,8 +210,8 @@ class AutomaticDemoApp:
             ib.types.Contract(symbol='ES', secType='FUT', exchange='GLOBEX',
                              expiry='200603')
 
-        self.connection.request_market_data(es_id, contract)
-        self.connection.request_contract_details(contract)
+        self.connection.reqMktData(es_id, contract)
+        self.connection.reqContractDetails(contract)
 
 
     def demo_d_historicaldata(self):
@@ -237,7 +237,7 @@ class AutomaticDemoApp:
         ]
         self.handler.orderId += 1
         order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=1200)
-        self.connection.place_order(self.handler.orderId, self.es_contract, order)
+        self.connection.placeOrder(self.handler.orderId, self.es_contract, order)
 
 
     def demo_f_cancelled_order(self):
@@ -247,9 +247,9 @@ class AutomaticDemoApp:
         self.handler.orderId += 1
         contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK')
         order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=3.00)
-        self.connection.place_order(self.handler.orderId, contract, order)
+        self.connection.placeOrder(self.handler.orderId, contract, order)
         time.sleep(self.snooze)
-        self.connection.cancel_order(self.handler.orderId)
+        self.connection.cancelOrder(self.handler.orderId)
 
 
     def demo_g_cancel_some_requests(self):
@@ -259,10 +259,10 @@ class AutomaticDemoApp:
         connection = self.connection
 
         for tickerId, symbol in self.tickers:
-            connection.cancel_market_data(tickerId)
-            connection.cancel_market_depth(tickerId)
+            connection.cancelMktData(tickerId)
+            connection.cancelMktDepth(tickerId)
 
-        connection.cancel_news_bulletins()
+        connection.cancelNewsBulletins()
 
 
     def disconnect(self):

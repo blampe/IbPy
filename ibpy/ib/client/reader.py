@@ -40,8 +40,16 @@ REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
 REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA,
 ) = range(1, 26)
 
-EOF = struct.pack('!i', 0)[3]
 
+NO_API_FMT = 'Connected TWS version does not support %s API.'
+NO_SCANNER_API = NO_API_FMT % 'scanner'
+NO_CONTRACT_API = NO_API_FMT % 'contract details'
+NO_DEPTH_API = NO_API_FMT % 'market depth'
+NO_OPTION_EX_API = NO_API_FMT % 'options exercise'
+NO_FA_API = NO_API_FMT % 'fa'
+
+
+EOF = struct.pack('!i', 0)[3]
 logger = ib.lib.logger()
 
 
@@ -89,9 +97,9 @@ class SocketReaderBase(object):
 
             except (Exception, ), ex:
                 self.active = 0
-                logger.error('Exception %s during message dispatch', ex)
+                msg = 'Reading stopped on Exception %s during message dispatch'
+                logger.error(msg, ex)
                 readers[READER_STOP].dispatch(exception='%s' % (ex, ))
-                logger.debug('Reader stop message dispatched')
 
 
     def readInteger(self):
@@ -182,7 +190,7 @@ class SocketConnection(object):
     reader object is then responsible for slurping data from the connection 
     and doing something with it.
     """
-    reader_types = {
+    readerTypes = {
         ACCT_VALUE : ib.client.message.AccountValue,
         ACCT_UPDATE_TIME : ib.client.message.AccountTime,
         CONTRACT_DATA : ib.client.message.ContractDetails,
@@ -209,12 +217,12 @@ class SocketConnection(object):
     }
 
 
-    def __init__(self, clientId, reader_type):
+    def __init__(self, clientId, reader):
         self.clientId = clientId
-        self.server_version = 0
-        self.reader_type = reader_type
+        self.serverVersion = 0
+        self.reader = reader
 
-        readers = self.reader_types.items()
+        readers = self.readerTypes.items()
         self.readers = dict([(msgid, reader()) for msgid, reader in readers])
 
         # this enables the ticker price message handler to call our
@@ -226,31 +234,32 @@ class SocketConnection(object):
         """ connect((host, port)) -> construct a socket and connect it to TWS
 
         """
-        logger.debug('Creating socket object for %s', self)
+        debug = logger.debug
+        debug('Creating socket object for %s', self)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        logger.debug('Creating reader of type %s for %s', self.reader_type, self)
-        self.reader = self.reader_type(self.readers, self.socket)
+        debug('Creating reader of type %s for %s', self.reader, self)
+        self.reader = self.reader(self.readers, self.socket)
 
-        logger.info('Connecting object %s to address %s', self, address)
+        debug('Connecting object %s to address %s', self, address)
         self.socket.connect(address)
 
-        logger.info('Sending client version %s', client_version)
+        debug('Sending client version %s', client_version)
         self.send(client_version)
 
-        logger.debug('Reading server version')
-        self.server_version = self.reader.readInteger()
-        logger.info('Read server version %s', self.server_version)
+        debug('Reading server version')
+        self.serverVersion = self.reader.readInteger()
+        logger.info('Read server version %s', self.serverVersion)
 
-        if self.server_version>=20:
+        if self.serverVersion>=20:
             tws_time = self.reader.readString()
-            logger.info('Received server TwsTime=%s', tws_time)
+            debug('Received server TwsTime=%s', tws_time)
 
-        if self.server_version >= 3:
-            logger.info('Sending client id %s for object %s', self.clientId, self)
+        if self.serverVersion >= 3:
+            debug('Sending client id %s for object %s', self.clientId, self)
             self.send(self.clientId)
 
-        logger.debug('Starting reader for object %s', self)
+        debug('Starting reader for object %s', self)
         self.reader.start()
 
 
@@ -265,457 +274,39 @@ class SocketConnection(object):
         logger.debug('Socked closed on object %s', self)
 
 
-    def request_market_data(self, tickerId, contract):
-        """ request_market_data(tickerId, contract) -> request market data
-
-        The tickerId value will be used by the broker to refer to the
-        market instrument in subsequent communication.
-        """
-        logger.debug('Requesting market data for ticker %s %s',
-                     tickerId, contract.symbol)
-        send = self.send
-        server_version = self.server_version
-        
-        message_version = 5
-        data = (REQ_MKT_DATA, 
-                message_version, 
-                tickerId, 
-                contract.symbol,
-                contract.secType, 
-                contract.expiry, 
-                contract.strike,
-                contract.right)
-        map(send, data)
-
-        if server_version >= 15:
-            send(contract.multiplier)
-        send(contract.exchange)
-        if server_version >= 14:
-            send(contract.primaryExch)
-        send(contract.currency)
-        if server_version >= 2:
-            send(contract.localSymbol)
-
-        self.send_combolegs(contract)
-        logger.debug('Market data request for ticker %s %s sent',
-                     tickerId, contract.symbol)
-
-
-    def request_contract_details(self, contract):
-        """ request_contract_details(contract) -> request contract details
+    def cancelScannerSubscription(self, tickerId):
+        """ cancelScannerSubscription(tickerId) -> cancel scanner subscription
 
         """
-        server_version = self.server_version
-        need_version = 4
-        if server_version < need_version:
-            msg = ('Did not send request for contract details '
-                   'server version mismatch %s %s')
-            logger.warning(msg, need_version, server_version)
+        if self.serverVersion < 24:
+            logger.error(NO_SCANNER_API)
             return
-
-        send = self.send
-        message_version = 2
-        data = (REQ_CONTRACT_DATA, 
-                message_version, 
-                contract.symbol,
-                contract.secType, 
-                contract.expiry, 
-                contract.strike,
-                contract.right)
-        map(send, data)
-
-        if server_version >= 15:
-            send(contract.multiplier)
-
-        data = (contract.exchange, 
-                contract.currency, 
-                contract.localSymbol, )
-        map(send, data)        
-
-
-    def request_market_depth(self, tickerId, contract, numRows=1):
-        """ request_market_depth(tickerId, contract) -> request market depth
-
-        """
-        server_version = self.server_version
-        need_version = 6
-        send = self.send
-        if server_version < need_version:
-            msg = ('Did not send request for market depth '
-                   'server version mismatch %s %s')
-            logger.warning(msg, need_version, server_version)
-            return
-        
-        message_version = 3
-        data = (REQ_MKT_DEPTH,
-                message_version,
-                tickerId,
-                contract.symbol,
-                contract.secType,
-                contract.expiry,
-                contract.strike,
-                contract.right)
-        map(send, data)
-
-        if server_version >= 15:
-            send(contract.multiplier)
-
-        data = (contract.exchange,
-                contract.currency,
-                contract.localSymbol)
-        map(send, data)
-        if server_version >= 19:
-            send(numRows)
-
-
-    def cancel_market_data(self, tickerId):
-        """ cancel_market_data(tickerId) -> cancel market data
-
-        """
-        message_version = 1
-        data = (CANCEL_MKT_DATA,
-                message_version,
-                tickerId)
-        map(self.send, data)
-
-
-    def cancel_market_depth(self, tickerId):
-        """ cancel_market_depth(tickerId) -> cancel market depth
-
-        """
-        if self.server_version < 6:
-            ## TODO:  log or raise
-            return
-        
-        message_version = 1
-        data = (CANCEL_MKT_DEPTH,
-                message_version,
-                tickerId)
-        map(self.send, data)
-
-
-    def place_order(self, orderId, contract, order):
-        """ place_order(orderId, contract, order) -> place an order
-
-        """
-        server_version = self.server_version
-        send = self.send
-        message_version = 20
-
-        map(send, (PLACE_ORDER,
-                   message_version,
-                   orderId))
-
-        ## contract fields
-        map(send, (contract.symbol,
-                   contract.secType,
-                   contract.expiry,
-                   contract.strike,
-                   contract.right))
-        if server_version >= 15:
-            send(contract.multiplier)
-        send(contract.exchange)
-        if server_version >= 14:
-            send(contract.primaryExch)
-        send(contract.currency)
-        if server_version >= 2:
-            send(contract.localSymbol)
-
-        ## main order fields
-        map(send, (order.action,
-                   order.totalQuantity,
-                   order.orderType,
-                   order.lmtPrice,
-                   order.auxPrice))
-
-        ## extended order fields
-        map(send, (order.tif,
-                   order.ocaGroup,
-                   order.account,
-                   order.openClose,
-                   order.origin,
-                   order.orderRef,
-                   order.transmit))
-
-        if server_version >= 4:
-            send(order.parentId)
-
-        ## more extended order fields
-        if server_version >= 5:
-            map(send, (order.blockOrder,
-                       order.sweepToFill,
-                       order.displaySize,
-                       order.triggerMethod,
-                       order.ignoreRth))
-
-        if server_version >= 7:
-            send(order.hidden)
-
-        self.send_combolegs(contract)
-
-        if server_version >= 9:
-            send(order.sharesAllocation)
-            
-        if server_version >= 10:
-            send(order.discretionaryAmt)
-
-        if server_version >= 11:
-            send(order.goodAfterTime)
-
-        if server_version >= 12:
-            send(order.goodTillDate)
-
-        if server_version >= 13:
-            map(send, (order.faGroup,
-                       order.faMethod,
-                       order.faPercentage,
-                       order.faProfile))
-
-        # institutional short sale slot fields.
-        if server_version >= 18:  
-            map(send, (order.shortSaleSlot,         # 0 only for retail, 1 or 2 only for institution.
-                       order.designatedLocation))   # only populate when order.shortSaleSlot = 2
-
-        if server_version >= 19:
-            map(send, (
-                       #order.faGroup,
-                       order.ocaType,
-                       order.rthOnly,
-                       order.rule80A,
-                       order.settlingFirm,
-                       order.allOrNone))
-            map(send, (order.minQty, order.percentOffset,))
-            map(send, (order.eTradeOnly, order.firmQuoteOnly,))
-            map(send, (order.nbboPriceCap, order.auctionStrategy, 
-                          order.startingPrice, order.stockRefPrice,
-                          order.delta))
-            if server_version == 26:
-                if order.orderType == 'VOL':
-                    lower = order.stockRangeLower
-                    upper = order.stockRangeUpper
-                else:
-                    upper = lower = ''
-                map(send (upper, lower))
-        
-        if server_version >= 22:
-            send(order.overridePercentageConstraints)
-
-        if server_version >= 26:
-            map(send, (order.volatility, order.volatilityType))
-            if server_version < 28:
-                send(order.deltaNeutralOrderType == 'MKT' and 1)
-            else:
-                send(order.deltaNeutralOrderType)
-                send(order.deltaNeutralAuxPrice)
-            send(order.continuousUpdate)
-            if server_version == 26:
-                map(send, (upper, lower))
-            send(order.referencePriceType)
-
-
-    def request_account_updates(self, subscribe=1, acctCode=''):
-        """ request_account_updates() -> request account data updates
-
-        """
-        send = self.send
-        message_version = 2
-
-        map(send, (REQ_ACCOUNT_DATA,
-                   message_version,
-                   subscribe))
-
-        if self.server_version >= 9:
-            send(acctCode)
-
-
-    def request_executions(self, exec_filter=None):
-        """ request_executions() -> request order execution data
-
-        """
-        send = self.send
-        message_version = 2
-
-        map(send, (REQ_EXECUTIONS, 
-                   message_version))
-
-        if self.server_version >= 9:
-            if exec_filter is None:
-                exec_filter = ib.types.ExecutionFilter()
-
-            map(send, (exec_filter.clientId,
-                       exec_filter.acctCode,
-                       exec_filter.time,
-                       exec_filter.symbol,
-                       exec_filter.secType,
-                       exec_filter.exchange,
-                       exec_filter.side))
-
-
-    def cancel_order(self, orderId):
-        """ cancel_order(orderId) -> cancel order specified by orderId
-
-        """
-        message_version = 1
-        map(self.send, (CANCEL_ORDER,
-                        message_version,
-                        orderId))
-
-
-    def request_open_orders(self):
-        """ request_open_orders() -> request order data
-
-        """
-        message_version = 1
-        map(self.send, (REQ_OPEN_ORDERS, message_version))
-
-
-    def request_ids(self, count):
-        """ request_ids() -> request ids
-
-        """
-        message_version = 1
-        map(self.send, (REQ_IDS, message_version, count))
-
-
-    def request_news_bulletins(self, all=True):
-        """ request_news_bulletins(all=True) -> request news bulletin updates
-
-        """
-        message_version = 1
-        map(self.send, (REQ_NEWS_BULLETINS, message_version, int(all)))
-
-
-    def cancel_news_bulletins(self):
-        """ cancel_news_bulletins() -> cancel news bulletin updates
-
-        """
-        message_version = 1
-        map(self.send, (CANCEL_NEWS_BULLETINS, message_version))
-
-
-    def set_server_log_level(self, level):
-        """ set_server_log_level(level=[1..4]) -> set the server log verbosity
-
-        """
-        message_version = 1
-        map(self.send, (SET_SERVER_LOGLEVEL, message_version, level))
-
-
-    def request_auto_open_orders(self, auto_bind=True):
-        """ request_auto_open_orders() -> request auto open orders
-
-        """
-        message_version = 1
-        map(self.send, (REQ_AUTO_OPEN_ORDERS, message_version, int(auto_bind)))
-
-
-    def request_all_open_orders(self):
-        """ request_all_open_orders() -> request all open orders
-
-        """
-        message_version = 1
-        map(self.send, (REQ_ALL_OPEN_ORDERS, message_version))
-
-
-    def request_managed_accounts(self):
-        """ request_managed_accounts() -> request managed accounts
-
-        """
-        message_version = 1
-        map(self.send, (REQ_MANAGED_ACCTS, message_version))
-
-
-    def request_fa(self, fa_type):
-        """ request_fa(fa_type) -> request fa of some type
-
-        """
-        if self.server_version < 13:
-            ## TODO:  log or raise
-            return
-
-        message_version = 1
-        map(self.send, (REQ_FA, message_version, fa_type))
-
-
-    def replace_fa(self, fa_type, xml):
-        """ replace_fa(fa_type, xml) -> replace fa
-
-        """
-        if self.server_version < 13:
-            ## TODO:  log or raise
-            return
-
-        message_version = 1
-        map(self.send, (REPLACE_FA, message_version, fa_type, xml))
-
-
-    def reqHistoricalData(self, tickerId, contract, endDateTime,
-                         durationStr, barSizeSetting, whatToShow,
-                         useRTH, formatDate):
-        """
-
-        """
-        if self.server_version < 16:
-            logger.warning('Server version mismatch.')
-            return
-
-        message_version = 3
-        map(self.send, (REQ_HISTORICAL_DATA,
-                        message_version,
-                        tickerId,
-                        contract.symbol,
-                        contract.secType,
-                        contract.expiry,
-                        contract.strike,
-                        contract.right,
-                        contract.multiplier,
-                        contract.exchange,
-                        contract.primaryExch,
-                        contract.currency,
-                        contract.localSymbol))
-        if self.server_version >= 20:
-            map(self.send, (endDateTime,
-                            barSizeSetting))
-        map(self.send, (durationStr,
-                        useRTH,
-                        whatToShow))
-        if self.server_version > 16:
-            self.send(formatDate)
-        self.send_combolegs(contract)
-
-
-    def cancelHistoricalData(self, tickerId):
-        """ cancelHistoricalData(tickerId) ->
-
-        """
-        if self.server_version < 24:
-            logger.warning('Server version mismatch.')
-            return
-        message_version = 1
-        map(self.send, (CANCEL_HISTORICAL_DATA, message_version, tickerId))
+        version = 1
+        map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, version, tickerId))
 
 
     def reqScannerParameters(self):
-        """ reqScannerParameters() ->
+        """ reqScannerParameters() -> request scanner parameters
 
         """
-        if self.server_version < 24:
-            logger.warning('Server version mismatch.')
+        if self.serverVersion < 24:
+            logger.error(NO_SCANNER_API)            
             return
-        message_version = 1
-        map(self.send, (REQ_SCANNER_PARAMETERS, message_version))
+        version = 1
+        map(self.send, (REQ_SCANNER_PARAMETERS, version))
 
 
     def reqScannerSubscription(self, tickerId, subscription):
-        """ reqScannerSubscription(subscription) ->
+        """ reqScannerSubscription(subscription) -> request scanner subscription
 
         """
-        if self.server_version < 24:
-            logger.warning('Server version mismatch.')            
+        if self.serverVersion < 24:
+            logger.error(NO_SCANNER_API)
             return
-        message_version = 3
+
+        version = 3
         map(self.send, (REQ_SCANNER_SUBSCRIPTION,
-                        message_version,
+                        version,
                         tickerId,
                         subscription.numberOfRows,
                         subscription.instrument,
@@ -735,35 +326,187 @@ class SocketConnection(object):
                         subscription.couponRateAbove,
                         subscription.couponRateBelow,
                         subscription.excludeConvertible))
-        if self.server_version >= 25:
+        if self.serverVersion >= 25:
             map(self.send, (subscription.averageOptionVolumeAbove,
                             subscription.scannerSetttingPairs))
-        if self.server_version >= 27:
+        if self.serverVersion >= 27:
             map(self.send, (subscription.stockTypeFilter))
 
 
-    def cancelScannerSubscription(self, tickerId):
-        """ cancelScannerSubscription(tickerId) ->
+    def reqMktData(self, tickerId, contract):
+        """ reqMktData(tickerId, contract) -> request market data
+
+        The tickerId value will be used by the broker to refer to the
+        market instrument in subsequent communication.
+        """
+        logger.debug('Requesting market data for ticker %s %s',
+                     tickerId, contract.symbol)
+        send = self.send
+        serverVersion = self.serverVersion
+        
+        version = 5
+        data = (REQ_MKT_DATA, 
+                version, 
+                tickerId, 
+                contract.symbol,
+                contract.secType, 
+                contract.expiry, 
+                contract.strike,
+                contract.right)
+        map(send, data)
+
+        if serverVersion >= 15:
+            send(contract.multiplier)
+        send(contract.exchange)
+        if serverVersion >= 14:
+            send(contract.primaryExch)
+        send(contract.currency)
+        if serverVersion >= 2:
+            send(contract.localSymbol)
+
+        self.sendComboLegs(contract)
+        msg = 'Market data request for ticker %s %s sent'
+        logger.debug(msg, tickerId, contract.symbol)
+
+
+    def cancelHistoricalData(self, tickerId):
+        """ cancelHistoricalData(tickerId) ->
 
         """
-        if self.server_version < 24:
-            ## TODO:  log or raise
+        if self.serverVersion < 24:
+            logger.error(NO_SCANNER_API)
             return
-        message_version = 1
-        map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, message_version, tickerId))
+        version = 1
+        map(self.send, (CANCEL_HISTORICAL_DATA, version, tickerId))
+
+
+    def reqHistoricalData(self, tickerId, contract, endDateTime,
+                         durationStr, barSizeSetting, whatToShow,
+                         useRTH, formatDate):
+        """ reqHistoricalData(...) -> request historical data
+
+        """
+        if self.serverVersion < 16:
+            logger.warning('Server version mismatch.')
+            return
+
+        serverVersion = self.serverVersion
+        send = self.send
+        version = 3
+        map(send, (REQ_HISTORICAL_DATA,
+                   version,
+                   tickerId,
+                   contract.symbol,
+                   contract.secType,
+                   contract.expiry,
+                   contract.strike,
+                   contract.right,
+                   contract.multiplier,
+                   contract.exchange,
+                   contract.primaryExch,
+                   contract.currency,
+                   contract.localSymbol))
+        if serverVersion >= 20:
+            map(send, (endDateTime, barSizeSetting))
+        map(send, (durationStr, useRTH, whatToShow))
+        if serverVersion > 16:
+            send(formatDate)
+        self.sendComboLegs(contract)
+
+
+    def reqContractDetails(self, contract):
+        """ reqContractDetails(contract) -> request contract details
+
+        """
+        serverVersion = self.serverVersion
+        if serverVersion < 4:
+            logger.warning(NO_CONTRACT_API)
+            return
+
+        send = self.send
+        version = 2
+        data = (REQ_CONTRACT_DATA, 
+                version, 
+                contract.symbol,
+                contract.secType, 
+                contract.expiry, 
+                contract.strike,
+                contract.right)
+        map(send, data)
+
+        if serverVersion >= 15:
+            send(contract.multiplier)
+
+        data = (contract.exchange, 
+                contract.currency, 
+                contract.localSymbol, )
+        map(send, data)        
+
+
+    def reqMktDepth(self, tickerId, contract, numRows=1):
+        """ reqMktDepth(tickerId, contract) -> request market depth
+
+        """
+        serverVersion = self.serverVersion
+        if serverVersion < 6:
+            logger.warning(NO_DEPTH_API)
+            return
+
+        send = self.send        
+        version = 3
+        data = (REQ_MKT_DEPTH,
+                version,
+                tickerId,
+                contract.symbol,
+                contract.secType,
+                contract.expiry,
+                contract.strike,
+                contract.right)
+        map(send, data)
+
+        if serverVersion >= 15:
+            send(contract.multiplier)
+
+        data = (contract.exchange,
+                contract.currency,
+                contract.localSymbol)
+        map(send, data)
+
+        if serverVersion >= 19:
+            send(numRows)
+
+
+    def cancelMktData(self, tickerId):
+        """ cancelMktData(tickerId) -> cancel market data
+
+        """
+        version = 1
+        map(self.send, (CANCEL_MKT_DATA, version, tickerId))
+
+
+    def cancelMktDepth(self, tickerId):
+        """ cancelMktDepth(tickerId) -> cancel market depth
+
+        """
+        if self.serverVersion < 6:
+            logger.warning(NO_DEPTH_API)                      
+            return
+        
+        version = 1
+        map(self.send, (CANCEL_MKT_DEPTH, version, tickerId))
 
 
     def exerciseOptions(self, tickerId, contract, exerciseAction,
                         exerciseQuantity, account, override):
-        """ exerciseOptions(...) ->
+        """ exerciseOptions(...) -> exercise options
 
         """
-        if self.server_version < 21:
-            logger.warning('Exercise Option API not supported')
+        if self.serverVersion < 21:
+            logger.error(NO_OPTION_EX_API)
             return
-        message_version = 1
+        version = 1
         map(self.send, (EXERCISE_OPTIONS,
-                        message_version,
+                        version,
                         tickerId,
                         contract.symbol,
                         contract.secType,
@@ -780,6 +523,254 @@ class SocketConnection(object):
                         override))
 
 
+    def placeOrder(self, orderId, contract, order):
+        """ placeOrder(orderId, contract, order) -> place an order
+
+        """
+        serverVersion = self.serverVersion
+        send = self.send
+        version = 20
+
+        map(send, (PLACE_ORDER,
+                   version,
+                   orderId))
+
+        ## contract fields
+        map(send, (contract.symbol,
+                   contract.secType,
+                   contract.expiry,
+                   contract.strike,
+                   contract.right))
+        if serverVersion >= 15:
+            send(contract.multiplier)
+        send(contract.exchange)
+        if serverVersion >= 14:
+            send(contract.primaryExch)
+        send(contract.currency)
+        if serverVersion >= 2:
+            send(contract.localSymbol)
+
+        ## main order fields
+        map(send, (order.action,
+                   order.totalQuantity,
+                   order.orderType,
+                   order.lmtPrice,
+                   order.auxPrice))
+
+        ## extended order fields
+        map(send, (order.tif,
+                   order.ocaGroup,
+                   order.account,
+                   order.openClose,
+                   order.origin,
+                   order.orderRef,
+                   order.transmit))
+
+        if serverVersion >= 4:
+            send(order.parentId)
+
+        ## more extended order fields
+        if serverVersion >= 5:
+            map(send, (order.blockOrder,
+                       order.sweepToFill,
+                       order.displaySize,
+                       order.triggerMethod,
+                       order.ignoreRth))
+
+        if serverVersion >= 7:
+            send(order.hidden)
+
+        self.sendComboLegs(contract)
+
+        if serverVersion >= 9:
+            send(order.sharesAllocation)
+            
+        if serverVersion >= 10:
+            send(order.discretionaryAmt)
+
+        if serverVersion >= 11:
+            send(order.goodAfterTime)
+
+        if serverVersion >= 12:
+            send(order.goodTillDate)
+
+        if serverVersion >= 13:
+            map(send, (order.faGroup,
+                       order.faMethod,
+                       order.faPercentage,
+                       order.faProfile))
+
+        # institutional short sale slot fields.
+        if serverVersion >= 18:  
+            map(send, (order.shortSaleSlot,         # 0 only for retail, 1 or 2 only for institution.
+                       order.designatedLocation))   # only populate when order.shortSaleSlot = 2
+
+        if serverVersion >= 19:
+            map(send, (order.ocaType,
+                       order.rthOnly,
+                       order.rule80A,
+                       order.settlingFirm,
+                       order.allOrNone))
+            map(send, (order.minQty, order.percentOffset,))
+            map(send, (order.eTradeOnly, order.firmQuoteOnly,))
+            map(send, (order.nbboPriceCap, order.auctionStrategy, 
+                          order.startingPrice, order.stockRefPrice,
+                          order.delta))
+            if serverVersion == 26:
+                if order.orderType == 'VOL':
+                    lower = order.stockRangeLower
+                    upper = order.stockRangeUpper
+                else:
+                    upper = lower = ''
+                map(send (upper, lower))
+        
+        if serverVersion >= 22:
+            send(order.overridePercentageConstraints)
+
+        if serverVersion >= 26:
+            map(send, (order.volatility, order.volatilityType))
+            if serverVersion < 28:
+                send(order.deltaNeutralOrderType == 'MKT' and 1)
+            else:
+                send(order.deltaNeutralOrderType)
+                send(order.deltaNeutralAuxPrice)
+            send(order.continuousUpdate)
+            if serverVersion == 26:
+                map(send, (upper, lower))
+            send(order.referencePriceType)
+
+
+    def reqAccountUpdates(self, subscribe=1, acctCode=''):
+        """ reqAccountUpdates() -> request account data updates
+
+        """
+        send = self.send
+        version = 2
+
+        map(send, (REQ_ACCOUNT_DATA, version, subscribe))
+        if self.serverVersion >= 9:
+            send(acctCode)
+
+
+    def reqExecutions(self, executionFilter=None):
+        """ reqExecutions() -> request order execution data
+
+        """
+        send = self.send
+        version = 2
+
+        map(send, (REQ_EXECUTIONS, 
+                   version))
+
+        if self.serverVersion >= 9:
+            if executionFilter is None:
+                executionFilter = ib.types.ExecutionFilter()
+
+            map(send, (executionFilter.clientId,
+                       executionFilter.acctCode,
+                       executionFilter.time,
+                       executionFilter.symbol,
+                       executionFilter.secType,
+                       executionFilter.exchange,
+                       executionFilter.side))
+
+
+    def cancelOrder(self, orderId):
+        """ cancelOrder(orderId) -> cancel order specified by orderId
+
+        """
+        version = 1
+        map(self.send, (CANCEL_ORDER, version, orderId))
+
+
+    def reqOpenOrders(self):
+        """ reqOpenOrders() -> request order data
+
+        """
+        version = 1
+        map(self.send, (REQ_OPEN_ORDERS, version))
+
+
+    def reqIds(self, numIds):
+        """ reqIds() -> request ids
+
+        """
+        version = 1
+        map(self.send, (REQ_IDS, version, numIds))
+
+
+    def reqNewsBulletins(self, all=True):
+        """ reqNewsBulletins(all=True) -> request news bulletin updates
+
+        """
+        version = 1
+        map(self.send, (REQ_NEWS_BULLETINS, version, int(all)))
+
+
+    def cancelNewsBulletins(self):
+        """ cancelNewsBulletins() -> cancel news bulletin updates
+
+        """
+        version = 1
+        map(self.send, (CANCEL_NEWS_BULLETINS, version))
+
+
+    def setServerLogLevel(self, logLevel):
+        """ setServerLogLevel(logLevel=[1..4]) -> set the server log verbosity
+
+        """
+        version = 1
+        map(self.send, (SET_SERVER_LOGLEVEL, version, logLevel))
+
+
+    def reqAutoOpenOrders(self, autoBind=True):
+        """ reqAutoOpenOrders() -> request auto open orders
+
+        """
+        version = 1
+        map(self.send, (REQ_AUTO_OPEN_ORDERS, version, int(autoBind)))
+
+
+    def reqAllOpenOrders(self):
+        """ reqAllOpenOrders() -> request all open orders
+
+        """
+        version = 1
+        map(self.send, (REQ_ALL_OPEN_ORDERS, version))
+
+
+    def reqManagedAccts(self):
+        """ reqManagedAccts() -> request managed accounts
+
+        """
+        version = 1
+        map(self.send, (REQ_MANAGED_ACCTS, version))
+
+
+    def requestFA(self, faDataType):
+        """ requestFA(faDataType) -> request fa of some type
+
+        """
+        if self.serverVersion < 13:
+            logger.error(NO_FA_API)
+            return
+
+        version = 1
+        map(self.send, (REQ_FA, version, faDataType))
+
+
+    def replaceFA(self, faDataType, xml):
+        """ replaceFA(faDataType, xml) -> replace fa
+
+        """
+        if self.serverVersion < 13:
+            logger.error(NO_FA_API)
+            return
+
+        version = 1
+        map(self.send, (REPLACE_FA, version, faDataType, xml))
+
+
     def send(self, data, packfunc=struct.pack):
         """ send(data) -> send a value to TWS
 
@@ -790,13 +781,13 @@ class SocketConnection(object):
         sendfunc(EOF)
 
 
-    def send_combolegs(self, contract):
-        """ send_combolegs(contract) -> helper to send a contracts combo legs
+    def sendComboLegs(self, contract):
+        """ sendComboLegs(contract) -> helper to send a contracts combo legs
 
         """
         send = self.send
 
-        if self.server_version >= 8 and contract.secType.lower() == BAG_SEC_TYPE:
+        if self.serverVersion >= 8 and contract.secType.lower() == BAG_SEC_TYPE:
             if contract.comboLegs:
                 send(len(contract.comboLegs))
                 for leg in contract.comboLegs:
@@ -809,31 +800,32 @@ class SocketConnection(object):
                 send(0)
 
 
-    def register(self, message_type, listener):
+    def register(self, messageType, listener):
         """ register(listener) -> add callable listener to message receivers
 
         """
-        for msg_reader in self.readers.values():
-            if isinstance(msg_reader , (message_type, )):
-                if not msg_reader.listeners.count(listener):
-                    msg_reader.listeners.append(listener)
+        for reader in self.readers.values():
+            if isinstance(reader , (messageType, )):
+                if not reader.listeners.count(listener):
+                    reader.listeners.append(listener)
 
 
-    def deregister(self, message_type, listener):
+    def deregister(self, messageType, listener):
         """ deregister(listener) -> remove listener from message receivers
 
         """
-        for msg_reader in self.readers.values():
-            if isinstance(msg_reader, (message_type, )):
+        for reader in self.readers.values():
+            if isinstance(reader, (messageType, )):
                 try:
-                    msg_reader.listeners.remove(listener)
+                    reader.listeners.remove(listener)
                 except (ValueError, ):
                     pass
 
 
-def build(clientId=0, reader_type=None):
+def build(clientId=0, reader=None):
     """ build(clientId) -> creates a new ib socket connection
 
     """
-    reader_type = reader_type or SocketReader
-    return SocketConnection(clientId=clientId, reader_type=reader_type)
+    if reader is None:
+        reader = SocketReader
+    return SocketConnection(clientId=clientId, reader=reader)

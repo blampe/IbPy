@@ -13,8 +13,8 @@ import ib.types
 logger = ib.lib.logger()
 
 
-class SocketReader(object):
-    """ SocketReader() -> dispatching socket reader
+class MessageDecoder(object):
+    """ MessageDecoder() -> base class for socket decoders
 
     Subtypes encapsulate the logic of reading values from a socket
     object encoded by the TWS application.  After instances read data,
@@ -67,7 +67,7 @@ class Message(object):
         return str.join(' ', args)
 
 
-class Account(SocketReader):
+class Account(MessageDecoder):
     """ Account() -> parent type for account-related readers
 
     Using a parent class enables the client to specify a single
@@ -127,7 +127,7 @@ class AccountTime(Account):
                       accountName='')
 
 
-class ContractDetails(SocketReader):
+class ContractDetails(MessageDecoder):
     """ ContractDetails() -> reads contract detail messages
 
     Generated detail instance:
@@ -165,7 +165,7 @@ class ContractDetails(SocketReader):
         self.dispatch(details=details)
 
 
-class Error(SocketReader):
+class Error(MessageDecoder):
     """ Error() -> reads error messages
 
     Generated detail instance:
@@ -197,7 +197,7 @@ class Error(SocketReader):
                       error_msg=error_msg)
 
 
-class Execution(SocketReader):
+class Execution(MessageDecoder):
     """ Execution() -> reads execution detail messages
 
     Generated detail instance:
@@ -248,7 +248,7 @@ class Execution(SocketReader):
                       details=details)
 
 
-class ManagedAccounts(SocketReader):
+class ManagedAccounts(MessageDecoder):
     """ ManagedAccounts() -> reads a list of managed account ids
 
     """
@@ -265,12 +265,12 @@ class ManagedAccounts(SocketReader):
         self.dispatch(accounts=accounts)
 
 
-class MarketDepth(SocketReader):
+class MarketDepth(MessageDecoder):
     """ MarketDepth() -> reads market depth messages
 
     Generated detail instance:
 
-    msg.tickerId - ticker id specified the call to request_market_depth
+    msg.tickerId - ticker id specified the call to reqMktDepth
     msg.position - specifies the row id of the order
     msg.operation - identifies how this message should be applied to the
                       market depth.  Valid values:
@@ -308,12 +308,12 @@ class MarketDepth(SocketReader):
                       size=size)
 
 
-class MarketDepthLevel2(SocketReader):
+class MarketDepthLevel2(MessageDecoder):
     """ MarketDepthLevel2Reader() -> reads level 2 market depth messages
 
     Generated detail instance:
 
-    msg.tickerId - ticker id specified the call to request_market_depth
+    msg.tickerId - ticker id specified the call to reqMktDepth
     msg.position - specifies the row id of the order
     msg.market_maker - specifies the exchange hosting this order
     msg.operation - identifies how this message should be applied to the
@@ -354,7 +354,7 @@ class MarketDepthLevel2(SocketReader):
                       size=size)
 
 
-class NextId(SocketReader):
+class NextId(MessageDecoder):
     """ NextId() -> reads next valid id messages
 
     Generated detail instance:
@@ -374,7 +374,7 @@ class NextId(SocketReader):
         self.dispatch(nextValidId=nextValidId)
 
 
-class OpenOrder(SocketReader):
+class OpenOrder(MessageDecoder):
     """ OpenOrder() -> reads open order messages
 
     Generated detail instance:
@@ -493,7 +493,7 @@ class OpenOrder(SocketReader):
                       order=order)
 
 
-class OrderStatus(SocketReader):
+class OrderStatus(MessageDecoder):
     """ OrderStatus() -> reads order status messages
 
     Generated detail instance:
@@ -551,7 +551,7 @@ class OrderStatus(SocketReader):
                       clientId=clientId)
 
 
-class Portfolio(SocketReader):
+class Portfolio(MessageDecoder):
     """ Portfolio() -> reads portfolio update messages 
 
     Generated detail instance:
@@ -608,7 +608,7 @@ class Portfolio(SocketReader):
                       accountName=accountName)
 
 
-class ReaderStart(SocketReader):
+class ReaderStart(MessageDecoder):
     """ ReaderStart() -> pseudo message for reader start notification
 
     Instances do not have a 'read' method, but messages are sent with with
@@ -620,7 +620,7 @@ class ReaderStart(SocketReader):
         __slots__ = ()
 
 
-class ReaderStop(SocketReader):
+class ReaderStop(MessageDecoder):
     """ ReaderStart() -> pseudo message for reader stop notification
 
     Instances do not have a 'read' method, but messages are sent with with
@@ -632,7 +632,7 @@ class ReaderStop(SocketReader):
         __slots__ = ('exception', )
 
 
-class Tick(SocketReader):
+class Tick(MessageDecoder):
     """ Tick() -> parent type for ticker-related readers
 
     Using a parent class enables the client to specify a single listener 
@@ -721,7 +721,7 @@ class TickSize(Tick):
                       value=size)
 
 
-class TickOptionComputation(SocketReader):
+class TickOptionComputation(MessageDecoder):
     """ TickOptionComputation() -> reads ticker option computation messages
 
     """
@@ -748,7 +748,7 @@ class TickOptionComputation(SocketReader):
                       delta=detla)
 
 
-class NewsBulletin(SocketReader):
+class NewsBulletin(MessageDecoder):
     """ NewsBulletin() -> reads news bulletin messages
 
     """
@@ -772,7 +772,7 @@ class NewsBulletin(SocketReader):
                       news_exchange=news_exchange)
 
 
-class ReceiveFa(SocketReader):
+class ReceiveFa(MessageDecoder):
     """ ReceiveFa() -> reads some type of message
 
     """
@@ -792,7 +792,7 @@ class ReceiveFa(SocketReader):
                       xml=xml)
 
 
-class HistoricalData(SocketReader):
+class HistoricalData(MessageDecoder):
     """ HistoricalData() -> reads some type of message
 
     """
@@ -816,7 +816,7 @@ class HistoricalData(SocketReader):
         self.dispatch(version=version, tickerId=tickerId, rows=rows)
 
 
-class BondContractData(SocketReader):
+class BondContractData(MessageDecoder):
     """ BondContractData() -> reads some type of message
 
     """
@@ -855,7 +855,7 @@ class BondContractData(SocketReader):
         self.dispatch(details=details)
 
 
-class ScannerParameters(SocketReader):
+class ScannerParameters(MessageDecoder):
     """ ScannerParameters() -> reads some type of message
 
     """
@@ -872,7 +872,7 @@ class ScannerParameters(SocketReader):
         self.dispatch(xml=xml)
 
 
-class ScannerData(SocketReader):
+class ScannerData(MessageDecoder):
     """ ScannerData() -> reads some type of message
 
     """
