@@ -67,7 +67,7 @@ class SimpleMessageHandler:
         """ next_orderId(msg) -> called to tell us the first usable order id
 
         """
-        self.orderId = msg.next_valid_id
+        self.orderId = msg.nextValidId
         print >> self.outstream, msg
 
 
@@ -128,8 +128,8 @@ class AutomaticDemoApp:
         self.log_level = log_level
         self.snooze = snooze
         self.tickers = [
-            (next_ticker_id(), 'AAPL'),
-            (next_ticker_id(), 'MXIM'),
+            (next_tickerId(), 'AAPL'),
+            (next_tickerId(), 'MXIM'),
         ]
 
         self.connection = ib.client.reader.build(next_connection_id())
@@ -162,7 +162,7 @@ class AutomaticDemoApp:
         register(ib.client.message.Portfolio, handler.portfolio_updated)
         register(ib.client.message.ReaderStart, handler.connected)
         register(ib.client.message.ReaderStop, handler.disconnected)
-        register(ib.client.message.Ticker, handler.ticker_updated)
+        register(ib.client.message.Tick, handler.ticker_updated)
         register(ib.client.message.HistoricalData, handler.historical_data)
         
     def demo_b_request(self):
@@ -181,10 +181,10 @@ class AutomaticDemoApp:
         exec_filter = ib.types.ExecutionFilter(secType='FUT')
         connection.request_executions(exec_filter)
 
-        for ticker_id, symbol in self.tickers:
+        for tickerId, symbol in self.tickers:
             contract = ib.types.Contract(symbol=symbol, secType='STK')
-            connection.request_market_data(ticker_id, contract)
-            connection.request_market_depth(ticker_id, contract)
+            connection.request_market_data(tickerId, contract)
+            connection.request_market_depth(tickerId, contract)
 
 
     def demo_c_order(self):
@@ -205,7 +205,7 @@ class AutomaticDemoApp:
         """ request market data and market details for a futures contract
 
         """
-        self.es_id = es_id = next_ticker_id()
+        self.es_id = es_id = next_tickerId()
         self.es_contract = contract = \
             ib.types.Contract(symbol='ES', secType='FUT', exchange='GLOBEX',
                              expiry='200603')
@@ -218,7 +218,7 @@ class AutomaticDemoApp:
         """ request historical market data
 
         """
-        id = next_ticker_id()
+        id = next_tickerId()
         contract = ib.types.Contract(symbol='MSFT', secType='STK', exchange='SMART')
         endDateTime = time.strftime('%Y%m%d %H:%M:%S')
         self.connection.reqHistoricalData(id, contract, endDateTime, '300 S', 5, 'BID', 1, 1)
@@ -258,9 +258,9 @@ class AutomaticDemoApp:
         """
         connection = self.connection
 
-        for ticker_id, symbol in self.tickers:
-            connection.cancel_market_data(ticker_id)
-            connection.cancel_market_depth(ticker_id)
+        for tickerId, symbol in self.tickers:
+            connection.cancel_market_data(tickerId)
+            connection.cancel_market_depth(tickerId)
 
         connection.cancel_news_bulletins()
 
@@ -281,7 +281,7 @@ def ids(next):
 
 ## one id generator for connections and another for tickers
 next_connection_id = ids(0).next
-next_ticker_id = ids(3000).next
+next_tickerId = ids(3000).next
 
 
 if __name__ == '__main__':

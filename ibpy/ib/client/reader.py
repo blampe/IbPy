@@ -26,8 +26,8 @@ TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
 PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
 EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
 MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
-SCANNER_PARAMETERS, SCANNER_DATA
-) = range(1, 21)
+SCANNER_PARAMETERS, SCANNER_DATA, TICK_OPTION_COMPUTATION,
+) = range(1, 22)
  
 (
 REQ_MKT_DATA, CANCEL_MKT_DATA, PLACE_ORDER, CANCEL_ORDER,
@@ -67,23 +67,26 @@ class SocketReaderBase(object):
 
         """
         logger.debug('Begin %s', self)
-        ri, rf, rs = self.read_integer, self.read_float, self.read_string
+        ri, rf, rs = self.readInteger, self.readFloat, self.readString
         readers = self.readers
         readers[READER_START].dispatch()
         self.active = 1
 
         while self.active:
             try:
-                msg_id = ri()
-                if msg_id == -1:
+                msgId = ri()
+                if msgId == -1:
                     continue
-                reader = readers[msg_id]
+                reader = readers[msgId]
+
                 if str(reader) == 'Error':
                     log = logger.warning
                 else:
                     log = logger.info
+
                 log(reader)
                 reader.read(ri, rf, rs)
+
             except (Exception, ), ex:
                 self.active = 0
                 logger.error('Exception %s during message dispatch', ex)
@@ -91,30 +94,30 @@ class SocketReaderBase(object):
                 logger.debug('Reader stop message dispatched')
 
 
-    def read_integer(self):
-        """ read_integer() -> read an integer from the socket
+    def readInteger(self):
+        """ readInteger() -> read an integer from the socket
 
         """
-        value = self.read_string()
+        value = self.readString()
         try:
             return int(value)
         except (ValueError, ):
             return 0
 
 
-    def read_float(self):
-        """ read_float() -> read and unpack a float from the socket
+    def readFloat(self):
+        """ readFloat() -> read and unpack a float from the socket
 
         """
-        fvalue = self.read_string()
+        fvalue = self.readString()
         try:
             return float(fvalue)
         except (ValueError, ):
             return 0.0
 
 
-    def read_string__(self):
-        """ read_string() -> read and unpack a string from the socket
+    def readString__(self):
+        """ readString() -> read and unpack a string from the socket
 
         """
         buf_size = 1
@@ -134,8 +137,8 @@ class SocketReaderBase(object):
         return read
 
 
-    def read_string(self):
-        """ read_string() -> read and unpack a string from the socket
+    def readString(self):
+        """ readString() -> read and unpack a string from the socket
 
         """
         #do we need to get more tokens from the socket?
@@ -196,12 +199,13 @@ class SocketConnection(object):
         PORTFOLIO_VALUE : ib.client.message.Portfolio,
         READER_START : ib.client.message.ReaderStart,
         READER_STOP : ib.client.message.ReaderStop,
-        TICK_PRICE : ib.client.message.TickerPrice,
-        TICK_SIZE : ib.client.message.TickerSize,
+        TICK_PRICE : ib.client.message.TickPrice,
+        TICK_SIZE : ib.client.message.TickSize,
         HISTORICAL_DATA : ib.client.message.HistoricalData,
         BOND_CONTRACT_DATA : ib.client.message.BondContractData,
         SCANNER_PARAMETERS : ib.client.message.ScannerParameters,
         SCANNER_DATA : ib.client.message.ScannerData,
+        TICK_OPTION_COMPUTATION : ib.client.message.TickOptionComputation,
     }
 
 
@@ -234,12 +238,12 @@ class SocketConnection(object):
         logger.info('Sending client version %s', client_version)
         self.send(client_version)
 
-        logger.info('Reading server version')
-        self.server_version = self.reader.read_integer()
-        logger.debug('Read server version %s', self.server_version)
+        logger.debug('Reading server version')
+        self.server_version = self.reader.readInteger()
+        logger.info('Read server version %s', self.server_version)
 
         if self.server_version>=20:
-            tws_time = self.reader.read_string()
+            tws_time = self.reader.readString()
             logger.info('Received server TwsTime=%s', tws_time)
 
         if self.server_version >= 3:
@@ -261,21 +265,21 @@ class SocketConnection(object):
         logger.debug('Socked closed on object %s', self)
 
 
-    def request_market_data(self, ticker_id, contract):
-        """ request_market_data(ticker_id, contract) -> request market data
+    def request_market_data(self, tickerId, contract):
+        """ request_market_data(tickerId, contract) -> request market data
 
-        The ticker_id value will be used by the broker to refer to the
+        The tickerId value will be used by the broker to refer to the
         market instrument in subsequent communication.
         """
         logger.debug('Requesting market data for ticker %s %s',
-                     ticker_id, contract.symbol)
+                     tickerId, contract.symbol)
         send = self.send
         server_version = self.server_version
         
         message_version = 5
         data = (REQ_MKT_DATA, 
                 message_version, 
-                ticker_id, 
+                tickerId, 
                 contract.symbol,
                 contract.secType, 
                 contract.expiry, 
@@ -294,7 +298,7 @@ class SocketConnection(object):
 
         self.send_combolegs(contract)
         logger.debug('Market data request for ticker %s %s sent',
-                     ticker_id, contract.symbol)
+                     tickerId, contract.symbol)
 
 
     def request_contract_details(self, contract):
@@ -329,8 +333,8 @@ class SocketConnection(object):
         map(send, data)        
 
 
-    def request_market_depth(self, ticker_id, contract, numRows=1):
-        """ request_market_depth(ticker_id, contract) -> request market depth
+    def request_market_depth(self, tickerId, contract, numRows=1):
+        """ request_market_depth(tickerId, contract) -> request market depth
 
         """
         server_version = self.server_version
@@ -345,7 +349,7 @@ class SocketConnection(object):
         message_version = 3
         data = (REQ_MKT_DEPTH,
                 message_version,
-                ticker_id,
+                tickerId,
                 contract.symbol,
                 contract.secType,
                 contract.expiry,
@@ -364,19 +368,19 @@ class SocketConnection(object):
             send(numRows)
 
 
-    def cancel_market_data(self, ticker_id):
-        """ cancel_market_data(ticker_id) -> cancel market data
+    def cancel_market_data(self, tickerId):
+        """ cancel_market_data(tickerId) -> cancel market data
 
         """
         message_version = 1
         data = (CANCEL_MKT_DATA,
                 message_version,
-                ticker_id)
+                tickerId)
         map(self.send, data)
 
 
-    def cancel_market_depth(self, ticker_id):
-        """ cancel_market_depth(ticker_id) -> cancel market depth
+    def cancel_market_depth(self, tickerId):
+        """ cancel_market_depth(tickerId) -> cancel market depth
 
         """
         if self.server_version < 6:
@@ -386,7 +390,7 @@ class SocketConnection(object):
         message_version = 1
         data = (CANCEL_MKT_DEPTH,
                 message_version,
-                ticker_id)
+                tickerId)
         map(self.send, data)
 
 
@@ -645,7 +649,7 @@ class SocketConnection(object):
         map(self.send, (REPLACE_FA, message_version, fa_type, xml))
 
 
-    def reqHistoricalData(self, ticker_id, contract, endDateTime,
+    def reqHistoricalData(self, tickerId, contract, endDateTime,
                          durationStr, barSizeSetting, whatToShow,
                          useRTH, formatDate):
         """
@@ -658,7 +662,7 @@ class SocketConnection(object):
         message_version = 3
         map(self.send, (REQ_HISTORICAL_DATA,
                         message_version,
-                        ticker_id,
+                        tickerId,
                         contract.symbol,
                         contract.secType,
                         contract.expiry,
@@ -680,15 +684,15 @@ class SocketConnection(object):
         self.send_combolegs(contract)
 
 
-    def cancelHistoricalData(self, ticker_id):
-        """ cancelHistoricalData(ticker_id) ->
+    def cancelHistoricalData(self, tickerId):
+        """ cancelHistoricalData(tickerId) ->
 
         """
         if self.server_version < 24:
             logger.warning('Server version mismatch.')
             return
         message_version = 1
-        map(self.send, (CANCEL_HISTORICAL_DATA, message_version, ticker_id))
+        map(self.send, (CANCEL_HISTORICAL_DATA, message_version, tickerId))
 
 
     def reqScannerParameters(self):
@@ -702,7 +706,7 @@ class SocketConnection(object):
         map(self.send, (REQ_SCANNER_PARAMETERS, message_version))
 
 
-    def reqScannerSubscription(self, ticker_id, subscription):
+    def reqScannerSubscription(self, tickerId, subscription):
         """ reqScannerSubscription(subscription) ->
 
         """
@@ -712,7 +716,7 @@ class SocketConnection(object):
         message_version = 3
         map(self.send, (REQ_SCANNER_SUBSCRIPTION,
                         message_version,
-                        ticker_id,
+                        tickerId,
                         subscription.numberOfRows,
                         subscription.instrument,
                         subscription.locationCode,
@@ -738,18 +742,18 @@ class SocketConnection(object):
             map(self.send, (subscription.stockTypeFilter))
 
 
-    def cancelScannerSubscription(self, ticker_id):
-        """ cancelScannerSubscription(ticker_id) ->
+    def cancelScannerSubscription(self, tickerId):
+        """ cancelScannerSubscription(tickerId) ->
 
         """
         if self.server_version < 24:
             ## TODO:  log or raise
             return
         message_version = 1
-        map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, message_version, ticker_id))
+        map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, message_version, tickerId))
 
 
-    def exerciseOptions(self, ticker_id, contract, exerciseAction,
+    def exerciseOptions(self, tickerId, contract, exerciseAction,
                         exerciseQuantity, account, override):
         """ exerciseOptions(...) ->
 
@@ -760,7 +764,7 @@ class SocketConnection(object):
         message_version = 1
         map(self.send, (EXERCISE_OPTIONS,
                         message_version,
-                        ticker_id,
+                        tickerId,
                         contract.symbol,
                         contract.secType,
                         contract.expiry,
