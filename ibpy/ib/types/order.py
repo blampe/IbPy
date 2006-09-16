@@ -2,7 +2,9 @@
 """ Defines the Order class.
 
 """
-from ib.lib import setattr_mapping, getattrs
+from ib.lib import setattr_mapping, getattrs, maxint, maxfloat
+
+
 
 
 class Order(object):
@@ -44,7 +46,7 @@ class Order(object):
                  openClose='O',
                  origin=CUSTOMER,
                  orderRef='',
-                 transmit=1, 
+                 transmit=1,
                  parentId=0,
                  blockOrder=0,
                  sweepToFill=0,
@@ -70,27 +72,27 @@ class Order(object):
                  rule80A='',
                  settlingFirm='',
                  allOrNone=0,
-                 minQty=0,
-                 percentOffset=0.0,
+                 minQty=maxint,
+                 percentOffset=maxfloat,
                  eTradeOnly=1,
                  firmQuoteOnly=1,
-                 nbboPriceCap=0.0,
+                 nbboPriceCap=maxfloat,
 
                  # box orders
                  auctionStrategy=0,
-                 startingPrice=0.0,
-                 stockRefPrice=0.0,
-                 delta=0.0,
-                 stockRangeLower=0.0,
-                 stockRangeUpper=0.0,
+                 startingPrice=maxfloat,
+                 stockRefPrice=maxfloat,
+                 delta=maxfloat,
+                 stockRangeLower=maxfloat,
+                 stockRangeUpper=maxfloat,
 
                  # volatility orders
-                 volatility=0.0,
-                 volatilityType=0, # 1=daily, 2=annual
+                 volatility=maxfloat,
+                 volatilityType=maxint, # 1=daily, 2=annual
                  continuousUpdate=0,
-                 referencePriceType=0, # 1=average, 2=bidorask
+                 referencePriceType=maxfloat, # 1=average, 2=bidorask
                  deltaNeutralOrderType='',
-                 deltaNeutralAuxPrice=0.0,
+                 deltaNeutralAuxPrice=maxfloat,
                  ):
         setattr_mapping(self, locals())
 

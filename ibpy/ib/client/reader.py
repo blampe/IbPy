@@ -12,23 +12,15 @@ import ib.types
 import ib.client.message
 
 
-SERVER_VERSION = 1
 CLIENT_VERSION = 27
-
+SERVER_VERSION = 1
+EOL = struct.pack('!i', 0)[3]
 BAG_SEC_TYPE = 'BAG'
+
+## fa message data types
 GROUPS, PROFILES, ALIASES = range(1, 4)
 
-READER_START = -1
-READER_STOP = -2
-
-(
-TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
-PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
-EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
-MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
-SCANNER_PARAMETERS, SCANNER_DATA, TICK_OPTION_COMPUTATION,
-) = range(1, 22)
- 
+## outgoing message ids
 (
 REQ_MKT_DATA, CANCEL_MKT_DATA, PLACE_ORDER, CANCEL_ORDER,
 REQ_OPEN_ORDERS, REQ_ACCOUNT_DATA, REQ_EXECUTIONS, REQ_IDS,
@@ -40,6 +32,17 @@ REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
 REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA,
 ) = range(1, 26)
 
+## incoming message ids.  reader start and stop message ids are local
+## to this package.
+READER_START, READER_STOP = -2, -1
+
+(
+TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
+PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
+EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
+MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
+SCANNER_PARAMETERS, SCANNER_DATA, TICK_OPTION_COMPUTATION,
+) = range(1, 22)
 
 NO_API_FMT = 'Connected TWS version does not support %s API.'
 NO_SCANNER_API = NO_API_FMT % 'scanner'
@@ -48,8 +51,6 @@ NO_DEPTH_API = NO_API_FMT % 'market depth'
 NO_OPTION_EX_API = NO_API_FMT % 'options exercise'
 NO_FA_API = NO_API_FMT % 'fa'
 
-
-EOF = struct.pack('!i', 0)[3]
 logger = ib.lib.logger()
 
 
@@ -84,7 +85,7 @@ class SocketReaderBase(object):
             try:
                 msgId = ri()
                 if msgId == -1:
-                    continue
+                    break
                 reader = readers[msgId]
 
                 if str(reader) == 'Error':
@@ -117,9 +118,9 @@ class SocketReaderBase(object):
         """ readFloat() -> read and unpack a float from the socket
 
         """
-        fvalue = self.readString()
+        value = self.readString()
         try:
-            return float(fvalue)
+            return float(value)
         except (ValueError, ):
             return 0.0
 
@@ -305,32 +306,36 @@ class SocketConnection(object):
             return
 
         version = 3
-        map(self.send, (REQ_SCANNER_SUBSCRIPTION,
-                        version,
-                        tickerId,
-                        subscription.numberOfRows,
-                        subscription.instrument,
-                        subscription.locationCode,
-                        subscription.scanCode,
-                        subscription.abovePrice,
-                        subscription.belowPrice,
-                        subscription.aboveVolume,
-                        subscription.marketCapAbove,
-                        subscription.marketCapBelow,
-                        subscription.moodyRatingAbove,
-                        subscription.moodyRatingBelow,
-                        subscription.spRatingAbove,
-                        subscription.spRatingBelow,
-                        subscription.maturityDateAbove,
-                        subscription.maturityDateBelow,
-                        subscription.couponRateAbove,
-                        subscription.couponRateBelow,
-                        subscription.excludeConvertible))
+        send = self.send
+        sendMax = self.sendMax
+        
+        send(REQ_SCANNER_SUBSCRIPTION)
+        send(version)
+        send(tickerId)
+        sendMax(subscription.numberOfRows)
+        send(subscription.instrument)
+        send(subscription.locationCode)
+        send(subscription.scanCode)
+        sendMax(subscription.abovePrice)
+        sendMax(subscription.belowPrice)
+        sendMax(subscription.aboveVolume)
+        sendMax(subscription.marketCapAbove)
+        sendMax(subscription.marketCapBelow)
+        send(subscription.moodyRatingAbove)
+        send(subscription.moodyRatingBelow)
+        send(subscription.spRatingAbove)
+        send(subscription.spRatingBelow)
+        send(subscription.maturityDateAbove)
+        send(subscription.maturityDateBelow)
+        sendMax(subscription.couponRateAbove)
+        sendMax(subscription.couponRateBelow)
+        send(subscription.excludeConvertible)
+
         if self.serverVersion >= 25:
-            map(self.send, (subscription.averageOptionVolumeAbove,
-                            subscription.scannerSetttingPairs))
+            send(subscription.averageOptionVolumeAbove)
+            send(subscription.scannerSetttingPairs)
         if self.serverVersion >= 27:
-            map(self.send, (subscription.stockTypeFilter))
+            send(subscription.stockTypeFilter)
 
 
     def reqMktData(self, tickerId, contract):
@@ -364,7 +369,7 @@ class SocketConnection(object):
         if serverVersion >= 2:
             send(contract.localSymbol)
 
-        self.sendComboLegs(contract)
+        self.sendComboLegs(contract, openClose=False)
         msg = 'Market data request for ticker %s %s sent'
         logger.debug(msg, tickerId, contract.symbol)
 
@@ -386,6 +391,7 @@ class SocketConnection(object):
         """ reqHistoricalData(...) -> request historical data
 
         """
+        print '!!!!!!!!!'        
         if self.serverVersion < 16:
             logger.warning('Server version mismatch.')
             return
@@ -411,7 +417,7 @@ class SocketConnection(object):
         map(send, (durationStr, useRTH, whatToShow))
         if serverVersion > 16:
             send(formatDate)
-        self.sendComboLegs(contract)
+        self.sendComboLegs(contract, openClose=False)
 
 
     def reqContractDetails(self, contract):
@@ -527,8 +533,10 @@ class SocketConnection(object):
         """ placeOrder(orderId, contract, order) -> place an order
 
         """
+        print '#####'
         serverVersion = self.serverVersion
         send = self.send
+        sendMax = self.sendMax
         version = 20
 
         map(send, (PLACE_ORDER,
@@ -580,7 +588,7 @@ class SocketConnection(object):
         if serverVersion >= 7:
             send(order.hidden)
 
-        self.sendComboLegs(contract)
+        self.sendComboLegs(contract, openClose=True)
 
         if serverVersion >= 9:
             send(order.sharesAllocation)
@@ -605,39 +613,51 @@ class SocketConnection(object):
             map(send, (order.shortSaleSlot,         # 0 only for retail, 1 or 2 only for institution.
                        order.designatedLocation))   # only populate when order.shortSaleSlot = 2
 
+        isVol = order.orderType.upper() == 'VOL'
+        
         if serverVersion >= 19:
-            map(send, (order.ocaType,
-                       order.rthOnly,
-                       order.rule80A,
-                       order.settlingFirm,
-                       order.allOrNone))
-            map(send, (order.minQty, order.percentOffset,))
-            map(send, (order.eTradeOnly, order.firmQuoteOnly,))
-            map(send, (order.nbboPriceCap, order.auctionStrategy, 
-                          order.startingPrice, order.stockRefPrice,
-                          order.delta))
-            if serverVersion == 26:
-                if order.orderType == 'VOL':
-                    lower = order.stockRangeLower
-                    upper = order.stockRangeUpper
-                else:
-                    upper = lower = ''
-                map(send (upper, lower))
+           send(order.ocaType)
+           send(order.rthOnly)
+           send(order.rule80A)
+           send(order.settlingFirm)
+           send(order.allOrNone)
+           sendMax(order.minQty)
+           sendMax(order.percentOffset)
+           send(order.eTradeOnly)
+           send(order.firmQuoteOnly)
+           sendMax(order.nbboPriceCap)
+           sendMax(order.auctionStrategy)
+           sendMax(order.startingPrice)
+           sendMax(order.stockRefPrice)
+           sendMax(order.delta)
+
+           if serverVersion == 26:
+               if isVol:
+                   upper = lower = ''
+               else:
+                   lower = order.stockRangeLower
+                   upper = order.stockRangeUpper                   
+               map(sendMax, (upper, lower))
         
         if serverVersion >= 22:
             send(order.overridePercentageConstraints)
 
         if serverVersion >= 26:
-            map(send, (order.volatility, order.volatilityType))
+            map(sendMax, (order.volatility, order.volatilityType))
             if serverVersion < 28:
-                send(order.deltaNeutralOrderType == 'MKT' and 1)
+                send(int(order.deltaNeutralOrderType.upper() == 'MKT'))
             else:
                 send(order.deltaNeutralOrderType)
-                send(order.deltaNeutralAuxPrice)
+                sendMax(order.deltaNeutralAuxPrice)
             send(order.continuousUpdate)
             if serverVersion == 26:
-                map(send, (upper, lower))
-            send(order.referencePriceType)
+                if isVol:
+                   lower = order.stockRangeLower
+                   upper = order.stockRangeUpper                   
+                else:
+                   upper = lower = ''
+                map(sendMax, (upper, lower))
+            sendMax(order.referencePriceType)
 
 
     def reqAccountUpdates(self, subscribe=1, acctCode=''):
@@ -771,17 +791,28 @@ class SocketConnection(object):
         map(self.send, (REPLACE_FA, version, faDataType, xml))
 
 
-    def send(self, data, packfunc=struct.pack):
+    def send(self, data, packfunc=struct.pack, eol=EOL):
         """ send(data) -> send a value to TWS
 
         """
+        print '***', data
         sendfunc = self.socket.send
         for k in str(data):
             sendfunc(packfunc('!i', ord(k))[3])
-        sendfunc(EOF)
+        sendfunc(eol)
 
 
-    def sendComboLegs(self, contract):
+    def sendMax(self, data, eol=EOL, maxes=(ib.lib.maxint, ib.lib.maxfloat)):
+        """ send(data) -> send a value to TWS, changing some values
+
+        """
+        if data in maxes:
+            self.socket.send(eol)
+        else:
+            self.send(data)
+
+
+    def sendComboLegs(self, contract, openClose):
         """ sendComboLegs(contract) -> helper to send a contracts combo legs
 
         """
@@ -794,8 +825,9 @@ class SocketConnection(object):
                     map(send, (leg.conId,
                                leg.ratio,
                                leg.action,
-                               leg.exchange,
-                               leg.openClose))
+                               leg.exchange))
+                    if openClose:
+                        send(leg.openClose)
             else:
                 send(0)
 

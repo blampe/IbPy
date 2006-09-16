@@ -32,7 +32,7 @@ class Tick(object):
 
 
     def __getitem__(self, index):
-        """ t[i] -> type string at i
+        """ tick[i] -> string at i
 
         """
         try:

@@ -686,11 +686,11 @@ class TickPrice(Tick):
         if version >= 2:
             sizeTickType = None
             tickClass = ib.types.Tick
-            if tickType == tickClass.BID_PRICE:
+            if tickType == tickClass.BID:
                 sizeTickType = tickClass.BID_SIZE
-            elif tickType == tickClass.ASK_PRICE:
+            elif tickType == tickClass.ASK:
                 sizeTickType = tickClass.ASK_SIZE
-            elif tickType == tickClass.LAST_PRICE:
+            elif tickType == tickClass.LAST:
                 sizeTickType = tickClass.LAST_SIZE
 
             if sizeTickType is not None:

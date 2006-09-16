@@ -2,37 +2,37 @@
 """ Defines the ScannerSubscription class.
 
 """
-from ib.lib import setattr_mapping
+from ib.lib import setattr_mapping, maxint, maxfloat
 
 
 class ScannerSubscription(object):
     """ ScannerSubscription(...) -> scanner subscription parameters 
 
     """
-    doubleMax= ''
-    integerMax = ''
+    NO_ROW_NUMBER_SPECIFIED = -1
 
-
+    
     def __init__(self,
-                 numberOfRows=-1,
+                 numberOfRows=NO_ROW_NUMBER_SPECIFIED,
                  instrument='',
                  locationCode='',
                  scanCode='',
-                 abovePrice=doubleMax,
-                 belowPrice=doubleMax,
-                 aboveVolume=integerMax,
-                 averageOptionVolumeAbove=integerMax,
-                 marketCapAbove=doubleMax,
-                 marketCapBelow=doubleMax,                 
+                 abovePrice=maxfloat,
+                 belowPrice=maxfloat,
+                 aboveVolume=maxint,
+                 averageOptionVolumeAbove=maxint,
+                 marketCapAbove=maxfloat,
+                 marketCapBelow=maxfloat,
                  moodyRatingAbove='',
                  moodyRatingBelow='',
                  spRatingAbove='',
                  spRatingBelow='',
                  maturityDateAbove='',
                  maturityDateBelow='',
-                 couponRateAbove=doubleMax,
-                 couponRateBelow=doubleMax,
+                 couponRateAbove=maxfloat,
+                 couponRateBelow=maxfloat,
                  excludeConvertible='',
                  scannerSettingPairs='',
-                 stockTypeFilter=''):
+                 stockTypeFilter='',
+                 ):
         setattr_mapping(self, locals())

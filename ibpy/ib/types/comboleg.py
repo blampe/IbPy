@@ -11,7 +11,6 @@ class ComboLeg(object):
     """
     SAME, OPEN, CLOSE, UNKNOWN = range(0, 4)
 
-
     def __init__(self,
                  conId=0,
                  ratio=0,

@@ -4,6 +4,12 @@
 """
 from ib.lib import setattr_mapping
 
+#                // Note that the valid format for m_time is "yyyymmdd-hh:mm:ss"
+#
+import time
+timeFormat = '%Y%m%d-%I%M:S'
+
+
 
 class Execution(object):
     """ Execution(...) -> execution details 
@@ -13,7 +19,7 @@ class Execution(object):
                  orderId=0,
                  clientId=0,
                  execId='',
-                 time='',
+                 time=time.strftime(timeFormat),
                  acctNumber='',
                  exchange='',
                  side='',

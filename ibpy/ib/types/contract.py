@@ -13,7 +13,7 @@ class Contract(object):
                  symbol='',
                  secType='',
                  expiry='',
-                 strike=0.0,
+                 strike=0,
                  right='',
                  multiplier='',
                  exchange='',
@@ -28,7 +28,7 @@ class Contract(object):
                  couponType='',
                  callable=False,
                  putable=False,
-                 coupon=0.0,
+                 coupon=None,
                  convertible=False,
                  maturity='',
                  issueDate=''):

@@ -128,8 +128,9 @@ class AutomaticDemoApp:
         self.log_level = log_level
         self.snooze = snooze
         self.tickers = [
-            (next_tickerId(), 'AAPL'),
-            (next_tickerId(), 'MXIM'),
+            (next_tickerId(), 'DELL'),
+            (next_tickerId(), 'APPL'),
+            (next_tickerId(), 'INTC'),            
         ]
 
         self.connection = ib.client.reader.build(next_connection_id())
@@ -178,11 +179,13 @@ class AutomaticDemoApp:
         connection.reqNewsBulletins()
         ## connection.reqManagedAccts()
 
-        exec_filter = ib.types.ExecutionFilter(secType='FUT')
-        connection.reqExecutions(exec_filter)
-
+        #exec_filter = ib.types.ExecutionFilter(secType='FUT')
+        #connection.reqExecutions(exec_filter)
+    
         for tickerId, symbol in self.tickers:
-            contract = ib.types.Contract(symbol=symbol, secType='STK')
+            contract = ib.types.Contract(symbol=symbol, secType='STK',
+                                         exchange="ISLAND")
+                                         
             connection.reqMktData(tickerId, contract)
             connection.reqMktDepth(tickerId, contract)
 
@@ -192,12 +195,15 @@ class AutomaticDemoApp:
 
         """
         ## have to snooze in order to get the next order id
-        time.sleep(self.snooze) 
+        time.sleep(self.snooze)
 
         self.handler.orderId += 1
-        contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK')
-        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=200, 
-                              lmtPrice=24.00)
+        contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK',
+                                     exchange="ISLAND")
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=200,
+                               action='BUY',
+                              lmtPrice=12.00,
+                               orderType='LMT')
         self.connection.placeOrder(self.handler.orderId, contract, order)
 
 
@@ -220,11 +226,19 @@ class AutomaticDemoApp:
         """
         id = next_tickerId()
         contract = ib.types.Contract(symbol='MSFT', secType='STK', exchange='SMART')
-        endDateTime = time.strftime('%Y%m%d %H:%M:%S')
-        self.connection.reqHistoricalData(id, contract, endDateTime, '300 S', 5, 'BID', 1, 1)
+        endDateTime = time.strftime('%Y%m%d %H:%M:%S GMT')
+        return
+        self.connection.reqHistoricalData(id,
+                                          contract,
+                                          endDateTime,
+                                          '300 S',
+                                          5,
+                                          'BID',
+                                          1,
+                                          2)
 
 
-    def demo_e_comboLegs(self):
+    def _demo_e_comboLegs(self):
         """ submit an order for a futures contract with multiple combo legs
 
         """
@@ -236,23 +250,23 @@ class AutomaticDemoApp:
             cleg(es_id, ratio=3, action='SELL', exchange='GLOBEX', openClose=2),
         ]
         self.handler.orderId += 1
-        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=1200)
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=1200, orderType="LMT")
         self.connection.placeOrder(self.handler.orderId, self.es_contract, order)
 
 
-    def demo_f_cancelled_order(self):
+    def _demo_f_cancelled_order(self):
         """ submit a silly order and then cancel it
 
         """
         self.handler.orderId += 1
         contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK')
-        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=3.00)
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=3.00, orderType='LMT')
         self.connection.placeOrder(self.handler.orderId, contract, order)
         time.sleep(self.snooze)
         self.connection.cancelOrder(self.handler.orderId)
 
 
-    def demo_g_cancel_some_requests(self):
+    def _demo_g_cancel_some_requests(self):
         """ cancel_some_requests() -> stop the market data and market depth feeds
 
         """
