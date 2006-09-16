@@ -16,8 +16,8 @@ import sys
 import time
 
 import ib.types
+import ib.client
 import ib.client.message
-import ib.client.reader
 
 
 class SimpleMessageHandler:
@@ -133,7 +133,7 @@ class AutomaticDemoApp:
             (next_tickerId(), 'INTC'),            
         ]
 
-        self.connection = ib.client.reader.build(next_connection_id())
+        self.connection = ib.client.build(next_connection_id())
         self.build_handler()
         self.connection.connect(dsn)
 
@@ -200,14 +200,14 @@ class AutomaticDemoApp:
         self.handler.orderId += 1
         contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK',
                                      exchange="ISLAND")
-        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=200,
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=100,
                                action='BUY',
-                              lmtPrice=12.00,
+                               lmtPrice=12.00,
                                orderType='LMT')
         self.connection.placeOrder(self.handler.orderId, contract, order)
 
 
-    def demo_d_contract(self):
+    def __demo_d_contract(self):
         """ request market data and market details for a futures contract
 
         """
