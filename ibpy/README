@@ -1,6 +1,6 @@
 IbPy - Interactive Brokers Python API
 =====================================
-IbPy 0.6d Released 25 December 2005
+IbPy 0.6 Released dd mm yyyy
 
 
 What is IbPy?
@@ -14,11 +14,7 @@ submit orders for stocks and futures, and more.
 What's new in this release?
 ------------------------------------------------------------------------------
 The focus of this release is compatibility with recent versions of the TWS
-application.  TWS Build 851.9 is the most recent release tested.
-
-This 0.6a release marks the first version with run time activity logging.  The 
-feature is turned on by default.  Users wanting to turn the feature off should
-refer to the source documentation.
+application.  TWS Build 861.5 is the most recent release tested.
 
 
 Where can I get IbPy?
