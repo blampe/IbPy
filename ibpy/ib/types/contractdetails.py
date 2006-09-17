@@ -14,9 +14,9 @@ class ContractDetails(object):
                  marketName='', 
                  tradingClass='', 
                  conId=0, 
-                 minTick=0.0,
+                 minTick=0,
                  multiplier='',
-                 priceMagnifier=1,
+                 priceMagnifier=0,
                  orderTypes='', 
                  validExchanges=''):
         if summary is None:

@@ -13,7 +13,7 @@ class Contract(object):
                  symbol='',
                  secType='',
                  expiry='',
-                 strike=0,
+                 strike=0.0,
                  right='',
                  multiplier='',
                  exchange='',
@@ -26,10 +26,10 @@ class Contract(object):
                  descAppend='',
                  bondType='',
                  couponType='',
-                 callable=False,
-                 putable=False,
-                 coupon=None,
-                 convertible=False,
+                 callable=0,
+                 putable=0,
+                 coupon=0.0,
+                 convertible=0,
                  maturity='',
                  issueDate=''):
         if comboLegs is None:

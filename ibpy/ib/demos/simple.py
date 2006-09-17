@@ -151,7 +151,7 @@ class AutomaticDemoApp:
         handler = self.handler = SimpleMessageHandler()
         register = self.connection.register
 
-        register(ib.client.message.Account, handler.account_updated)
+        register(ib.client.message.AccountBase, handler.account_updated)
         register(ib.client.message.ContractDetails, handler.contract_details)
         register(ib.client.message.Error, handler.error)
         register(ib.client.message.Execution, handler.exec_details)
@@ -163,7 +163,7 @@ class AutomaticDemoApp:
         register(ib.client.message.Portfolio, handler.portfolio_updated)
         register(ib.client.message.ReaderStart, handler.connected)
         register(ib.client.message.ReaderStop, handler.disconnected)
-        register(ib.client.message.Tick, handler.ticker_updated)
+        register(ib.client.message.TickBase, handler.ticker_updated)
         register(ib.client.message.HistoricalData, handler.historical_data)
         
     def demo_b_request(self):
@@ -183,8 +183,10 @@ class AutomaticDemoApp:
         #connection.reqExecutions(exec_filter)
     
         for tickerId, symbol in self.tickers:
-            contract = ib.types.Contract(symbol=symbol, secType='STK',
-                                         exchange="ISLAND")
+            contract = ib.types.Contract(symbol=symbol,
+                                         secType='STK',
+                                         exchange="SMART",
+                                         currency='USD')
                                          
             connection.reqMktData(tickerId, contract)
             connection.reqMktDepth(tickerId, contract)
@@ -198,16 +200,21 @@ class AutomaticDemoApp:
         time.sleep(self.snooze)
 
         self.handler.orderId += 1
-        contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK',
-                                     exchange="ISLAND")
+        contract = ib.types.Contract(symbol=self.tickers[0][1],
+                                     secType='STK',
+                                     exchange="SMART",
+                                     currency='USD',
+                                     )
         order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=100,
                                action='BUY',
+                               primaryExch='ISLAND',
                                lmtPrice=12.00,
                                orderType='LMT')
+        self.orderInfo = (self.handler.orderId, contract, order)
         self.connection.placeOrder(self.handler.orderId, contract, order)
 
 
-    def __demo_d_contract(self):
+    def demo_d_contract(self):
         """ request market data and market details for a futures contract
 
         """
@@ -238,7 +245,7 @@ class AutomaticDemoApp:
                                           2)
 
 
-    def _demo_e_comboLegs(self):
+    def demo_e_comboLegs(self):
         """ submit an order for a futures contract with multiple combo legs
 
         """
@@ -254,19 +261,15 @@ class AutomaticDemoApp:
         self.connection.placeOrder(self.handler.orderId, self.es_contract, order)
 
 
-    def _demo_f_cancelled_order(self):
+    def demo_f_cancelled_order(self):
         """ submit a silly order and then cancel it
 
         """
-        self.handler.orderId += 1
-        contract = ib.types.Contract(symbol=self.tickers[0][1], secType='STK')
-        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=3.00, orderType='LMT')
-        self.connection.placeOrder(self.handler.orderId, contract, order)
         time.sleep(self.snooze)
-        self.connection.cancelOrder(self.handler.orderId)
+        self.connection.cancelOrder(self.orderInfo[0])
 
 
-    def _demo_g_cancel_some_requests(self):
+    def demo_g_cancel_some_requests(self):
         """ cancel_some_requests() -> stop the market data and market depth feeds
 
         """
@@ -295,7 +298,7 @@ def ids(next):
 
 ## one id generator for connections and another for tickers
 next_connection_id = ids(0).next
-next_tickerId = ids(3000).next
+next_tickerId = ids(4000).next
 
 
 if __name__ == '__main__':

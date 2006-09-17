@@ -681,8 +681,10 @@ class ConnectedWriter(object):
         """
         send = self.send
 
-        if self.serverVersion >= 8 and contract.secType.lower() == BAG_SEC_TYPE:
-            if contract.comboLegs:
+        if self.serverVersion >= 8 and contract.secType.upper() == BAG_SEC_TYPE:
+            if not contract.comboLegs:
+                send(0)
+            else:
                 send(len(contract.comboLegs))
                 for leg in contract.comboLegs:
                     map(send, (leg.conId,
@@ -691,8 +693,6 @@ class ConnectedWriter(object):
                                leg.exchange))
                     if openClose:
                         send(leg.openClose)
-            else:
-                send(0)
 
 
     def register(self, messageType, listener):
