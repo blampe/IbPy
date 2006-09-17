@@ -36,12 +36,12 @@ running.  See the note "What is TWS?" for more information.
 IbPy is used in the same manner as all socket clients supplied by Interactive
 Brokers.  The typical sequence of operations is:
 
-    *  Start the browser-based or stand-alone TWS application
-    *  In TWS, enable socket clients via the Configure -> API menu
-    *  Connect to TWS from external application
-    *  In TWS, accept the incoming connection
-    *  External application requests ticker updates, sends orders, receives
-       account data, portfolio data, etc.
+- Start the browser-based or stand-alone TWS application
+- In TWS, enable socket clients via the Configure -> API menu
+- Connect to TWS from external application
+- In TWS, accept the incoming connection
+- External application requests ticker updates, sends orders, receives
+  account data, portfolio data, etc.
 
 To connect to TWS and interact with the brokers trading system, the Python
 developer defines methods or functions to act as callbacks and associates these
@@ -102,18 +102,20 @@ What is TWS?
 From the page "Trader Execution and Clearing System Features" 
 (http://interactivebrokers.com/html/companyInfo/market_ib.html):
 
-* IB's Trader Workstation can be run directly from your browser, or you can 
-install it on your PC and run it from your desktop. This Java based 
-application allows traders to quickly enter orders and see results.
+- IB's Trader Workstation can be run directly from your browser, or
+  you can install it on your PC and run it from your desktop. This
+  Java based application allows traders to quickly enter orders and
+  see results.
 
-* Direct Access: Unlike other "online" brokers that send your order through 
-an e-mail type system, IB offers a direct-access order entry system that 
-transmits your order to the proper market center, usually within one second of
-entry.
+- Direct Access: Unlike other "online" brokers that send your order
+  through an e-mail type system, IB offers a direct-access order entry
+  system that transmits your order to the proper market center,
+  usually within one second of entry.
 
-* Real-Time Streaming Quotes: Display real-time, streaming quotes for markets 
-of interest to the investor. Quotes are live and change continuously as the 
-markets change, no periodic manual update or "refresh" is required.
+- Real-Time Streaming Quotes: Display real-time, streaming quotes for
+  markets of interest to the investor. Quotes are live and change
+  continuously as the markets change, no periodic manual update or
+  "refresh" is required.
 
 
 What Else?
@@ -122,11 +124,11 @@ IbPy is not a product of Interactive Brokers, nor am I affiliated with IB.  I
 am a satisfied IB customer, of course.
 
 IbPy is installed with distutils.  Refer to the Python distutils documentation
-for more information.  The digest version is:
+for more information.  The digest version is::
 
-    # tar xzf IbPy-0.6.tar.gz
-    # cd IbPy-0.6
-    # python setup.py install
+    $ tar xzf IbPy-0.6.tar.gz
+    $ cd IbPy-0.6
+    $ python setup.py install
 
 The TWS demo system is available here:
 
