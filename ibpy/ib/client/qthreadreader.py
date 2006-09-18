@@ -18,8 +18,8 @@ class QThreadReader(Reader, QThread):
     The connection object starts its reader on demand; neither the client nor 
     the instance should do that.
     """
-    def __init__(self, readers, socket):
-        Reader.__init__(self, readers, socket)
+    def __init__(self, decoders=None):
+        Reader.__init__(self, decoders)
         QThread.__init__(self)
 
 

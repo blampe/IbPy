@@ -1,15 +1,55 @@
 #!/usr/bin/env python
 """ ib.client.reader -> Interactive Brokers socket reader
 
-
+This module plus the messages.py module roughly correspond to the IB
+TWS Java Client EReader.java source.
 """
 from struct import unpack
 
-from ib import lib 
-from ib.client.writer import READER_START, READER_STOP
+from ib import lib
+from ib.client import message
 
 
-## local logger
+## incoming message ids.  reader start and stop message ids are local
+## to this package.
+(
+TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
+PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
+EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
+MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
+SCANNER_PARAMETERS, SCANNER_DATA, TICK_OPTION_COMPUTATION,
+) = range(1, 22)
+
+READER_START, READER_STOP = -2, -1
+
+decoderMap = {
+    TICK_PRICE : message.TickPrice,
+    TICK_SIZE : message.TickSize,
+    ORDER_STATUS : message.OrderStatus,
+    ERR_MSG : message.Error,
+    OPEN_ORDER : message.OpenOrder,
+    ACCT_VALUE : message.AccountValue,
+    PORTFOLIO_VALUE : message.Portfolio,
+    ACCT_UPDATE_TIME : message.AccountTime,
+    NEXT_VALID_ID : message.NextId,
+    CONTRACT_DATA : message.ContractDetails,
+    EXECUTION_DATA : message.Execution,
+    MARKET_DEPTH : message.MarketDepth,
+    MARKET_DEPTH_L2 : message.MarketDepthLevel2,
+    NEWS_BULLETINS : message.NewsBulletin,
+    MANAGED_ACCTS : message.ManagedAccounts,
+    RECEIVE_FA : message.ReceiveFa,
+    HISTORICAL_DATA : message.HistoricalData,
+    BOND_CONTRACT_DATA : message.BondContractData,
+    SCANNER_PARAMETERS : message.ScannerParameters,    
+    SCANNER_DATA : message.ScannerData,
+    TICK_OPTION_COMPUTATION : message.TickOptionComputation,
+
+    READER_START : message.ReaderStart,
+    READER_STOP : message.ReaderStop,
+}
+
+
 logger = lib.logger()
 
 
@@ -20,14 +60,15 @@ class Reader(object):
     Subclasses mix this type in to the appropriate threading library type 
     (e.g., python threading.Thread or Qt QThread)
     """
-    def __init__(self, decoders, socket):
+    def __init__(self, decoders=None):
         object.__init__(self)
         self.active = 0
-        self.decoders = decoders
-        self.socket = socket
-        logger.debug('Created %s with fd %s', self, socket.fileno())
         self.tokens = []
         self.lastValue = ''
+        self.decoders = dict([(id, dcdr()) for id, dcdr in decoderMap.items()])
+        ## this enables the ticker price message handler to call our
+        ## tick size handlder.
+        self.decoders[TICK_PRICE].sizer = self.decoders[TICK_SIZE]
 
 
     def run(self):
@@ -103,8 +144,36 @@ class Reader(object):
         return value
 
 
+    def register(self, messageItem, listener):
+        """ register(listener) -> add callable listener to message receivers
 
-    def __readString(self):
+        """
+        for msgid, decoder in self.decoders.items():
+            if isinstance(decoder, (messageItem, )) or msgid == messageItem:
+                try:
+                    decoder.listeners.index(listener)
+                except (ValueError, ):
+                    decoder.listeners.append(listener)
+
+
+    def deregister(self, messageItem, listener):
+        """ deregister(listener) -> remove listener from message receivers
+
+        """
+        for msgid, decoder in self.decoders.items():
+            if isinstance(decoder, (messageItem, )) or msgid == messageItem:
+                try:
+                    decoder.listeners.remove(listener)
+                except (ValueError, ):
+                    pass
+
+
+class LegacyReader(Reader):
+    """ The class with just the original readString implementation.
+
+    Useful reference implementation.
+    """
+    def readString(self):
         """ legacy readString implementation
 
         """
@@ -122,5 +191,3 @@ class Reader(object):
         read = ''.join(read_bites)
         logger.debug('Socket read bytes %s', read_bites)
         return read
-
-

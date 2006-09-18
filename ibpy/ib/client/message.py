@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 """ ib.client.message -> Interactive Brokers client socket reader.
 
+This module plus the reader.py module roughly correspond to the IB TWS
+Java Client EReader.java source.
+
 These types provide the logic of reading encoded TWS data and turning
 that data into Message objects.  The types inherit the dispatch
 method, which they use to send the Message objects to registered
 listeners.
 """
 from ib import lib
-from ib.types import Contract, ContractDetails, Execution, Order, Tick
+from ib.types import Contract, ContractDetails, Execution, Order, TickType
 
 
 logger = lib.logger()
@@ -685,12 +688,12 @@ class TickPrice(TickBase):
                       canAutoExecute=canAutoExecute)
         if version >= 2:
             sizeTickType = None
-            if tickType == Tick.BID:
-                sizeTickType = Tick.BID_SIZE
-            elif tickType == Tick.ASK:
-                sizeTickType = Tick.ASK_SIZE
-            elif tickType == Tick.LAST:
-                sizeTickType = Tick.LAST_SIZE
+            if tickType == TickType.BID:
+                sizeTickType = TickType.BID_SIZE
+            elif tickType == TickType.ASK:
+                sizeTickType = TickType.ASK_SIZE
+            elif tickType == TickType.LAST:
+                sizeTickType = TickType.LAST_SIZE
 
             if sizeTickType is not None:
                 self.sizer.dispatch(tickerId=tickerId,

@@ -2,7 +2,7 @@
 """ Defines the ScannerSubscription class.
 
 """
-from ib.lib import setattr_mapping, maxint, maxfloat
+from ib.lib import maxint, maxfloat, setattrs
 
 
 class ScannerSubscription(object):
@@ -35,4 +35,4 @@ class ScannerSubscription(object):
                  scannerSettingPairs='',
                  stockTypeFilter='',
                  ):
-        setattr_mapping(self, locals())
+        setattrs(self, locals())

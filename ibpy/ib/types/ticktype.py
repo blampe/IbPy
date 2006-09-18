@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-""" Defines the Tick class.
+""" Defines the TickType class.
 
 """
 
 
-class Tick(object):
-    """ Tick() -> tick type
+class TickType(object):
+    """ TickType() -> tick type
 
     """
     (

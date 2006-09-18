@@ -2,28 +2,36 @@
 """ ib.client -> simple interface for creating IB TWS connections.
 
 """
-from ib.client.writer import ConnectedWriter
+from ib.client.connection import Connection
+from ib.client.writer import DefaultWriter
 from ib.client.threadreader import ThreadingReader
 
 
-def build(clientId=0, readerType=ThreadingReader):
+def build(clientId=0, reader=None, writer=None, socket=None):
     """ build(clientId=0, ...) -> new ib connection with threading reader
 
     """
-    return ConnectedWriter(clientId=clientId, readerType=readerType)
+    if reader is None:
+        reader = ThreadingReader()
+    if writer is None:
+        writer = DefaultWriter()
+    return Connection(clientId=clientId, reader=reader, writer=writer,
+                      socket=socket)
 
 
 try:
     from ib.client.qthreadreader import QThreadReader
 except (ImportError, ), exc:
-    def build_qt(clientId=0, readerType=None):
+    def build_qt(clientId=0, reader=None, writer=None, socket=None):
         """ build_qt(clientId=0, ...) -> QThread not available.
 
         """
         raise exc
 else:
-    def build_qt(clientId=0, readerType=QThreadReader):
+    def build_qt(clientId=0, reader=None, writer=None, socket=None):        
         """ build_qt(clientId=0, ...) -> new ib connection with QThread reader
 
         """
-        return build(clientId=clientId, readerType=readerType)
+        if reader is None:
+            reader = QThreadReader()
+        return build(clientId, reader, writer, socket)

@@ -2,9 +2,7 @@
 """ Defines the Order class.
 
 """
-from ib.lib import setattr_mapping, getattrs, maxint, maxfloat
-
-
+from ib.lib import getattrs, maxint, maxfloat, setattrs
 
 
 class Order(object):
@@ -94,7 +92,7 @@ class Order(object):
                  deltaNeutralOrderType='',
                  deltaNeutralAuxPrice=maxfloat,
                  ):
-        setattr_mapping(self, locals())
+        setattrs(self, locals())
 
 
     def __eq__(self, other):

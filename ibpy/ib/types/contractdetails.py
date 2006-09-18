@@ -2,7 +2,7 @@
 """ Defines the ContracDetails class.
 
 """
-from ib.lib import setattr_mapping
+from ib.lib import setattrs
 
 
 class ContractDetails(object):
@@ -21,7 +21,7 @@ class ContractDetails(object):
                  validExchanges=''):
         if summary is None:
             summary = Contract()
-        setattr_mapping(self, locals())
+        setattrs(self, locals())
 
 
     def __str__(self):

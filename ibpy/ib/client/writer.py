@@ -2,7 +2,6 @@
 """ ib.client.writer -> IB TWS socket connection and message encoder.
 
 """
-from socket import socket, AF_INET, SOCK_STREAM
 from struct import pack
 
 from ib import lib
@@ -30,18 +29,6 @@ REQ_SCANNER_SUBSCRIPTION, CANCEL_SCANNER_SUBSCRIPTION,
 REQ_SCANNER_PARAMETERS, CANCEL_HISTORICAL_DATA,
 ) = range(1, 26)
 
-## incoming message ids.  reader start and stop message ids are local
-## to this package.
-READER_START, READER_STOP = -2, -1
-
-(
-TICK_PRICE, TICK_SIZE, ORDER_STATUS, ERR_MSG, OPEN_ORDER, ACCT_VALUE,
-PORTFOLIO_VALUE, ACCT_UPDATE_TIME, NEXT_VALID_ID, CONTRACT_DATA,
-EXECUTION_DATA, MARKET_DEPTH, MARKET_DEPTH_L2, NEWS_BULLETINS,
-MANAGED_ACCTS, RECEIVE_FA, HISTORICAL_DATA, BOND_CONTRACT_DATA,
-SCANNER_PARAMETERS, SCANNER_DATA, TICK_OPTION_COMPUTATION,
-) = range(1, 22)
-
 ## local error strings
 NO_API_FMT = 'Connected TWS version does not support %s API.'
 NO_SCANNER_API = NO_API_FMT % 'scanner'
@@ -50,100 +37,12 @@ NO_DEPTH_API = NO_API_FMT % 'market depth'
 NO_OPTION_EX_API = NO_API_FMT % 'options exercise'
 NO_FA_API = NO_API_FMT % 'fa'
 
-## local logger
 logger = lib.logger()
 
 
-class ConnectedWriter(object):
-    """ ConnectedWriter(...) -> useful wrapper of a socket for IB
-
-    This type defines methods for requesting ticker data, account data, etc.
-
-    When called to connect, this type constructs a python socket, connects 
-    it to TWS, and if successful, creates and starts a reader object.  The
-    reader object is then responsible for slurping data from the connection 
-    and doing something with it.
-    """
-    readerTypes = {
-        ACCT_VALUE : message.AccountValue,
-        ACCT_UPDATE_TIME : message.AccountTime,
-        CONTRACT_DATA : message.ContractDetails,
-        ERR_MSG : message.Error,
-        EXECUTION_DATA : message.Execution,
-        RECEIVE_FA : message.ReceiveFa,
-        MANAGED_ACCTS : message.ManagedAccounts,
-        MARKET_DEPTH : message.MarketDepth,
-        MARKET_DEPTH_L2 : message.MarketDepthLevel2,
-        NEWS_BULLETINS : message.NewsBulletin,
-        NEXT_VALID_ID : message.NextId,
-        OPEN_ORDER : message.OpenOrder,
-        ORDER_STATUS : message.OrderStatus,
-        PORTFOLIO_VALUE : message.Portfolio,
-        READER_START : message.ReaderStart,
-        READER_STOP : message.ReaderStop,
-        TICK_PRICE : message.TickPrice,
-        TICK_SIZE : message.TickSize,
-        HISTORICAL_DATA : message.HistoricalData,
-        BOND_CONTRACT_DATA : message.BondContractData,
-        SCANNER_PARAMETERS : message.ScannerParameters,
-        SCANNER_DATA : message.ScannerData,
-        TICK_OPTION_COMPUTATION : message.TickOptionComputation,
-    }
-
-
-    def __init__(self, clientId, readerType):
-        self.clientId = clientId
-        self.serverVersion = 0
-        self.readerType = readerType
-        decoderItems = self.readerTypes.items()
-        self.decoders = dict([(id, rdr()) for id, rdr in decoderItems])
-        ## this enables the ticker price message handler to call our
-        ## tick size handlder.
-        self.decoders[TICK_PRICE].sizer = self.decoders[TICK_SIZE]
-
-
-    def connect(self, address, client_version=CLIENT_VERSION):
-        """ connect((host, port)) -> construct a socket and connect it to TWS
-        
-        """
-        debug = logger.debug
-        debug('Creating socket object for %s', self)
-        self.socket = socket(AF_INET, SOCK_STREAM)
-
-        debug('Creating reader of type %s for %s', self.readerType, self)
-        self.reader = self.readerType(self.decoders, self.socket)
-
-        debug('Connecting object %s to address %s', self, address)
-        self.socket.connect(address)
-
-        debug('Sending client version %s', client_version)
-        self.send(client_version)
-
-        debug('Reading server version')
-        self.serverVersion = self.reader.readInteger()
-        logger.info('Read server version %s', self.serverVersion)
-
-        if self.serverVersion>=20:
-            tws_time = self.reader.readString()
-            debug('Received server TwsTime=%s', tws_time)
-
-        if self.serverVersion >= 3:
-            debug('Sending client id %s for object %s', self.clientId, self)
-            self.send(self.clientId)
-
-        debug('Starting reader for object %s', self)
-        self.reader.start()
-
-
-    def disconnect(self):
-        """ disconnect() -> close the socket.
-
-        This causes an exception if the socket is active, but that
-        exception gets caught by the stop reader.
-        """
-        logger.debug('Closing socket on object %s', self)
-        self.socket.close()
-        logger.debug('Socked closed on object %s', self)
+class DefaultWriter(object):
+    def __init__(self, serverVersion=None):
+        self.serverVersion = serverVersion
 
 
     def cancelScannerSubscription(self, tickerId):
@@ -693,28 +592,4 @@ class ConnectedWriter(object):
                                leg.exchange))
                     if openClose:
                         send(leg.openClose)
-
-
-    def register(self, messageType, listener):
-        """ register(listener) -> add callable listener to message receivers
-
-        """
-        for decoder in self.decoders.values():
-            if isinstance(decoder , (messageType, )):
-                if not decoder.listeners.count(listener):
-                    decoder.listeners.append(listener)
-
-
-    def deregister(self, messageType, listener):
-        """ deregister(listener) -> remove listener from message receivers
-
-        """
-        for decoder in self.decoders.values():
-            if isinstance(decoder, (messageType, )):
-                try:
-                    decoder.listeners.remove(listener)
-                except (ValueError, ):
-                    pass
-
-
 

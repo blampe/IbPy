@@ -45,8 +45,8 @@ def getattrs(obj, seq):
         return values
 
 
-def setattr_mapping(obj, mapping):
-    """ setattr_mapping(object, mapping) -> add attributes from mapping to obj
+def setattrs(obj, mapping):
+    """ setattrs(object, mapping) -> add attributes from mapping to obj
 
     """
     del(mapping['self'])

@@ -2,7 +2,7 @@
 """ Defines the ComboLeg class.
 
 """
-from ib.lib import setattr_mapping, getattrs
+from ib.lib import getattrs, setattrs
 
 
 class ComboLeg(object):
@@ -17,7 +17,7 @@ class ComboLeg(object):
                  action='',
                  exchange='',
                  openClose=0):
-        setattr_mapping(self, locals())
+        setattrs(self, locals())
 
 
     def __eq__(self, other):

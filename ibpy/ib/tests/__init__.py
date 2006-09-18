@@ -60,7 +60,7 @@ class ScannerSubscription_Test(unittest.TestCase):
 
 class Tick_Test(unittest.TestCase):
     def setUp(self):
-        self.tick = ib.types.Tick()
+        self.tick = ib.types.TickType()
 
     def test_friendly_strings(self):
         tick = self.tick

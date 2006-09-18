@@ -2,7 +2,7 @@
 """ Defines the Contract class.
 
 """
-from ib.lib import setattr_mapping, getattrs
+from ib.lib import getattrs, setattrs
 
 
 class Contract(object):
@@ -34,7 +34,7 @@ class Contract(object):
                  issueDate=''):
         if comboLegs is None:
             comboLegs = []
-        setattr_mapping(self, locals())
+        setattrs(self, locals())
 
 
     def __str__(self):

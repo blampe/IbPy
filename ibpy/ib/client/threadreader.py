@@ -10,9 +10,9 @@ class ThreadingReader(Thread, Reader):
     """ ThreadingReader(...) -> basic thread reader
 
     """
-    def __init__(self, readers, socket):
+    def __init__(self, decoders=None):
         Thread.__init__(self)
-        Reader.__init__(self, readers, socket)
+        Reader.__init__(self, decoders)
         self.setDaemon(True)
 
 

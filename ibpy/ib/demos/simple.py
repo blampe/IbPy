@@ -266,7 +266,10 @@ class AutomaticDemoApp:
 
         """
         time.sleep(self.snooze)
-        self.connection.cancelOrder(self.orderInfo[0])
+        try:
+            self.connection.cancelOrder(self.orderInfo[0])
+        except (AttributeError, ):
+            pass
 
 
     def demo_g_cancel_some_requests(self):
@@ -307,10 +310,6 @@ if __name__ == '__main__':
     except (NameError, ):
         os.environ['PYTHONINSPECT'] = '1'
 
-    if int(os.environ.get('IBPY_LOGLEVEL', 20)) in range(1, 21):
-        raw_input('Logger will print all messages.  Press enter.')
-    else:
-        SimpleMessageHandler.outstream = sys.stdout
 
     raw_input('Start TWS and login before continuing.  Press enter when ready.')
 

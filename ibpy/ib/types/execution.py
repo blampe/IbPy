@@ -2,7 +2,7 @@
 """ Defines the Execution class.
 
 """
-from ib.lib import setattr_mapping
+from ib.lib import setattrs
 
 #                // Note that the valid format for m_time is "yyyymmdd-hh:mm:ss"
 #
@@ -27,7 +27,7 @@ class Execution(object):
                  price=0.0, 
                  permId=0,
                  liquidation=0):
-        setattr_mapping(self, locals())
+        setattrs(self, locals())
 
 
     def __eq__(self, other):
