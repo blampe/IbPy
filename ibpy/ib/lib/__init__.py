@@ -51,3 +51,14 @@ def setattrs(obj, mapping):
     """
     del(mapping['self'])
     obj.__dict__.update(mapping)
+
+
+class ListenerContainer(object):
+    def __init__(self, preListeners=None, postListeners=None):
+        if preListeners is None:
+            preListeners = []
+        if postListeners is None:
+            postListeners = []
+        self.preListeners = preListeners
+        self.postListeners = postListeners
+                 

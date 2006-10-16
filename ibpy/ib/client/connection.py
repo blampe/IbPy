@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-from socket import AF_INET, SOCK_STREAM
-from socket import socket as sockettype
-
 from ib import lib
 from ib.client.writer import CLIENT_VERSION
 
@@ -19,15 +16,15 @@ class Connection(object):
     reader object is then responsible for slurping data from the connection 
     and doing something with it.
     """
-    def __init__(self, clientId, reader, writer, socket=None):
+    READER, WRITER, PRE, POST = range(4)
+
+    
+    def __init__(self, clientId, reader, writer, socket):
         self.clientId = clientId
         self.reader = reader
         self.writer = writer
-        
-        if socket is None:
-            socket = sockettype(AF_INET, SOCK_STREAM)
-            logger.debug('Created socket object %s for %s', socket, self)
         self.socket = reader.socket = writer.socket = socket
+        logger.debug('Using socket object %s for %s', socket, self)
 
 
     def connect(self, address, clientVersion=CLIENT_VERSION):
@@ -61,14 +58,56 @@ class Connection(object):
 
 
     def disconnect(self):
-        """ disconnect() -> close the socket.
+        """ disconnect() -> close the connection by closing the socket
 
         This causes an exception if the socket is active, but that
         exception gets caught by the stop reader.
+
+        @return None
         """
         logger.debug('Closing socket on object %s', self)
         self.socket.close()
         logger.debug('Socked closed on object %s', self)
+
+
+    def register(self, messageItem, listener, which=READER, when=POST):
+        """ register(...) -> add listner to reader/writer pre/post lists
+
+        @param messageItem message key or message type
+        @param listener callable to invoke with generated messages
+        @keyparam which may be connection.READER or connection.WRITER
+        @keyparam when may be connection.PRE or connection.POST
+        @return None
+        """
+        if which == self.READER:
+            for msgid, decoder in self.reader.decoders.items():
+                if isinstance(decoder, (messageItem, )) or msgid == messageItem:
+                    if when == self.POST:
+                        seq = decoder.postListeners
+                    else:
+                        seq = decoder.preListeners
+                    try:
+                        seq.index(listener)
+                    except (ValueError, ):
+                        seq.append(listener)
+        elif which == self.writer:
+            pass
+
+
+    def deregister(self, listener, messageItem, post=True):
+        """ deregister(listener) -> remove listener from message receivers
+
+        """
+        for msgid, decoder in self.reader.decoders.items():
+            if isinstance(decoder, (messageItem, )) or msgid == messageItem:
+                if post:
+                    seq = decoder.postListeners
+                else:
+                    seq = decoder.preListeners
+                try:
+                    seq.remove(listener)
+                except (ValueError, ):
+                    pass
 
 
     def __getattr__(self, name):
@@ -76,4 +115,4 @@ class Connection(object):
             return getattr(self.writer, name)
         except (AttributeError, ):
             return getattr(self.reader, name)
-        
+

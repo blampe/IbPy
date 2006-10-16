@@ -1,15 +1,10 @@
 #!/usr/bin/env python
-""" Ib.Demo -> a module not unlike a demo, a module not unlike a unittest
+""" ib.demo.simple -> a module not unlike a demo, a module not unlike a unittest
 
-The SimpleMessageHandler and AutomaticDemoApp classes show a simplistic way of
-constructing an application that uses IbPy.  The AutomaticDemoApp class
-constructs an IbPy.Socket connection, a SimpleMessageHandler, and makes the
-association between the two.
-
-These two classes also form a unit test of sorts.  I'm not exactly certain of 
-the best testing approach to take with IbPy and TWS, but this is allows me to
-execute most of the IbPy code and interact with it at the Python prompt. YMMV.
-
+The SimpleMessageHandler and AutomaticDemoApp classes show a
+simplistic way of constructing an application that uses ibpy.  The
+AutomaticDemoApp class makes a connection, a SimpleMessageHandler, and
+makes the association between the two.
 """
 import os
 import sys
@@ -25,98 +20,99 @@ class SimpleMessageHandler:
 
     """
     orderId = 0    
-    outstream = file('ibpy_demo_output.txt', 'w')
-    
-    def connected(self, msg):
-        """ connected(msg) -> executed when IbPy connects to TWS
+    outstream = sys.stdout
+
+
+    def onConnect(self, msg):
+        """ onConnect(msg) -> executed when IbPy connects to TWS
 
         """
         print >> self.outstream, 'connected', msg
 
 
-    def disconnected(self, msg):
-        """ disconnected(msg) -> executed when IbPy disconnects from TWS
+    def onDisconnect(self, msg):
+        """ onDisconnect(msg) -> executed when IbPy disconnects from TWS
 
         """
         print >> self.outstream, 'disconnected', msg
 
 
-    def account_updated(self, msg):
-        """ account_updated(msg) -> called when account values change
+    def onAccountUpdate(self, msg):
+        """ onAccountUpdate(msg) -> called when account values change
 
         """
         print >> self.outstream, 'Account value changed: %s is %s' % (msg.key, msg.value, )
 
 
-    def error(self, msg):
-        """ error(msg) -> called when TWS reports an error
+    def onError(self, msg):
+        """ onError(msg) -> called when TWS reports an error
 
         """
         err = (msg.error_id, msg.error_code, msg.error_msg, )
         print >> self.outstream, 'An Error from TWS: %s %s %s' % err
 
 
-    def ticker_updated(self, msg):
-        """ ticker_updated(msg) -> called when ticker price or size data has changed
+    def onTickerUpdate(self, msg):
+        """ onTickerUpdate(msg) -> called when ticker price or size data has changed
 
         """
         print >> self.outstream, msg
 
 
-    def next_orderId(self, msg):
-        """ next_orderId(msg) -> called to tell us the first usable order id
+    def onNextOrderId(self, msg):
+        """ onNextOrderId(msg) -> called to tell us the first usable order id
 
         """
         self.orderId = msg.nextValidId
         print >> self.outstream, msg
 
 
-    def order_status(self, msg):
-        """ order_status(msg) -> called when order status has changed
+    def onOrderStatus(self, msg):
+        """ onOrderStatus(msg) -> called when order status has changed
 
         """
         ordinfo = (msg.orderId, msg.message, )
         print >> self.outstream, 'Order status changed:  order id %s, status %s' % ordinfo
 
 
-    def open_order(self, msg):
-        """ open_order(msg) -> called for every existing order
+    def onOpenOrder(self, msg):
+        """ onOpenOrder(msg) -> called for every existing order
 
         """
 
 
-    def contract_details(self, msg):
-        """ contract_details(msg) -> called with details on a contract
+    def onContractDetails(self, msg):
+        """ onContractDetails(msg) -> called with details on a contract
 
         """
         print >> self.outstream, msg
 
 
-    def managed_accounts(self, msg):
-        """ managed_accounts(msg) -> called with a list of accounts manage
+    def onManagedAccounts(self, msg):
+        """ onManagedAccounts(msg) -> called with a list of accounts manage
 
         """
 
 
-    def news_bulletin(self, msg):
-        """ news_bulletin(msg) -> called when there is news!
+    def onNewsBulletin(self, msg):
+        """ onNewsBulletin(msg) -> called when there is news!
 
         """
 
 
-    def exec_details(self, msg):
-        """ exec_details(msg) -> called with execution details
+    def onExecutionDetails(self, msg):
+        """ onExecutionDetails(msg) -> called with execution details
 
         """
 
 
-    def portfolio_updated(self, msg):
-        """ portfolio_updated(msg) -> called when the portfolio has changed
+    def onPortfolioUpdate(self, msg):
+        """ onPortfolioUpdate(msg) -> called when the portfolio has changed
 
         """
 
 
-    def historical_data(self, msg):
+    def onHistoricalData(self, msg):
         print >> self.outstream, msg
 
 
@@ -124,54 +120,67 @@ class AutomaticDemoApp:
     """ AutomaticDemoApp() -> something not unlike a demonstration.
 
     """
-    def __init__(self, dsn=('localhost', 7496), log_level=3, snooze=3):
-        self.log_level = log_level
-        self.snooze = snooze
-        self.tickers = [
-            (next_tickerId(), 'DELL'),
-            (next_tickerId(), 'APPL'),
-            (next_tickerId(), 'INTC'),            
-        ]
+    snooze = 3
+    serverLogLevel = 3
+    tickers = dict(DELL=4000, AAPL=4001, INTC=4002)
 
+
+    def __init__(self, dsn=('localhost', 7496)):
+
+        ## first thing we do is create a new connection object
         self.connection = ib.client.build(next_connection_id())
-        self.build_handler()
+
+        ## next we create something to handle the messages read from
+        ## the connection.  this could be more than one class, a
+        ## collection of functions, thread methods, etc.  in this
+        ## example we're using a single class instance to process all
+        ## of the incoming messages.
+        self.handler = handler = SimpleMessageHandler()
+
+        ## here we associate the connection with our handler instance.
+        ## again, these could be multiple functions, instance methods,
+        ## or any other callable types instead.
+        register = self.connection.register
+        message = ib.client.message
+
+        register(message.ContractDetails, handler.onContractDetails)
+        register(message.Error, handler.onError)
+        register(message.Execution, handler.onExecutionDetails)
+        register(message.ManagedAccounts, handler.onManagedAccounts)
+        register(message.NextId, handler.onNextOrderId)
+        register(message.NewsBulletin, handler.onNewsBulletin)
+        register(message.OpenOrder, handler.onOpenOrder)
+        register(message.OrderStatus, handler.onOrderStatus)
+        register(message.Portfolio, handler.onPortfolioUpdate)
+        register(message.ReaderStart, handler.onConnect)
+        register(message.ReaderStop, handler.onDisconnect)
+        register(message.HistoricalData, handler.onHistoricalData)
+
+        ## there is more than one type of account update message, and
+        ## more than one type of ticker message.  here we associate
+        ## all types with their respective handlers by refering to the
+        ## generated message's base class.
+        register(message.AccountBase, handler.onAccountUpdate)
+        register(message.TickBase, handler.onTickerUpdate)
+
+        ## now that the connection is associated with our callables,
+        ## we can connect the connection object to tws.
         self.connection.connect(dsn)
 
-        ## get and execute all the demo methods
-        funcs = [getattr(self, n) for n in dir(self) if n.startswith('demo_')]
+        ## and because we're automatic, we can go ahead and run all of
+        ## instance methods on this class that start with 'demo'.
+        funcs = [getattr(self, n) for n in dir(self) if n.startswith('demo')]
         funcs.sort()
         for func in funcs:
             func()
 
 
-    def build_handler(self):
-        """ build_handler(conn) -> create a handler and register its methods
-
-        """
-        handler = self.handler = SimpleMessageHandler()
-        register = self.connection.register
-
-        register(ib.client.message.AccountBase, handler.account_updated)
-        register(ib.client.message.ContractDetails, handler.contract_details)
-        register(ib.client.message.Error, handler.error)
-        register(ib.client.message.Execution, handler.exec_details)
-        register(ib.client.message.ManagedAccounts, handler.managed_accounts)
-        register(ib.client.message.NextId, handler.next_orderId)
-        register(ib.client.message.NewsBulletin, handler.news_bulletin)
-        register(ib.client.message.OpenOrder, handler.open_order)
-        register(ib.client.message.OrderStatus, handler.order_status)
-        register(ib.client.message.Portfolio, handler.portfolio_updated)
-        register(ib.client.message.ReaderStart, handler.connected)
-        register(ib.client.message.ReaderStop, handler.disconnected)
-        register(ib.client.message.TickBase, handler.ticker_updated)
-        register(ib.client.message.HistoricalData, handler.historical_data)
-        
-    def demo_b_request(self):
+    def demo000_MakeRequests(self):
         """ make requests for account data, ticker data, etc.
 
         """
         connection = self.connection
-        connection.setServerLogLevel(self.log_level)
+        connection.setServerLogLevel(self.serverLogLevel)
         connection.reqAccountUpdates()
         connection.reqOpenOrders()
         connection.reqAllOpenOrders()
@@ -182,17 +191,16 @@ class AutomaticDemoApp:
         #exec_filter = ib.types.ExecutionFilter(secType='FUT')
         #connection.reqExecutions(exec_filter)
     
-        for tickerId, symbol in self.tickers:
-            contract = ib.types.Contract(symbol=symbol,
+        for tickerSym, tickerId in self.tickers.items():
+            contract = ib.types.Contract(symbol=tickerSym,
                                          secType='STK',
                                          exchange="SMART",
                                          currency='USD')
-                                         
             connection.reqMktData(tickerId, contract)
             connection.reqMktDepth(tickerId, contract)
 
 
-    def demo_c_order(self):
+    def demo100_SubmitOrders(self):
         """ submit an order for some stock
 
         """
@@ -200,7 +208,7 @@ class AutomaticDemoApp:
         time.sleep(self.snooze)
 
         self.handler.orderId += 1
-        contract = ib.types.Contract(symbol=self.tickers[0][1],
+        contract = ib.types.Contract(symbol=self.tickers.keys()[0],
                                      secType='STK',
                                      exchange="SMART",
                                      currency='USD',
@@ -214,7 +222,34 @@ class AutomaticDemoApp:
         self.connection.placeOrder(self.handler.orderId, contract, order)
 
 
-    def demo_d_contract(self):
+    def demo101_SubmitOrdersWithComboLegs(self):
+        """ submit an order for a futures contract with multiple combo legs
+
+        """
+        es_id = self.es_id
+        cleg = ib.types.ComboLeg
+        legs = [
+            cleg(es_id, ratio=1, action='BUY', exchange='GLOBEX', openClose=0),
+            cleg(es_id, ratio=2, action='BUY', exchange='GLOBEX', openClose=1),
+            cleg(es_id, ratio=3, action='SELL', exchange='GLOBEX', openClose=2),
+        ]
+        self.handler.orderId += 1
+        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=1200, orderType="LMT")
+        self.connection.placeOrder(self.handler.orderId, self.es_contract, order)
+
+
+    def demo102_CancelOrder(self):
+        """ submit a silly order and then cancel it
+
+        """
+        time.sleep(self.snooze)
+        try:
+            self.connection.cancelOrder(self.orderInfo[0])
+        except (AttributeError, ):
+            pass
+
+
+    def demo200_RequestContractDetails(self):
         """ request market data and market details for a futures contract
 
         """
@@ -227,7 +262,7 @@ class AutomaticDemoApp:
         self.connection.reqContractDetails(contract)
 
 
-    def demo_d_historicaldata(self):
+    def demo201_RequestHistoricalData(self):
         """ request historical market data
 
         """
@@ -245,51 +280,17 @@ class AutomaticDemoApp:
                                           2)
 
 
-    def demo_e_comboLegs(self):
-        """ submit an order for a futures contract with multiple combo legs
-
-        """
-        es_id = self.es_id
-        cleg = ib.types.ComboLeg
-        legs = [
-            cleg(es_id, ratio=1, action='BUY', exchange='GLOBEX', openClose=0),
-            cleg(es_id, ratio=2, action='BUY', exchange='GLOBEX', openClose=1),
-            cleg(es_id, ratio=3, action='SELL', exchange='GLOBEX', openClose=2),
-        ]
-        self.handler.orderId += 1
-        order = ib.types.Order(orderId=self.handler.orderId, totalQuantity=1, lmtPrice=1200, orderType="LMT")
-        self.connection.placeOrder(self.handler.orderId, self.es_contract, order)
-
-
-    def demo_f_cancelled_order(self):
-        """ submit a silly order and then cancel it
-
-        """
-        time.sleep(self.snooze)
-        try:
-            self.connection.cancelOrder(self.orderInfo[0])
-        except (AttributeError, ):
-            pass
-
-
-    def demo_g_cancel_some_requests(self):
-        """ cancel_some_requests() -> stop the market data and market depth feeds
+    def demo202_CancelMarketData(self):
+        """ 
 
         """
         connection = self.connection
 
-        for tickerId, symbol in self.tickers:
+        for tickerSym, tickerId in self.tickers.items():
             connection.cancelMktData(tickerId)
             connection.cancelMktDepth(tickerId)
 
         connection.cancelNewsBulletins()
-
-
-    def disconnect(self):
-        """ disconnect() -> tell the socket to disconnect
-
-        """
-        self.connection.disconnect()
 
 
 def ids(next):
@@ -301,7 +302,7 @@ def ids(next):
 
 ## one id generator for connections and another for tickers
 next_connection_id = ids(0).next
-next_tickerId = ids(4000).next
+next_tickerId = ids(5000).next
 
 
 if __name__ == '__main__':
@@ -309,9 +310,6 @@ if __name__ == '__main__':
         __IP
     except (NameError, ):
         os.environ['PYTHONINSPECT'] = '1'
-
-
     raw_input('Start TWS and login before continuing.  Press enter when ready.')
-
-    ## see?  it runs by itself.
     demo = AutomaticDemoApp()
+n

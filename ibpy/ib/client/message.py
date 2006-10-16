@@ -8,6 +8,10 @@ These types provide the logic of reading encoded TWS data and turning
 that data into Message objects.  The types inherit the dispatch
 method, which they use to send the Message objects to registered
 listeners.
+
+The message decoder dispatches its own messages after the message is
+decoded from the socket.  This behavior will be expanded to include
+message dispatch prior to the socket read.  See ticket #4.
 """
 from ib import lib
 from ib.types import Contract, ContractDetails, Execution, Order, TickType
@@ -16,7 +20,7 @@ from ib.types import Contract, ContractDetails, Execution, Order, TickType
 logger = lib.logger()
 
 
-class MessageDecoder(object):
+class MessageDecoder(lib.ListenerContainer):
     """ MessageDecoder() -> base class for socket decoders
 
     Subtypes encapsulate the logic of reading values from a socket
@@ -24,21 +28,25 @@ class MessageDecoder(object):
     they generate Message objects and send them to registered
     listeners via the dispatch method.
     """
-    def __init__(self, listeners=None):
-        if listeners is None:
-            listeners = []
-        self.listeners = listeners
-
-
     def __str__(self):
         return self.__class__.__name__
 
 
-    def dispatch(self, **kwds):
-        """ dispatch(**kwds) -> send a new Message instance to listeners
+    def preDispatch(self):
+        msg = 'PreRead-%s' % (self, )
+        for listener in self.preListeners:
+            try:
+                log('%s%s' % ('    ', msg, ))
+                listener(msg)
+            except (Exception, ), ex:
+                logger.error(str(ex))
+
+
+    def postDispatch(self, **kwds):
+        """ postDispatch(**kwds) -> send a new Message instance to listeners
 
         """
-        for listener in self.listeners:
+        for listener in self.postListeners:
             try:
                 msg = self.message(**kwds)
                 if isinstance(msg, Error.message):
@@ -90,10 +98,12 @@ class AccountValue(AccountBase):
     msg.currency - currency type
     msg.accountName - guess!
     """
+
     def read(self, readInt, readFloat, readStr):
         """ read(...) -> read an account value message
 
         """
+        self.preDispatch()
         version = readInt()
         key = readStr()
         value = readStr()
@@ -103,7 +113,7 @@ class AccountValue(AccountBase):
         if version >= 2:
             accountName = readStr()
 
-        self.dispatch(key=key,
+        self.postDispatch(key=key,
                       value=value,
                       currency=currency,
                       accountName=accountName)
@@ -122,9 +132,10 @@ class AccountTime(AccountBase):
         """ read(...) -> read an account update time message
 
         """
+        self.preDispatch()        
         version = readInt()
         timeStamp = readStr()
-        self.dispatch(key='TimeStamp',
+        self.postDispatch(key='TimeStamp',
                       value=timeStamp,
                       currency='',
                       accountName='')
@@ -145,6 +156,7 @@ class ContractDetails(MessageDecoder):
         """ read(...) -> read a contract details message
 
         """
+        self.preDispatch()        
         details = ContractDetails()
 
         version = readInt()
@@ -165,7 +177,7 @@ class ContractDetails(MessageDecoder):
         details.validExchanges = readStr()
         if version >= 2:
             details.priceMagnifier = readInt()            
-        self.dispatch(details=details)
+        self.postDispatch(details=details)
 
 
 class Error(MessageDecoder):
@@ -185,6 +197,7 @@ class Error(MessageDecoder):
         """ read(...) -> read an error message
 
         """
+        self.preDispatch()        
         version = readInt()
 
         if version < 2:
@@ -195,7 +208,7 @@ class Error(MessageDecoder):
             error_code = readInt()
             error_msg = readStr()
 
-        self.dispatch(error_id=error_id, 
+        self.postDispatch(error_id=error_id, 
                       error_code=error_code, 
                       error_msg=error_msg)
 
@@ -217,6 +230,7 @@ class Execution(MessageDecoder):
         """ read(...) -> read an execution details message
 
         """
+        self.preDispatch()        
         version = readInt()
         orderId = readInt()        
 
@@ -246,7 +260,7 @@ class Execution(MessageDecoder):
         if version >= 4:
             details.liquidation = readInt()
 
-        self.dispatch(orderId=orderId,
+        self.postDispatch(orderId=orderId,
                       contract=contract,
                       details=details)
 
@@ -263,9 +277,10 @@ class ManagedAccounts(MessageDecoder):
         """ read(...) -> read a managed accounts message
 
         """
+        self.preDispatch()        
         version = readInt()
         accounts = readStr()
-        self.dispatch(accounts=accounts)
+        self.postDispatch(accounts=accounts)
 
 
 class MarketDepth(MessageDecoder):
@@ -295,6 +310,7 @@ class MarketDepth(MessageDecoder):
         """ read(...) -> read a market depth message
 
         """
+        self.preDispatch()        
         version = readInt()
         tickerId = readInt()
         position = readInt()
@@ -303,7 +319,7 @@ class MarketDepth(MessageDecoder):
         price = readFloat()
         size = readInt()
 
-        self.dispatch(tickerId=tickerId,
+        self.postDispatch(tickerId=tickerId,
                       position=position,
                       operation=operation,
                       side=side,
@@ -339,6 +355,7 @@ class MarketDepthLevel2(MessageDecoder):
         """ read(...) -> read a market depth level 2 message
 
         """
+        self.preDispatch()        
         version = readInt()
         tickerId = readInt()
         position = readInt()
@@ -348,7 +365,7 @@ class MarketDepthLevel2(MessageDecoder):
         price = readFloat()
         size = readInt()
 
-        self.dispatch(tickerId=tickerId,
+        self.postDispatch(tickerId=tickerId,
                       position=position,
                       market_maker=market_maker,
                       operation=operation, 
@@ -372,9 +389,10 @@ class NextId(MessageDecoder):
         """ read(...) -> read a next order id message
 
         """
+        self.preDispatch()        
         version = readInt()
         nextValidId = readInt()
-        self.dispatch(nextValidId=nextValidId)
+        self.postDispatch(nextValidId=nextValidId)
 
 
 class OpenOrder(MessageDecoder):
@@ -394,6 +412,7 @@ class OpenOrder(MessageDecoder):
         """ read(...) -> read an open order message
 
         """
+        self.preDispatch()        
         version = readInt()        
 
         order = Order()        
@@ -491,7 +510,7 @@ class OpenOrder(MessageDecoder):
             
             order.referencePriceType = readInt()
             
-        self.dispatch(orderId=order.orderId, 
+        self.postDispatch(orderId=order.orderId, 
                       contract=contract, 
                       order=order)
 
@@ -520,6 +539,7 @@ class OrderStatus(MessageDecoder):
         """ read(...) -> read an order status message
 
         """
+        self.preDispatch()        
         version = readInt()
         orderId = readInt()
         message = readStr()
@@ -543,7 +563,7 @@ class OrderStatus(MessageDecoder):
         if version >= 5:
             clientId = readInt()
 
-        self.dispatch(orderId=orderId,
+        self.postDispatch(orderId=orderId,
                       message=message,
                       filled=filled,
                       remaining=remaining,
@@ -574,6 +594,7 @@ class Portfolio(MessageDecoder):
         """ read(...) -> read a portfolio update message
 
         """
+        self.preDispatch()        
         contract = Contract()
 
         version = readInt()
@@ -601,7 +622,7 @@ class Portfolio(MessageDecoder):
         if version >= 4:
             accountName = readStr()
 
-        self.dispatch(contract=contract,
+        self.postDispatch(contract=contract,
                       position=position,
                       market_price=market_price,
                       market_value=market_value,
@@ -672,6 +693,7 @@ class TickPrice(TickBase):
         """ read(...) -> read a ticker price message
 
         """
+        self.preDispatch()        
         version = readInt()
         tickerId = readInt()
         tickType = readInt()
@@ -682,7 +704,7 @@ class TickPrice(TickBase):
         canAutoExecute = 0
         if version >= 3:
             canAutoExecute = readInt()
-        self.dispatch(tickerId=tickerId,
+        self.postDispatch(tickerId=tickerId,
                       field=tickType,
                       value=price,
                       canAutoExecute=canAutoExecute)
@@ -696,7 +718,8 @@ class TickPrice(TickBase):
                 sizeTickType = TickType.LAST_SIZE
 
             if sizeTickType is not None:
-                self.sizer.dispatch(tickerId=tickerId,
+                self.sizer.preDispatch()
+                self.sizer.postDispatch(tickerId=tickerId,
                                     field=sizeTickType,
                                     value=size)
 
@@ -714,11 +737,12 @@ class TickSize(TickBase):
         """ read(...) -> read a ticker size message
 
         """
+        self.preDispatch()        
         version = readInt()
         tickerId = readInt()
         tickType = readInt()
         size = readInt()
-        self.dispatch(tickerId=tickerId,
+        self.postDispatch(tickerId=tickerId,
                       field=tickType,
                       value=size)
 
@@ -735,6 +759,7 @@ class TickOptionComputation(MessageDecoder):
         """ read(...) -> read a ticker size message
 
         """
+        self.preDispatch()        
         version = readInt()
         tickerId = readInt()
         tickType = readInt()
@@ -744,7 +769,7 @@ class TickOptionComputation(MessageDecoder):
         delta = readFloat()
         if abs(delta) > 1:
             delta = ''
-        self.dispatch(tickerId=tickerId,
+        self.postDispatch(tickerId=tickerId,
                       field=tickType,
                       impliedVol=impliedVol,
                       delta=delta)
@@ -762,13 +787,14 @@ class NewsBulletin(MessageDecoder):
         """ read(...) -> read a news bulletin message
 
         """
+        self.preDispatch()        
         version = readInt()
         news_id = readInt()
         news_type = readInt()
         news_message = readStr()
         news_exchange = readStr()
 
-        self.dispatch(news_id=news_id,
+        self.postDispatch(news_id=news_id,
                       news_type=news_type,
                       news_message=news_message,
                       news_exchange=news_exchange)
@@ -786,11 +812,12 @@ class ReceiveFa(MessageDecoder):
         """ read(...) -> read a type of message
 
         """
+        self.preDispatch()        
         version = readInt()
         data_type = readInt()
         xml = readStr()
         
-        self.dispatch(data_type=data_type,
+        self.postDispatch(data_type=data_type,
                       xml=xml)
 
 
@@ -806,6 +833,7 @@ class HistoricalData(MessageDecoder):
         """ read(...) -> read a type of message
 
         """
+        self.preDispatch()        
         version = readInt()
         tickerId = readInt()
         nitems = readInt()
@@ -815,7 +843,7 @@ class HistoricalData(MessageDecoder):
             row=[readStr(), readFloat(), readFloat(), readFloat(), readFloat(),
                  readInt(), readFloat(), readStr().lower()=='true']
             rows.append(row)
-        self.dispatch(version=version, tickerId=tickerId, rows=rows)
+        self.postDispatch(version=version, tickerId=tickerId, rows=rows)
 
 
 class BondContractData(MessageDecoder):
@@ -830,6 +858,7 @@ class BondContractData(MessageDecoder):
         """ read(...) -> read a type of message
 
         """
+        self.preDispatch()        
         details = ContractDetails()
 
         version = readInt()
@@ -854,7 +883,7 @@ class BondContractData(MessageDecoder):
         details.minTick = readFloat()
         details.orderTypes = readStr()
         details.validExchanges = readStr()
-        self.dispatch(details=details)
+        self.postDispatch(details=details)
 
 
 class ScannerParameters(MessageDecoder):
@@ -869,9 +898,10 @@ class ScannerParameters(MessageDecoder):
         """ read(...) -> read a type of message
 
         """
+        self.preDispatch()        
         version = readInt()
         xml = readStr()
-        self.dispatch(xml=xml)
+        self.postDispatch(xml=xml)
 
 
 class ScannerData(MessageDecoder):
@@ -886,6 +916,7 @@ class ScannerData(MessageDecoder):
         """ read(...) -> read a type of message
 
         """
+        self.preDispatch()        
         version = readInt()
         tickerId = readInt()
         elementCount = readInt()
@@ -911,4 +942,4 @@ class ScannerData(MessageDecoder):
             rows.append(dict(rank=rank, contract=contract, distance=distance,
                              benchmark=benchmark, projection=projection))
 
-        self.dispatch(tickerId=tickerId, rows=rows)
+        self.postDispatch(tickerId=tickerId, rows=rows)

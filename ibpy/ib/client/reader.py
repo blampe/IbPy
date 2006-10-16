@@ -75,12 +75,13 @@ class Reader(object):
         """ run() -> read socket data encoded by TWS 
 
         """
+        decoders = self.decoders        
+        decoders[READER_START].preDispatch()        
         logger.debug('Begin %s', self)
         ri, rf, rs = self.readInteger, self.readFloat, self.readString
-        decoders = self.decoders
-        decoders[READER_START].dispatch()
         self.active = 1
-
+        decoders[READER_START].postDispatch()
+        
         while self.active:
             try:
                 msgId = ri()
@@ -94,13 +95,15 @@ class Reader(object):
                     log = logger.info
 
                 log(reader)
+                ## reader dispatches it's own messages
                 reader.read(ri, rf, rs)
 
             except (Exception, ), ex:
+                decoders[READER_STOP].preDispatch()
                 self.active = 0
                 msg = 'Reading stopped on Exception %s during message dispatch'
                 logger.error(msg, ex)
-                decoders[READER_STOP].dispatch(exception='%s' % (ex, ))
+                decoders[READER_STOP].postDispatch(exception='%s' % (ex, ))
 
 
     def readInteger(self):
@@ -142,30 +145,6 @@ class Reader(object):
                 break
         value = tokens.pop(0)
         return value
-
-
-    def register(self, messageItem, listener):
-        """ register(listener) -> add callable listener to message receivers
-
-        """
-        for msgid, decoder in self.decoders.items():
-            if isinstance(decoder, (messageItem, )) or msgid == messageItem:
-                try:
-                    decoder.listeners.index(listener)
-                except (ValueError, ):
-                    decoder.listeners.append(listener)
-
-
-    def deregister(self, messageItem, listener):
-        """ deregister(listener) -> remove listener from message receivers
-
-        """
-        for msgid, decoder in self.decoders.items():
-            if isinstance(decoder, (messageItem, )) or msgid == messageItem:
-                try:
-                    decoder.listeners.remove(listener)
-                except (ValueError, ):
-                    pass
 
 
 class LegacyReader(Reader):

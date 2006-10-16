@@ -2,10 +2,12 @@
 """ ib.client.writer -> IB TWS socket connection and message encoder.
 
 """
+from operator import lt
 from struct import pack
+from sys import _getframe
 
 from ib import lib
-from ib.client import message
+from ib.client import message, support
 from ib.types import ExecutionFilter
 
 
@@ -40,41 +42,43 @@ NO_FA_API = NO_API_FMT % 'fa'
 logger = lib.logger()
 
 
-class DefaultWriter(object):
-    def __init__(self, serverVersion=None):
+class DefaultWriter(lib.ListenerContainer):
+
+    def __init__(self, preListeners=None, postListeners=None,
+                 serverVersion=None):
+        lib.ListenerContainer.__init__(self, preListeners, postListeners)
         self.serverVersion = serverVersion
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)
+    @support.notifyEnclosure(CANCEL_SCANNER_SUBSCRIPTION)
     def cancelScannerSubscription(self, tickerId):
         """ cancelScannerSubscription(tickerId) -> cancel scanner subscription
 
         """
-        if self.serverVersion < 24:
-            logger.error(NO_SCANNER_API)
-            return
         version = 1
         map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, version, tickerId))
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)    
+    @support.notifyEnclosure(REQ_SCANNER_PARAMETERS)
     def reqScannerParameters(self):
         """ reqScannerParameters() -> request scanner parameters
 
         """
-        if self.serverVersion < 24:
-            logger.error(NO_SCANNER_API)            
-            return
         version = 1
         map(self.send, (REQ_SCANNER_PARAMETERS, version))
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)    
+    @support.notifyEnclosure(REQ_SCANNER_SUBSCRIPTION)
     def reqScannerSubscription(self, tickerId, subscription):
         """ reqScannerSubscription(subscription) -> request scanner subscription
 
         """
-        if self.serverVersion < 24:
-            logger.error(NO_SCANNER_API)
-            return
-
         version = 3
         send = self.send
         sendMax = self.sendMax
@@ -108,14 +112,14 @@ class DefaultWriter(object):
             send(subscription.stockTypeFilter)
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_MKT_DATA)
     def reqMktData(self, tickerId, contract):
         """ reqMktData(tickerId, contract) -> request market data
 
         The tickerId value will be used by the broker to refer to the
         market instrument in subsequent communication.
         """
-        logger.debug('Requesting market data for ticker %s %s',
-                     tickerId, contract.symbol)
         send = self.send
         serverVersion = self.serverVersion
         
@@ -140,32 +144,28 @@ class DefaultWriter(object):
             send(contract.localSymbol)
 
         self.sendComboLegs(contract, openClose=False)
-        msg = 'Market data request for ticker %s %s sent'
-        logger.debug(msg, tickerId, contract.symbol)
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)    
+    @support.notifyEnclosure(CANCEL_HISTORICAL_DATA)
     def cancelHistoricalData(self, tickerId):
         """ cancelHistoricalData(tickerId) ->
 
         """
-        if self.serverVersion < 24:
-            logger.error(NO_SCANNER_API)
-            return
         version = 1
         map(self.send, (CANCEL_HISTORICAL_DATA, version, tickerId))
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 16, 'Server version mismatch.')
+    @support.notifyEnclosure(REQ_HISTORICAL_DATA)
     def reqHistoricalData(self, tickerId, contract, endDateTime,
                          durationStr, barSizeSetting, whatToShow,
                          useRTH, formatDate):
         """ reqHistoricalData(...) -> request historical data
 
         """
-        print '!!!!!!!!!'        
-        if self.serverVersion < 16:
-            logger.warning('Server version mismatch.')
-            return
-
         serverVersion = self.serverVersion
         send = self.send
         version = 3
@@ -190,16 +190,16 @@ class DefaultWriter(object):
         self.sendComboLegs(contract, openClose=False)
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 4, NO_CONTRACT_API)
+    @support.notifyEnclosure(REQ_CONTRACT_DATA)
     def reqContractDetails(self, contract):
         """ reqContractDetails(contract) -> request contract details
 
         """
         serverVersion = self.serverVersion
-        if serverVersion < 4:
-            logger.warning(NO_CONTRACT_API)
-            return
-
         send = self.send
+
         version = 2
         data = (REQ_CONTRACT_DATA, 
                 version, 
@@ -219,16 +219,16 @@ class DefaultWriter(object):
         map(send, data)        
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 6, NO_DEPTH_API)
+    @support.notifyEnclosure(REQ_MKT_DEPTH)
     def reqMktDepth(self, tickerId, contract, numRows=1):
         """ reqMktDepth(tickerId, contract) -> request market depth
 
         """
         serverVersion = self.serverVersion
-        if serverVersion < 6:
-            logger.warning(NO_DEPTH_API)
-            return
-
         send = self.send        
+
         version = 3
         data = (REQ_MKT_DEPTH,
                 version,
@@ -252,6 +252,8 @@ class DefaultWriter(object):
             send(numRows)
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(CANCEL_MKT_DATA)
     def cancelMktData(self, tickerId):
         """ cancelMktData(tickerId) -> cancel market data
 
@@ -260,26 +262,25 @@ class DefaultWriter(object):
         map(self.send, (CANCEL_MKT_DATA, version, tickerId))
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 6, NO_DEPTH_API)
+    @support.notifyEnclosure(CANCEL_MKT_DEPTH)
     def cancelMktDepth(self, tickerId):
         """ cancelMktDepth(tickerId) -> cancel market depth
 
         """
-        if self.serverVersion < 6:
-            logger.warning(NO_DEPTH_API)                      
-            return
-        
         version = 1
         map(self.send, (CANCEL_MKT_DEPTH, version, tickerId))
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 21, NO_OPTION_EX_API)
+    @support.notifyEnclosure(EXERCISE_OPTIONS)
     def exerciseOptions(self, tickerId, contract, exerciseAction,
                         exerciseQuantity, account, override):
         """ exerciseOptions(...) -> exercise options
 
         """
-        if self.serverVersion < 21:
-            logger.error(NO_OPTION_EX_API)
-            return
         version = 1
         map(self.send, (EXERCISE_OPTIONS,
                         version,
@@ -298,14 +299,13 @@ class DefaultWriter(object):
                         account,
                         override))
 
-    # @onlyConnected
-    # @requireServerVersion
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(PLACE_ORDER)
     def placeOrder(self, orderId, contract, order):
         """ placeOrder(orderId, contract, order) -> place an order
 
         """
-        print '#####'
         serverVersion = self.serverVersion
         send = self.send
         sendMax = self.sendMax
@@ -422,6 +422,8 @@ class DefaultWriter(object):
             sendMax(order.referencePriceType)
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_ACCOUNT_DATA)
     def reqAccountUpdates(self, subscribe=1, acctCode=''):
         """ reqAccountUpdates() -> request account data updates
 
@@ -434,6 +436,8 @@ class DefaultWriter(object):
             send(acctCode)
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_EXECUTIONS)
     def reqExecutions(self, executionFilter=None):
         """ reqExecutions() -> request order execution data
 
@@ -457,6 +461,8 @@ class DefaultWriter(object):
                        executionFilter.side))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(CANCEL_ORDER)
     def cancelOrder(self, orderId):
         """ cancelOrder(orderId) -> cancel order specified by orderId
 
@@ -465,6 +471,8 @@ class DefaultWriter(object):
         map(self.send, (CANCEL_ORDER, version, orderId))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_OPEN_ORDERS)
     def reqOpenOrders(self):
         """ reqOpenOrders() -> request order data
 
@@ -473,6 +481,8 @@ class DefaultWriter(object):
         map(self.send, (REQ_OPEN_ORDERS, version))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_IDS)
     def reqIds(self, numIds):
         """ reqIds() -> request ids
 
@@ -481,6 +491,8 @@ class DefaultWriter(object):
         map(self.send, (REQ_IDS, version, numIds))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_NEWS_BULLETINS)
     def reqNewsBulletins(self, all=True):
         """ reqNewsBulletins(all=True) -> request news bulletin updates
 
@@ -489,6 +501,8 @@ class DefaultWriter(object):
         map(self.send, (REQ_NEWS_BULLETINS, version, int(all)))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(CANCEL_NEWS_BULLETINS)
     def cancelNewsBulletins(self):
         """ cancelNewsBulletins() -> cancel news bulletin updates
 
@@ -497,6 +511,8 @@ class DefaultWriter(object):
         map(self.send, (CANCEL_NEWS_BULLETINS, version))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(SET_SERVER_LOGLEVEL)
     def setServerLogLevel(self, logLevel):
         """ setServerLogLevel(logLevel=[1..4]) -> set the server log verbosity
 
@@ -505,6 +521,8 @@ class DefaultWriter(object):
         map(self.send, (SET_SERVER_LOGLEVEL, version, logLevel))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_AUTO_OPEN_ORDERS)
     def reqAutoOpenOrders(self, autoBind=True):
         """ reqAutoOpenOrders() -> request auto open orders
 
@@ -513,6 +531,8 @@ class DefaultWriter(object):
         map(self.send, (REQ_AUTO_OPEN_ORDERS, version, int(autoBind)))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_ALL_OPEN_ORDERS)
     def reqAllOpenOrders(self):
         """ reqAllOpenOrders() -> request all open orders
 
@@ -521,6 +541,8 @@ class DefaultWriter(object):
         map(self.send, (REQ_ALL_OPEN_ORDERS, version))
 
 
+    @support.allowOnlyConnected
+    @support.notifyEnclosure(REQ_MANAGED_ACCTS)
     def reqManagedAccts(self):
         """ reqManagedAccts() -> request managed accounts
 
@@ -529,26 +551,24 @@ class DefaultWriter(object):
         map(self.send, (REQ_MANAGED_ACCTS, version))
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 13, NO_FA_API)
+    @support.notifyEnclosure(REQ_FA)
     def requestFA(self, faDataType):
         """ requestFA(faDataType) -> request fa of some type
 
         """
-        if self.serverVersion < 13:
-            logger.error(NO_FA_API)
-            return
-
         version = 1
         map(self.send, (REQ_FA, version, faDataType))
 
 
+    @support.allowOnlyConnected
+    @support.restrictServerVersion(lt, 13, NO_FA_API)    
+    @support.notifyEnclosure(REPLACE_FA)
     def replaceFA(self, faDataType, xml):
         """ replaceFA(faDataType, xml) -> replace fa
 
         """
-        if self.serverVersion < 13:
-            logger.error(NO_FA_API)
-            return
-
         version = 1
         map(self.send, (REPLACE_FA, version, faDataType, xml))
 
@@ -557,7 +577,6 @@ class DefaultWriter(object):
         """ send(data) -> send a value to TWS
 
         """
-        print '***', data
         sendfunc = self.socket.send
         for k in str(data):
             sendfunc(packfunc('!i', ord(k))[3])
@@ -593,3 +612,14 @@ class DefaultWriter(object):
                     if openClose:
                         send(leg.openClose)
 
+
+    def preDispatch(self, messageId):
+        print '#' * 50
+        print _getframe(1).f_locals
+        print '#' * 50
+
+
+    def postDispatch(self, messageId):
+        print '*' * 50
+        print _getframe(1).f_locals
+        print '*' * 50

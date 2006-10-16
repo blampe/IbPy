@@ -2,6 +2,9 @@
 """ ib.client -> simple interface for creating IB TWS connections.
 
 """
+from socket import AF_INET, SOCK_STREAM
+from socket import socket as sockettype
+
 from ib.client.connection import Connection
 from ib.client.writer import DefaultWriter
 from ib.client.threadreader import ThreadingReader
@@ -15,6 +18,8 @@ def build(clientId=0, reader=None, writer=None, socket=None):
         reader = ThreadingReader()
     if writer is None:
         writer = DefaultWriter()
+    if socket is None:
+        socket = sockettype(AF_INET, SOCK_STREAM)
     return Connection(clientId=clientId, reader=reader, writer=writer,
                       socket=socket)
 
