@@ -269,7 +269,6 @@ class AutomaticDemoApp:
         id = next_tickerId()
         contract = ib.types.Contract(symbol='MSFT', secType='STK', exchange='SMART')
         endDateTime = time.strftime('%Y%m%d %H:%M:%S GMT')
-        return
         self.connection.reqHistoricalData(id,
                                           contract,
                                           endDateTime,

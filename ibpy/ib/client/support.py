@@ -32,6 +32,6 @@ def restrictServerVersion(op, version, message):
             if op(version, self.serverVersion):
                 logger.error('%s; server version required %s', message, version)
             else:
-                return method(self, *a **b)
+                return method(self, *a, **b)
         return serverVersionChecker
     return allowServerVersionDeco
