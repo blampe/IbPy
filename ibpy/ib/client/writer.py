@@ -2,7 +2,7 @@
 """ ib.client.writer -> IB TWS socket connection and message encoder.
 
 """
-from operator import lt
+from operator import lt, gt
 from struct import pack
 from sys import _getframe
 
@@ -158,7 +158,7 @@ class DefaultWriter(lib.ListenerContainer):
 
 
     @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 16, 'Server version mismatch.')
+    @support.restrictServerVersion(gt, 16, 'Server version mismatch.')
     @support.notifyEnclosure(REQ_HISTORICAL_DATA)
     def reqHistoricalData(self, tickerId, contract, endDateTime,
                          durationStr, barSizeSetting, whatToShow,
