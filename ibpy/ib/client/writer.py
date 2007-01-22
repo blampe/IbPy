@@ -6,9 +6,10 @@ from operator import lt, gt
 from struct import pack
 from sys import _getframe
 
-from ib import lib
-from ib.client import message, support
+from ib.client import message
 from ib.types import ExecutionFilter
+from ib.lib import onlyConnected, restrictServerVersion, \
+     notifyEnclosure, logger, maxint, maxfloat
 
 
 CLIENT_VERSION = 27
@@ -39,20 +40,16 @@ NO_DEPTH_API = NO_API_FMT % 'market depth'
 NO_OPTION_EX_API = NO_API_FMT % 'options exercise'
 NO_FA_API = NO_API_FMT % 'fa'
 
-logger = lib.logger()
 
-
-class DefaultWriter(lib.ListenerContainer):
-
-    def __init__(self, preListeners=None, postListeners=None,
-                 serverVersion=None):
-        lib.ListenerContainer.__init__(self, preListeners, postListeners)
+class DefaultWriter:
+    def __init__(self, serverVersion=None):
+        self.listeners = [], []
         self.serverVersion = serverVersion
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)
-    @support.notifyEnclosure(CANCEL_SCANNER_SUBSCRIPTION)
+    @onlyConnected
+    @restrictServerVersion(lt, 24, NO_SCANNER_API)
+    @notifyEnclosure(CANCEL_SCANNER_SUBSCRIPTION)
     def cancelScannerSubscription(self, tickerId):
         """ cancelScannerSubscription(tickerId) -> cancel scanner subscription
 
@@ -61,9 +58,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, version, tickerId))
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)    
-    @support.notifyEnclosure(REQ_SCANNER_PARAMETERS)
+    @onlyConnected
+    @restrictServerVersion(lt, 24, NO_SCANNER_API)    
+    @notifyEnclosure(REQ_SCANNER_PARAMETERS)
     def reqScannerParameters(self):
         """ reqScannerParameters() -> request scanner parameters
 
@@ -72,9 +69,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_SCANNER_PARAMETERS, version))
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)    
-    @support.notifyEnclosure(REQ_SCANNER_SUBSCRIPTION)
+    @onlyConnected
+    @restrictServerVersion(lt, 24, NO_SCANNER_API)    
+    @notifyEnclosure(REQ_SCANNER_SUBSCRIPTION)
     def reqScannerSubscription(self, tickerId, subscription):
         """ reqScannerSubscription(subscription) -> request scanner subscription
 
@@ -112,8 +109,8 @@ class DefaultWriter(lib.ListenerContainer):
             send(subscription.stockTypeFilter)
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_MKT_DATA)
+    @onlyConnected
+    @notifyEnclosure(REQ_MKT_DATA)
     def reqMktData(self, tickerId, contract):
         """ reqMktData(tickerId, contract) -> request market data
 
@@ -146,9 +143,9 @@ class DefaultWriter(lib.ListenerContainer):
         self.sendComboLegs(contract, openClose=False)
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 24, NO_SCANNER_API)    
-    @support.notifyEnclosure(CANCEL_HISTORICAL_DATA)
+    @onlyConnected
+    @restrictServerVersion(lt, 24, NO_SCANNER_API)    
+    @notifyEnclosure(CANCEL_HISTORICAL_DATA)
     def cancelHistoricalData(self, tickerId):
         """ cancelHistoricalData(tickerId) ->
 
@@ -157,9 +154,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (CANCEL_HISTORICAL_DATA, version, tickerId))
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(gt, 16, 'Server version mismatch.')
-    @support.notifyEnclosure(REQ_HISTORICAL_DATA)
+    @onlyConnected
+    @restrictServerVersion(gt, 16, 'Server version mismatch.')
+    @notifyEnclosure(REQ_HISTORICAL_DATA)
     def reqHistoricalData(self, tickerId, contract, endDateTime,
                          durationStr, barSizeSetting, whatToShow,
                          useRTH, formatDate):
@@ -190,9 +187,9 @@ class DefaultWriter(lib.ListenerContainer):
         self.sendComboLegs(contract, openClose=False)
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 4, NO_CONTRACT_API)
-    @support.notifyEnclosure(REQ_CONTRACT_DATA)
+    @onlyConnected
+    @restrictServerVersion(lt, 4, NO_CONTRACT_API)
+    @notifyEnclosure(REQ_CONTRACT_DATA)
     def reqContractDetails(self, contract):
         """ reqContractDetails(contract) -> request contract details
 
@@ -219,9 +216,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(send, data)        
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 6, NO_DEPTH_API)
-    @support.notifyEnclosure(REQ_MKT_DEPTH)
+    @onlyConnected
+    @restrictServerVersion(gt, 6, NO_DEPTH_API)
+    @notifyEnclosure(REQ_MKT_DEPTH)
     def reqMktDepth(self, tickerId, contract, numRows=1):
         """ reqMktDepth(tickerId, contract) -> request market depth
 
@@ -252,8 +249,8 @@ class DefaultWriter(lib.ListenerContainer):
             send(numRows)
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(CANCEL_MKT_DATA)
+    @onlyConnected
+    @notifyEnclosure(CANCEL_MKT_DATA)
     def cancelMktData(self, tickerId):
         """ cancelMktData(tickerId) -> cancel market data
 
@@ -262,9 +259,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (CANCEL_MKT_DATA, version, tickerId))
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 6, NO_DEPTH_API)
-    @support.notifyEnclosure(CANCEL_MKT_DEPTH)
+    @onlyConnected
+    @restrictServerVersion(gt, 6, NO_DEPTH_API)
+    @notifyEnclosure(CANCEL_MKT_DEPTH)
     def cancelMktDepth(self, tickerId):
         """ cancelMktDepth(tickerId) -> cancel market depth
 
@@ -273,9 +270,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (CANCEL_MKT_DEPTH, version, tickerId))
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 21, NO_OPTION_EX_API)
-    @support.notifyEnclosure(EXERCISE_OPTIONS)
+    @onlyConnected
+    @restrictServerVersion(lt, 21, NO_OPTION_EX_API)
+    @notifyEnclosure(EXERCISE_OPTIONS)
     def exerciseOptions(self, tickerId, contract, exerciseAction,
                         exerciseQuantity, account, override):
         """ exerciseOptions(...) -> exercise options
@@ -300,8 +297,8 @@ class DefaultWriter(lib.ListenerContainer):
                         override))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(PLACE_ORDER)
+    @onlyConnected
+    @notifyEnclosure(PLACE_ORDER)
     def placeOrder(self, orderId, contract, order):
         """ placeOrder(orderId, contract, order) -> place an order
 
@@ -394,7 +391,7 @@ class DefaultWriter(lib.ListenerContainer):
            sendMax(order.delta)
 
            if isVol and serverVersion == 26:
-               upper = lower = lib.maxfloat
+               upper = lower = maxfloat
            else:
                lower = order.stockRangeLower
                upper = order.stockRangeUpper
@@ -422,8 +419,8 @@ class DefaultWriter(lib.ListenerContainer):
             sendMax(order.referencePriceType)
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_ACCOUNT_DATA)
+    @onlyConnected
+    @notifyEnclosure(REQ_ACCOUNT_DATA)
     def reqAccountUpdates(self, subscribe=1, acctCode=''):
         """ reqAccountUpdates() -> request account data updates
 
@@ -436,8 +433,8 @@ class DefaultWriter(lib.ListenerContainer):
             send(acctCode)
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_EXECUTIONS)
+    @onlyConnected
+    @notifyEnclosure(REQ_EXECUTIONS)
     def reqExecutions(self, executionFilter=None):
         """ reqExecutions() -> request order execution data
 
@@ -461,8 +458,8 @@ class DefaultWriter(lib.ListenerContainer):
                        executionFilter.side))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(CANCEL_ORDER)
+    @onlyConnected
+    @notifyEnclosure(CANCEL_ORDER)
     def cancelOrder(self, orderId):
         """ cancelOrder(orderId) -> cancel order specified by orderId
 
@@ -471,8 +468,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (CANCEL_ORDER, version, orderId))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_OPEN_ORDERS)
+    @onlyConnected
+    @notifyEnclosure(REQ_OPEN_ORDERS)
     def reqOpenOrders(self):
         """ reqOpenOrders() -> request order data
 
@@ -481,8 +478,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_OPEN_ORDERS, version))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_IDS)
+    @onlyConnected
+    @notifyEnclosure(REQ_IDS)
     def reqIds(self, numIds):
         """ reqIds() -> request ids
 
@@ -491,8 +488,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_IDS, version, numIds))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_NEWS_BULLETINS)
+    @onlyConnected
+    @notifyEnclosure(REQ_NEWS_BULLETINS)
     def reqNewsBulletins(self, all=True):
         """ reqNewsBulletins(all=True) -> request news bulletin updates
 
@@ -501,8 +498,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_NEWS_BULLETINS, version, int(all)))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(CANCEL_NEWS_BULLETINS)
+    @onlyConnected
+    @notifyEnclosure(CANCEL_NEWS_BULLETINS)
     def cancelNewsBulletins(self):
         """ cancelNewsBulletins() -> cancel news bulletin updates
 
@@ -511,8 +508,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (CANCEL_NEWS_BULLETINS, version))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(SET_SERVER_LOGLEVEL)
+    @onlyConnected
+    @notifyEnclosure(SET_SERVER_LOGLEVEL)
     def setServerLogLevel(self, logLevel):
         """ setServerLogLevel(logLevel=[1..4]) -> set the server log verbosity
 
@@ -521,8 +518,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (SET_SERVER_LOGLEVEL, version, logLevel))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_AUTO_OPEN_ORDERS)
+    @onlyConnected
+    @notifyEnclosure(REQ_AUTO_OPEN_ORDERS)
     def reqAutoOpenOrders(self, autoBind=True):
         """ reqAutoOpenOrders() -> request auto open orders
 
@@ -531,8 +528,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_AUTO_OPEN_ORDERS, version, int(autoBind)))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_ALL_OPEN_ORDERS)
+    @onlyConnected
+    @notifyEnclosure(REQ_ALL_OPEN_ORDERS)
     def reqAllOpenOrders(self):
         """ reqAllOpenOrders() -> request all open orders
 
@@ -541,8 +538,8 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_ALL_OPEN_ORDERS, version))
 
 
-    @support.allowOnlyConnected
-    @support.notifyEnclosure(REQ_MANAGED_ACCTS)
+    @onlyConnected
+    @notifyEnclosure(REQ_MANAGED_ACCTS)
     def reqManagedAccts(self):
         """ reqManagedAccts() -> request managed accounts
 
@@ -551,9 +548,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_MANAGED_ACCTS, version))
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 13, NO_FA_API)
-    @support.notifyEnclosure(REQ_FA)
+    @onlyConnected
+    @restrictServerVersion(lt, 13, NO_FA_API)
+    @notifyEnclosure(REQ_FA)
     def requestFA(self, faDataType):
         """ requestFA(faDataType) -> request fa of some type
 
@@ -562,9 +559,9 @@ class DefaultWriter(lib.ListenerContainer):
         map(self.send, (REQ_FA, version, faDataType))
 
 
-    @support.allowOnlyConnected
-    @support.restrictServerVersion(lt, 13, NO_FA_API)    
-    @support.notifyEnclosure(REPLACE_FA)
+    @onlyConnected
+    @restrictServerVersion(lt, 13, NO_FA_API)    
+    @notifyEnclosure(REPLACE_FA)
     def replaceFA(self, faDataType, xml):
         """ replaceFA(faDataType, xml) -> replace fa
 
@@ -583,7 +580,7 @@ class DefaultWriter(lib.ListenerContainer):
         sendfunc(eol)
 
 
-    def sendMax(self, data, eol=EOL, maxes=(lib.maxint, lib.maxfloat)):
+    def sendMax(self, data, eol=EOL, maxes=(maxint, maxfloat)):
         """ send(data) -> send a value to TWS, changing some values
 
         """
@@ -613,13 +610,23 @@ class DefaultWriter(lib.ListenerContainer):
                         send(leg.openClose)
 
 
-    def preDispatch(self, messageId):
-        print '#' * 50
-        print _getframe(1).f_locals
-        print '#' * 50
+    def preDispatch(self, messageId, *varargs, **kwdargs):
+        """ preDispatch() -> notify listeners before a message is read
+        
+        """
+        for listener in self.listeners[0]:
+            try:
+                listener(messageId, *varargs, **kwdargs)
+            except (Exception, ), ex:
+                logger.error(str(ex))
 
 
-    def postDispatch(self, messageId):
-        print '*' * 50
-        print _getframe(1).f_locals
-        print '*' * 50
+    def postDispatch(self, messageId, *varargs, **kwdargs):        
+        """ postDispatch(**kwds) -> send a new Message instance to listeners
+
+        """
+        for listener in self.listeners[1]:
+            try:
+                listener(messageId, *varargs, **kwdargs)
+            except (Exception, ), ex:
+                logger.error(str(ex))

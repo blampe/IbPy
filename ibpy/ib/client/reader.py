@@ -50,9 +50,6 @@ decoderMap = {
 }
 
 
-logger = lib.logger()
-
-
 class Reader(object):
     """ Reader(...) -> TWS socket data reader base class
 
@@ -77,7 +74,7 @@ class Reader(object):
         """
         decoders = self.decoders        
         decoders[READER_START].preDispatch()        
-        logger.debug('Begin %s', self)
+        lib.logger.debug('Begin %s', self)
         ri, rf, rs = self.readInteger, self.readFloat, self.readString
         self.active = 1
         decoders[READER_START].postDispatch()
@@ -88,21 +85,18 @@ class Reader(object):
                 if msgId == -1:
                     break
                 reader = decoders[msgId]
-
                 if str(reader) == 'Error':
-                    log = logger.warning
+                    log = lib.logger.warning
                 else:
-                    log = logger.info
-
-                log(reader)
-                ## reader dispatches it's own messages
-                reader.read(ri, rf, rs)
-
+                    log = lib.logger.info
+                reader.preDispatch()
+                data = reader.read(ri, rf, rs)
+                reader.postDispatch(**data)
             except (Exception, ), ex:
                 decoders[READER_STOP].preDispatch()
                 self.active = 0
                 msg = 'Reading stopped on Exception %s during message dispatch'
-                logger.error(msg, ex)
+                lib.logger.error(msg, ex)
                 decoders[READER_STOP].postDispatch(exception='%s' % (ex, ))
 
 
@@ -168,5 +162,5 @@ class LegacyReader(Reader):
             read_bites.append(socket_read)
 
         read = ''.join(read_bites)
-        logger.debug('Socket read bytes %s', read_bites)
+        lib.logger.debug('Socket read bytes %s', read_bites)
         return read

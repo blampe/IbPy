@@ -3,9 +3,6 @@ from ib import lib
 from ib.client.writer import CLIENT_VERSION
 
 
-logger = lib.logger()
-
-
 class Connection(object):
     """ Connection(...) -> useful wrapper of a socket for IB
 
@@ -24,14 +21,14 @@ class Connection(object):
         self.reader = reader
         self.writer = writer
         self.socket = reader.socket = writer.socket = socket
-        logger.debug('Using socket object %s for %s', socket, self)
+        lib.logger.debug('Using socket object %s for %s', socket, self)
 
 
     def connect(self, address, clientVersion=CLIENT_VERSION):
         """ connect((host, port)) -> connect to TWS and start reading messages
         
         """
-        debug = logger.debug
+        debug = lib.logger.debug
         reader = self.reader
         writer = self.writer
         
@@ -65,9 +62,9 @@ class Connection(object):
 
         @return None
         """
-        logger.debug('Closing socket on object %s', self)
+        lib.logger.debug('Closing socket on object %s', self)
         self.socket.close()
-        logger.debug('Socked closed on object %s', self)
+        lib.logger.debug('Socked closed on object %s', self)
 
 
     def register(self, messageItem, listener, which=READER, when=POST):
@@ -83,9 +80,9 @@ class Connection(object):
             for msgid, decoder in self.reader.decoders.items():
                 if isinstance(decoder, (messageItem, )) or msgid == messageItem:
                     if when == self.POST:
-                        seq = decoder.postListeners
+                        seq = decoder.listeners[1]
                     else:
-                        seq = decoder.preListeners
+                        seq = decoder.listeners[0]
                     try:
                         seq.index(listener)
                     except (ValueError, ):
@@ -101,9 +98,9 @@ class Connection(object):
         for msgid, decoder in self.reader.decoders.items():
             if isinstance(decoder, (messageItem, )) or msgid == messageItem:
                 if post:
-                    seq = decoder.postListeners
+                    seq = decoder.listeners[1]
                 else:
-                    seq = decoder.preListeners
+                    seq = decoder.listeners[0]
                 try:
                     seq.remove(listener)
                 except (ValueError, ):

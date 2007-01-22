@@ -116,6 +116,10 @@ class SimpleMessageHandler:
         print >> self.outstream, msg
 
 
+def precatchall(a):
+    pass
+    #print 'precatchall', a
+
 class AutomaticDemoApp:
     """ AutomaticDemoApp() -> something not unlike a demonstration.
 
@@ -163,6 +167,8 @@ class AutomaticDemoApp:
         register(message.AccountBase, handler.onAccountUpdate)
         register(message.TickBase, handler.onTickerUpdate)
 
+        register(message.AccountBase, precatchall, when=self.connection.PRE)
+        
         ## now that the connection is associated with our callables,
         ## we can connect the connection object to tws.
         self.connection.connect(dsn)
@@ -226,6 +232,7 @@ class AutomaticDemoApp:
         """ submit an order for a futures contract with multiple combo legs
 
         """
+        return
         es_id = self.es_id
         cleg = ib.types.ComboLeg
         legs = [
@@ -253,6 +260,7 @@ class AutomaticDemoApp:
         """ request market data and market details for a futures contract
 
         """
+        return
         self.es_id = es_id = next_tickerId()
         self.es_contract = contract = \
             ib.types.Contract(symbol='ES', secType='FUT', exchange='GLOBEX',
@@ -311,4 +319,4 @@ if __name__ == '__main__':
         os.environ['PYTHONINSPECT'] = '1'
     raw_input('Start TWS and login before continuing.  Press enter when ready.')
     demo = AutomaticDemoApp()
-n
+

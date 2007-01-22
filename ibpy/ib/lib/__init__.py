@@ -16,25 +16,14 @@ logger_date_format = '%d-%b-%y %H:%M:%S'
 logger_level = int(os.environ.get('IBPY_LOGLEVEL', logging.DEBUG))
 
 
-def logger(name='IbPy', level=logger_level, format=logger_format,
-           date_format=logger_date_format):
-    """ logger(level) -> returns a logger all fixed up
+def makelogger(name='ibpy', level=logger_level, format=logger_format,
+               date_format=logger_date_format):
+    """ makelogger(level) -> returns a logger all fixed up
 
     """
-    if sys.version_info[0:2] < (2, 4):
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(logger_level)
-        formatter = logging.Formatter(logger_format, logger_date_format)
-        for handler in logger.handlers:
-            handler.setFormatter(formatter)
-            handler.setLevel(logger_level)
-        return logger
-    else:
-        logging.basicConfig(level=level,
-                            format=format,
-                            datefmt=date_format)
-        return logging
+    logging.basicConfig(level=level, format=format, datefmt=date_format)
+    return logging
+logger = makelogger()
 
 
 def getattrs(obj, seq):
@@ -53,12 +42,36 @@ def setattrs(obj, mapping):
     obj.__dict__.update(mapping)
 
 
-class ListenerContainer(object):
-    def __init__(self, preListeners=None, postListeners=None):
-        if preListeners is None:
-            preListeners = []
-        if postListeners is None:
-            postListeners = []
-        self.preListeners = preListeners
-        self.postListeners = postListeners
-                 
+def onlyConnected(method):
+    def connectionChecker(self, *a, **b):
+        try:
+            peer = self.socket.getpeername()
+        except (Exception, ), exc:
+            logger.error('Socket not connected. %s', exc)
+        else:
+            return method(self, *a, **b)
+    return connectionChecker
+
+
+def notifyEnclosure(messageId):
+    def notifyDeco(method):
+        def innerEnclosure(self, *a, **b):
+            logger.info('%s.preDispatch(%s, ...)' % (method.func_name, messageId))
+            self.preDispatch(messageId, *a, **b)
+            result = method(self, *a, **b)
+            logger.info('%s.postDispatch(%s, ...)' % (method.func_name, messageId))
+            self.postDispatch(messageId, *a, **b)
+            return result
+        return innerEnclosure
+    return notifyDeco
+
+
+def restrictServerVersion(op, version, message):
+    def allowServerVersionDeco(method):
+        def serverVersionChecker(self, *a, **b):
+            if op(version, self.serverVersion):
+                logger.error('%s; required %s have %s', message, version, self.serverVersion)
+            else:
+                return method(self, *a, **b)
+        return serverVersionChecker
+    return allowServerVersionDeco
