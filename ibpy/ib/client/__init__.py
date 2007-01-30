@@ -25,15 +25,15 @@ def build(clientId=0, reader=None, writer=None, socket=None):
 
 
 try:
-    from ib.client.qthreadreader import QThreadReader
+    from ib.client.qthreadreader3 import QThreadReader
 except (ImportError, ), exc:
-    def build_qt(clientId=0, reader=None, writer=None, socket=None):
+    def build_qt3(clientId=0, reader=None, writer=None, socket=None):
         """ build_qt(clientId=0, ...) -> QThread not available.
 
         """
         raise exc
 else:
-    def build_qt(clientId=0, reader=None, writer=None, socket=None):        
+    def build_qt3(clientId=0, reader=None, writer=None, socket=None):        
         """ build_qt(clientId=0, ...) -> new ib connection with QThread reader
 
         """

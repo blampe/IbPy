@@ -8,8 +8,8 @@ from sys import _getframe
 
 from ib.client import message
 from ib.types import ExecutionFilter
-from ib.lib import onlyConnected, restrictServerVersion, \
-     notifyEnclosure, logger, maxint, maxfloat
+from ib.lib import requireConnection, requireServerVersion, \
+     dispatchMethod, logger, maxint, maxfloat
 
 
 CLIENT_VERSION = 27
@@ -47,9 +47,9 @@ class DefaultWriter:
         self.serverVersion = serverVersion
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 24, NO_SCANNER_API)
-    @notifyEnclosure(CANCEL_SCANNER_SUBSCRIPTION)
+    @requireConnection
+    @requireServerVersion(lt, 24, NO_SCANNER_API)
+    @dispatchMethod(CANCEL_SCANNER_SUBSCRIPTION)
     def cancelScannerSubscription(self, tickerId):
         """ cancelScannerSubscription(tickerId) -> cancel scanner subscription
 
@@ -58,9 +58,9 @@ class DefaultWriter:
         map(self.send, (CANCEL_SCANNER_SUBSCRIPTION, version, tickerId))
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 24, NO_SCANNER_API)    
-    @notifyEnclosure(REQ_SCANNER_PARAMETERS)
+    @requireConnection
+    @requireServerVersion(lt, 24, NO_SCANNER_API)    
+    @dispatchMethod(REQ_SCANNER_PARAMETERS)
     def reqScannerParameters(self):
         """ reqScannerParameters() -> request scanner parameters
 
@@ -69,9 +69,9 @@ class DefaultWriter:
         map(self.send, (REQ_SCANNER_PARAMETERS, version))
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 24, NO_SCANNER_API)    
-    @notifyEnclosure(REQ_SCANNER_SUBSCRIPTION)
+    @requireConnection
+    @requireServerVersion(lt, 24, NO_SCANNER_API)    
+    @dispatchMethod(REQ_SCANNER_SUBSCRIPTION)
     def reqScannerSubscription(self, tickerId, subscription):
         """ reqScannerSubscription(subscription) -> request scanner subscription
 
@@ -109,8 +109,8 @@ class DefaultWriter:
             send(subscription.stockTypeFilter)
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_MKT_DATA)
+    @requireConnection
+    @dispatchMethod(REQ_MKT_DATA)
     def reqMktData(self, tickerId, contract):
         """ reqMktData(tickerId, contract) -> request market data
 
@@ -143,9 +143,9 @@ class DefaultWriter:
         self.sendComboLegs(contract, openClose=False)
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 24, NO_SCANNER_API)    
-    @notifyEnclosure(CANCEL_HISTORICAL_DATA)
+    @requireConnection
+    @requireServerVersion(lt, 24, NO_SCANNER_API)    
+    @dispatchMethod(CANCEL_HISTORICAL_DATA)
     def cancelHistoricalData(self, tickerId):
         """ cancelHistoricalData(tickerId) ->
 
@@ -154,9 +154,9 @@ class DefaultWriter:
         map(self.send, (CANCEL_HISTORICAL_DATA, version, tickerId))
 
 
-    @onlyConnected
-    @restrictServerVersion(gt, 16, 'Server version mismatch.')
-    @notifyEnclosure(REQ_HISTORICAL_DATA)
+    @requireConnection
+    @requireServerVersion(gt, 16, 'Server version mismatch.')
+    @dispatchMethod(REQ_HISTORICAL_DATA)
     def reqHistoricalData(self, tickerId, contract, endDateTime,
                          durationStr, barSizeSetting, whatToShow,
                          useRTH, formatDate):
@@ -187,9 +187,9 @@ class DefaultWriter:
         self.sendComboLegs(contract, openClose=False)
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 4, NO_CONTRACT_API)
-    @notifyEnclosure(REQ_CONTRACT_DATA)
+    @requireConnection
+    @requireServerVersion(lt, 4, NO_CONTRACT_API)
+    @dispatchMethod(REQ_CONTRACT_DATA)
     def reqContractDetails(self, contract):
         """ reqContractDetails(contract) -> request contract details
 
@@ -216,9 +216,9 @@ class DefaultWriter:
         map(send, data)        
 
 
-    @onlyConnected
-    @restrictServerVersion(gt, 6, NO_DEPTH_API)
-    @notifyEnclosure(REQ_MKT_DEPTH)
+    @requireConnection
+    @requireServerVersion(gt, 6, NO_DEPTH_API)
+    @dispatchMethod(REQ_MKT_DEPTH)
     def reqMktDepth(self, tickerId, contract, numRows=1):
         """ reqMktDepth(tickerId, contract) -> request market depth
 
@@ -249,8 +249,8 @@ class DefaultWriter:
             send(numRows)
 
 
-    @onlyConnected
-    @notifyEnclosure(CANCEL_MKT_DATA)
+    @requireConnection
+    @dispatchMethod(CANCEL_MKT_DATA)
     def cancelMktData(self, tickerId):
         """ cancelMktData(tickerId) -> cancel market data
 
@@ -259,9 +259,9 @@ class DefaultWriter:
         map(self.send, (CANCEL_MKT_DATA, version, tickerId))
 
 
-    @onlyConnected
-    @restrictServerVersion(gt, 6, NO_DEPTH_API)
-    @notifyEnclosure(CANCEL_MKT_DEPTH)
+    @requireConnection
+    @requireServerVersion(gt, 6, NO_DEPTH_API)
+    @dispatchMethod(CANCEL_MKT_DEPTH)
     def cancelMktDepth(self, tickerId):
         """ cancelMktDepth(tickerId) -> cancel market depth
 
@@ -270,9 +270,9 @@ class DefaultWriter:
         map(self.send, (CANCEL_MKT_DEPTH, version, tickerId))
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 21, NO_OPTION_EX_API)
-    @notifyEnclosure(EXERCISE_OPTIONS)
+    @requireConnection
+    @requireServerVersion(lt, 21, NO_OPTION_EX_API)
+    @dispatchMethod(EXERCISE_OPTIONS)
     def exerciseOptions(self, tickerId, contract, exerciseAction,
                         exerciseQuantity, account, override):
         """ exerciseOptions(...) -> exercise options
@@ -297,8 +297,8 @@ class DefaultWriter:
                         override))
 
 
-    @onlyConnected
-    @notifyEnclosure(PLACE_ORDER)
+    @requireConnection
+    @dispatchMethod(PLACE_ORDER)
     def placeOrder(self, orderId, contract, order):
         """ placeOrder(orderId, contract, order) -> place an order
 
@@ -419,8 +419,8 @@ class DefaultWriter:
             sendMax(order.referencePriceType)
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_ACCOUNT_DATA)
+    @requireConnection
+    @dispatchMethod(REQ_ACCOUNT_DATA)
     def reqAccountUpdates(self, subscribe=1, acctCode=''):
         """ reqAccountUpdates() -> request account data updates
 
@@ -433,8 +433,8 @@ class DefaultWriter:
             send(acctCode)
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_EXECUTIONS)
+    @requireConnection
+    @dispatchMethod(REQ_EXECUTIONS)
     def reqExecutions(self, executionFilter=None):
         """ reqExecutions() -> request order execution data
 
@@ -458,8 +458,8 @@ class DefaultWriter:
                        executionFilter.side))
 
 
-    @onlyConnected
-    @notifyEnclosure(CANCEL_ORDER)
+    @requireConnection
+    @dispatchMethod(CANCEL_ORDER)
     def cancelOrder(self, orderId):
         """ cancelOrder(orderId) -> cancel order specified by orderId
 
@@ -468,8 +468,8 @@ class DefaultWriter:
         map(self.send, (CANCEL_ORDER, version, orderId))
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_OPEN_ORDERS)
+    @requireConnection
+    @dispatchMethod(REQ_OPEN_ORDERS)
     def reqOpenOrders(self):
         """ reqOpenOrders() -> request order data
 
@@ -478,8 +478,8 @@ class DefaultWriter:
         map(self.send, (REQ_OPEN_ORDERS, version))
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_IDS)
+    @requireConnection
+    @dispatchMethod(REQ_IDS)
     def reqIds(self, numIds):
         """ reqIds() -> request ids
 
@@ -488,8 +488,8 @@ class DefaultWriter:
         map(self.send, (REQ_IDS, version, numIds))
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_NEWS_BULLETINS)
+    @requireConnection
+    @dispatchMethod(REQ_NEWS_BULLETINS)
     def reqNewsBulletins(self, all=True):
         """ reqNewsBulletins(all=True) -> request news bulletin updates
 
@@ -498,8 +498,8 @@ class DefaultWriter:
         map(self.send, (REQ_NEWS_BULLETINS, version, int(all)))
 
 
-    @onlyConnected
-    @notifyEnclosure(CANCEL_NEWS_BULLETINS)
+    @requireConnection
+    @dispatchMethod(CANCEL_NEWS_BULLETINS)
     def cancelNewsBulletins(self):
         """ cancelNewsBulletins() -> cancel news bulletin updates
 
@@ -508,8 +508,8 @@ class DefaultWriter:
         map(self.send, (CANCEL_NEWS_BULLETINS, version))
 
 
-    @onlyConnected
-    @notifyEnclosure(SET_SERVER_LOGLEVEL)
+    @requireConnection
+    @dispatchMethod(SET_SERVER_LOGLEVEL)
     def setServerLogLevel(self, logLevel):
         """ setServerLogLevel(logLevel=[1..4]) -> set the server log verbosity
 
@@ -518,8 +518,8 @@ class DefaultWriter:
         map(self.send, (SET_SERVER_LOGLEVEL, version, logLevel))
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_AUTO_OPEN_ORDERS)
+    @requireConnection
+    @dispatchMethod(REQ_AUTO_OPEN_ORDERS)
     def reqAutoOpenOrders(self, autoBind=True):
         """ reqAutoOpenOrders() -> request auto open orders
 
@@ -528,8 +528,8 @@ class DefaultWriter:
         map(self.send, (REQ_AUTO_OPEN_ORDERS, version, int(autoBind)))
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_ALL_OPEN_ORDERS)
+    @requireConnection
+    @dispatchMethod(REQ_ALL_OPEN_ORDERS)
     def reqAllOpenOrders(self):
         """ reqAllOpenOrders() -> request all open orders
 
@@ -538,8 +538,8 @@ class DefaultWriter:
         map(self.send, (REQ_ALL_OPEN_ORDERS, version))
 
 
-    @onlyConnected
-    @notifyEnclosure(REQ_MANAGED_ACCTS)
+    @requireConnection
+    @dispatchMethod(REQ_MANAGED_ACCTS)
     def reqManagedAccts(self):
         """ reqManagedAccts() -> request managed accounts
 
@@ -548,9 +548,9 @@ class DefaultWriter:
         map(self.send, (REQ_MANAGED_ACCTS, version))
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 13, NO_FA_API)
-    @notifyEnclosure(REQ_FA)
+    @requireConnection
+    @requireServerVersion(lt, 13, NO_FA_API)
+    @dispatchMethod(REQ_FA)
     def requestFA(self, faDataType):
         """ requestFA(faDataType) -> request fa of some type
 
@@ -559,9 +559,9 @@ class DefaultWriter:
         map(self.send, (REQ_FA, version, faDataType))
 
 
-    @onlyConnected
-    @restrictServerVersion(lt, 13, NO_FA_API)    
-    @notifyEnclosure(REPLACE_FA)
+    @requireConnection
+    @requireServerVersion(lt, 13, NO_FA_API)    
+    @dispatchMethod(REPLACE_FA)
     def replaceFA(self, faDataType, xml):
         """ replaceFA(faDataType, xml) -> replace fa
 
