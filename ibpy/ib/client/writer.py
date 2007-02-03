@@ -12,7 +12,7 @@ from ib.lib import requireConnection, requireServerVersion, \
      dispatchMethod, logger, maxint, maxfloat
 
 
-CLIENT_VERSION = 27
+CLIENT_VERSION = 30
 SERVER_VERSION = 1
 EOL = pack('!i', 0)[3]
 BAG_SEC_TYPE = 'BAG'
@@ -111,7 +111,7 @@ class DefaultWriter:
 
     @requireConnection
     @dispatchMethod(REQ_MKT_DATA)
-    def reqMktData(self, tickerId, contract):
+    def reqMktData(self, tickerId, contract, genericTicketList=''):
         """ reqMktData(tickerId, contract) -> request market data
 
         The tickerId value will be used by the broker to refer to the
@@ -120,7 +120,7 @@ class DefaultWriter:
         send = self.send
         serverVersion = self.serverVersion
         
-        version = 5
+        version = 6
         data = (REQ_MKT_DATA, 
                 version, 
                 tickerId, 
@@ -141,7 +141,8 @@ class DefaultWriter:
             send(contract.localSymbol)
 
         self.sendComboLegs(contract, openClose=False)
-
+        if serverVersion >= 31:
+            send(genericTicketList)
 
     @requireConnection
     @requireServerVersion(lt, 24, NO_SCANNER_API)    
@@ -165,7 +166,7 @@ class DefaultWriter:
         """
         serverVersion = self.serverVersion
         send = self.send
-        version = 3
+        version = 4
         map(send, (REQ_HISTORICAL_DATA,
                    version,
                    tickerId,
@@ -179,6 +180,8 @@ class DefaultWriter:
                    contract.primaryExch,
                    contract.currency,
                    contract.localSymbol))
+        if serverVersion >= 31:
+            send(contract.includedExpired and 1 or 0)
         if serverVersion >= 20:
             map(send, (endDateTime, barSizeSetting))
         map(send, (durationStr, useRTH, whatToShow))
@@ -197,7 +200,7 @@ class DefaultWriter:
         serverVersion = self.serverVersion
         send = self.send
 
-        version = 2
+        version = 3
         data = (REQ_CONTRACT_DATA, 
                 version, 
                 contract.symbol,
@@ -214,7 +217,8 @@ class DefaultWriter:
                 contract.currency, 
                 contract.localSymbol, )
         map(send, data)        
-
+        if serverVersion >= 31:
+            send(contract.includeExpired)
 
     @requireConnection
     @requireServerVersion(gt, 6, NO_DEPTH_API)
@@ -306,7 +310,7 @@ class DefaultWriter:
         serverVersion = self.serverVersion
         send = self.send
         sendMax = self.sendMax
-        version = 20
+        version = 21
 
         map(send, (PLACE_ORDER,
                    version,
@@ -417,7 +421,8 @@ class DefaultWriter:
                    upper = lower = maxfloat
                 map(sendMax, (upper, lower))
             sendMax(order.referencePriceType)
-
+        if serverVersion >= 30:
+            sendMax(order.trailStopPrice)
 
     @requireConnection
     @dispatchMethod(REQ_ACCOUNT_DATA)

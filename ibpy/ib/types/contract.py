@@ -17,10 +17,14 @@ class Contract(object):
                  right='',
                  multiplier='',
                  exchange='',
+                 
                  currency='', 
                  localSymbol='',
                  comboLegs=None,
                  primaryExch='',
+                 includeExpired=0,
+
+                 ## bond values
                  cusip='',
                  ratings='',
                  descAppend='',
@@ -31,7 +35,11 @@ class Contract(object):
                  coupon=0.0,
                  convertible=0,
                  maturity='',
-                 issueDate=''):
+                 issueDate='',
+                 nextOptionDate='',
+                 nextOptionType='',
+                 nextOptionPartial=0,
+                 notes=''):
         if comboLegs is None:
             comboLegs = []
         setattrs(self, locals())

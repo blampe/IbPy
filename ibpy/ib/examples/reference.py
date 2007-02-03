@@ -102,7 +102,7 @@ class ReferenceWrapper(com.ib.client.EWrapper):
 
 
 class ReferenceApp:
-    def __init__(self, host='localhost', port=7496, clientId=1):
+    def __init__(self, host='localhost', port=7496, clientId=0):
         self.host = host
         self.port = port
         self.clientId = clientId
@@ -151,7 +151,7 @@ class ReferenceApp:
         contract.m_symbol = 'QQQQ'
         contract.m_secType = 'STK'
         contract.m_exchange = 'SMART'
-        self.reader.reqMktData(1, contract)
+        self.reader.reqMktData(1, contract, '')
 
     def reqHistoricalData(self):
         contract = com.ib.client.Contract()

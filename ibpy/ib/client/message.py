@@ -148,7 +148,7 @@ class ContractDetails(MessageDecoder):
 
     msg.details - full description of a contract
     """
-    class detail(Message):
+    class message(Message):
         __slots__ = ('details', )
 
 
