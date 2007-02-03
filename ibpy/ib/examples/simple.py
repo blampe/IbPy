@@ -20,28 +20,27 @@ class SimpleMessageHandler:
 
     """
     orderId = 0    
-    outstream = sys.stdout
 
 
     def onConnect(self, msg):
         """ onConnect(msg) -> executed when IbPy connects to TWS
 
         """
-        print >> self.outstream, 'connected', msg
+        print 'connected', msg
 
 
     def onDisconnect(self, msg):
         """ onDisconnect(msg) -> executed when IbPy disconnects from TWS
 
         """
-        print >> self.outstream, 'disconnected', msg
+        print 'disconnected', msg
 
 
     def onAccountUpdate(self, msg):
         """ onAccountUpdate(msg) -> called when account values change
 
         """
-        print >> self.outstream, 'Account value changed: %s is %s' % (msg.key, msg.value, )
+        print 'Account value changed: %s is %s' % (msg.key, msg.value, )
 
 
     def onError(self, msg):
@@ -49,14 +48,14 @@ class SimpleMessageHandler:
 
         """
         err = (msg.error_id, msg.error_code, msg.error_msg, )
-        print >> self.outstream, 'An Error from TWS: %s %s %s' % err
+        print 'An Error from TWS: %s %s %s' % err
 
 
     def onTickerUpdate(self, msg):
         """ onTickerUpdate(msg) -> called when ticker price or size data has changed
 
         """
-        print >> self.outstream, msg
+        print msg
 
 
     def onNextOrderId(self, msg):
@@ -64,7 +63,7 @@ class SimpleMessageHandler:
 
         """
         self.orderId = msg.nextValidId
-        print >> self.outstream, msg
+        print msg
 
 
     def onOrderStatus(self, msg):
@@ -72,7 +71,7 @@ class SimpleMessageHandler:
 
         """
         ordinfo = (msg.orderId, msg.message, )
-        print >> self.outstream, 'Order status changed:  order id %s, status %s' % ordinfo
+        print 'Order status changed:  order id %s, status %s' % ordinfo
 
 
     def onOpenOrder(self, msg):
@@ -85,7 +84,7 @@ class SimpleMessageHandler:
         """ onContractDetails(msg) -> called with details on a contract
 
         """
-        print >> self.outstream, msg
+        print msg
 
 
     def onManagedAccounts(self, msg):
@@ -113,7 +112,7 @@ class SimpleMessageHandler:
 
 
     def onHistoricalData(self, msg):
-        print >> self.outstream, msg
+        print msg
 
 
 def precatchall(a):
@@ -192,10 +191,10 @@ class AutomaticDemoApp:
         connection.reqAllOpenOrders()
         connection.reqAutoOpenOrders()
         connection.reqNewsBulletins()
-        ## connection.reqManagedAccts()
+        connection.reqManagedAccts()
 
-        #exec_filter = ib.types.ExecutionFilter(secType='FUT')
-        #connection.reqExecutions(exec_filter)
+        exec_filter = ib.types.ExecutionFilter(secType='FUT')
+        connection.reqExecutions(exec_filter)
     
         for tickerSym, tickerId in self.tickers.items():
             contract = ib.types.Contract(symbol=tickerSym,

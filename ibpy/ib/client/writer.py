@@ -630,3 +630,13 @@ class DefaultWriter:
                 listener(messageId, *varargs, **kwdargs)
             except (Exception, ), ex:
                 logger.error(str(ex))
+
+
+    @requireConnection
+    def active(self):
+        """ 
+
+        The decorator will prevent this method from running if the
+        socket is not connected.  Thus, we only have to return True.
+        """
+        return True

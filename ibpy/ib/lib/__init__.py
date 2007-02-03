@@ -27,6 +27,9 @@ logger = makelogger()
 
 
 def getattrs(obj, seq):
+    """ getattrs(obj, seq) -> get attributes named in seq from obj
+
+    """
     values = [getattr(obj, k) for k in seq]
     try:
         return [v.lower() for v in values]
@@ -35,43 +38,77 @@ def getattrs(obj, seq):
 
 
 def setattrs(obj, mapping):
-    """ setattrs(object, mapping) -> add attributes from mapping to obj
+    """ setattrs(obj, mapping) -> add attributes from mapping to obj
 
     """
     del(mapping['self'])
     obj.__dict__.update(mapping)
 
 
-def onlyConnected(method):
-    def connectionChecker(self, *a, **b):
+def requireConnection(method):
+    """ 
+
+    """
+    def check(self, *a, **b):
         try:
             peer = self.socket.getpeername()
         except (Exception, ), exc:
             logger.error('Socket not connected. %s', exc)
         else:
             return method(self, *a, **b)
-    return connectionChecker
+    return check
 
 
-def notifyEnclosure(messageId):
+def dispatchMethod(messageId):
+    """
+
+    """
+    info = logger.info
     def notifyDeco(method):
-        def innerEnclosure(self, *a, **b):
-            logger.info('%s.preDispatch(%s, ...)' % (method.func_name, messageId))
+        name = method.func_name
+        def inner(self, *a, **b):
+            info('%s.preDispatch(%s, ...)' % (name, messageId))
             self.preDispatch(messageId, *a, **b)
             result = method(self, *a, **b)
-            logger.info('%s.postDispatch(%s, ...)' % (method.func_name, messageId))
+            info('%s.postDispatch(%s, ...)' % (name, messageId))
             self.postDispatch(messageId, *a, **b)
             return result
-        return innerEnclosure
+        return inner
     return notifyDeco
 
 
-def restrictServerVersion(op, version, message):
-    def allowServerVersionDeco(method):
-        def serverVersionChecker(self, *a, **b):
-            if op(version, self.serverVersion):
-                logger.error('%s; required %s have %s', message, version, self.serverVersion)
+def requireServerVersion(op, version, message):
+    """
+
+    """
+    def versionDeco(method):
+        def inner(self, *a, **b):
+            serverVersion = self.serverVersion
+            if op(version, serverVersion):
+                logger.error('%s; required %s have %s',
+                             message, version, serverVersion)
             else:
                 return method(self, *a, **b)
-        return serverVersionChecker
-    return allowServerVersionDeco
+        return inner
+    return versionDeco
+
+
+try:
+    from functools import partial
+except (ImportError, ):
+    class partial(object):
+        """ partial(f, *a, **k) -> a callable object from a function
+
+        """
+        def __init__(self, fun, *args, **kwargs):
+            self.fun = fun
+            self.pending = args[:]
+            self.kwargs = kwargs.copy()
+
+        def __call__(self, *args, **kwargs):
+            if kwargs and self.kwargs:
+                kw = self.kwargs.copy()
+                kw.update(kwargs)
+            else:
+                kw = kwargs or self.kwargs
+            return self.fun(*(self.pending + args), **kw)

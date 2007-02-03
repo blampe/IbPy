@@ -23,20 +23,22 @@ def build(clientId=0, reader=None, writer=None, socket=None):
     return Connection(clientId=clientId, reader=reader, writer=writer,
                       socket=socket)
 
+def build_qt3(clientId=0, reader=None, writer=None, socket=None):        
+    """ build_qt3(clientId=0, ...) -> new ib connection with Qt3 QThread reader
 
-try:
-    from ib.client.qthreadreader3 import QThreadReader
-except (ImportError, ), exc:
-    def build_qt3(clientId=0, reader=None, writer=None, socket=None):
-        """ build_qt(clientId=0, ...) -> QThread not available.
+    """
+    from ib.client.qthreadreader3 import QThreadReader        
+    if reader is None:
+        reader = QThreadReader()
+    return build(clientId, reader, writer, socket)
 
-        """
-        raise exc
-else:
-    def build_qt3(clientId=0, reader=None, writer=None, socket=None):        
-        """ build_qt(clientId=0, ...) -> new ib connection with QThread reader
 
-        """
-        if reader is None:
-            reader = QThreadReader()
-        return build(clientId, reader, writer, socket)
+def build_qt4(clientId=0, reader=None, writer=None, socket=None):        
+    """ build_qt4(clientId=0, ...) -> new ib connection with Qt4 QThread reader
+
+    """
+    from ib.client.qthreadreader4 import QThreadReader        
+    if reader is None:
+        reader = QThreadReader()
+    return build(clientId, reader, writer, socket)
+
