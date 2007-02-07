@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+import sys
+import antlr
+
+from java import lexer
+from java import parser
+
+
+class Scrap:
+   def _visit1(self,node):
+      if not node:
+         #print ' nil ',
+         return
+
+      c = node.getType()
+      t = node.getText()
+      k = node.getFirstChild()
+      s = node.getNextSibling()
+
+      if c == parser.BLOCK:
+         print '# START BLOCK'
+      if c == parser.CLASS_DEF:
+         print '# START CLASS'
+         print 'class %s' % (t, ),
+         self.inClass = 1
+      if c == parser.IDENT and (self.inClass or self.inCall):
+         print '%s' % (t, )
+
+   def tabs(self):
+      print ' ' * self.level
+
+         
+      #print '( <%s> ' % c,
+      #if t:
+      #   print ' %s ' % t,
+      self.visit1(k);
+      self.visit1(s);
+      #print ')'
+
+
+class Visitor(antlr.ASTVisitor):
+   def __init__(self, output=None):
+      super(Visitor,self).__init__()
+      if output is None:
+         output = sys.stdout
+      self.output = output
+      self.level = 0
+      self.inClass = 0
+      self.inCall = 0
+
+   def __call__(self, node):
+      self.visit(node)
+      
+   def visit(self, node, level=0):
+      if not node:
+         return      
+      print >> self.output, ' ' * level,
+      nodeText = node.getText() or ''
+      nodeType = node.getType()
+      print >> self.output, 'type:%s value:%s' % (nodeType, nodeText, )
+      child = node.getFirstChild()
+      self.visit(child, level+4)
+      if nodeType in (parser.CLASS_DEF, parser.PACKAGE_DEF, parser.IMPORT):
+         print >> self.output
+      sibling = node.getNextSibling()
+      self.visit(sibling, level)
+      
+
+
+def main(fh):
+   L = lexer.Lexer(fh) 
+   P = parser.Parser(L)
+   P.setFilename(L.getFilename())
+
+   try:
+      P.compilationUnit()
+   except antlr.ANTLRException, ex:
+      print '*** error(s) while parsing.'
+      sys.exit(1)
+   
+   ast = P.getAST()
+   
+   if not ast:
+      print 'stop - no AST generated.'
+      sys.exit(1)
+
+   visitor = Visitor()
+   visitor(ast)
+
+   return L, P, visitor
+   
+
+if __name__ == '__main__':
+   l, p, v  = main(sys.stdin)

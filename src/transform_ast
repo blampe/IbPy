@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+from sys import exit
+
+from antlr import ANTLRException
+import psyco
+psyco.full()
+
+from java import lexer
+from java import parser
+from java import walker
+
+
+def main():
+   L = lexer.Lexer()
+   P = parser.Parser(L)
+   P.setFilename(L.getFilename())
+   try:
+      P.compilationUnit()
+   except (ANTLRException, ), exc:
+      print '*** error(s) while parsing.'
+      exit(1)
+   ast = P.getAST()
+   if not ast:
+      print '*** stop - no AST generated.'
+      exit(2)
+
+   W = walker.Walker()
+   m = W.module(ast)
+   print
+   print
+   print m
+
+
+if __name__ == '__main__':
+   main()
