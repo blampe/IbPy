@@ -184,7 +184,6 @@ methodDef [block]
 variableDef [block]
 	:	#(VARIABLE_DEF modifiers[block] t:typeSpec[block] n:variableDeclarator i:varInitializer[block])
         {
-        print "#####", repr(block)
         block.addVariableDef(t, n, i)        
         }
 	;
