@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from antlr import ASTVisitor
 from java import lexer
 from java import parser
