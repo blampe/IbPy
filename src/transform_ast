@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os.path
 
 from java import lexer
 from java import parser
@@ -29,7 +30,9 @@ def transform(filename):
        return 2
 
     W = walker.Walker()
-    print W.module(ast)
+    filein = os.path.basename(filename)
+    fileout = '%s.py' % (os.path.splitext(filein)[0])
+    print W.module(ast, filein, fileout)
     return 0
 
 

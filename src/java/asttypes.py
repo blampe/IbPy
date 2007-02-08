@@ -3,6 +3,7 @@
 
 from cStringIO import StringIO
 
+import astextra
 import walker
 
 
@@ -14,15 +15,28 @@ typeMap = {
     }
 
 
+renameMap = {
+    'this':'self',
+    'null':'None',
+    'false':'False',
+    'true':'True',
+    }
+
+
+def rename(item):
+    try:
+        return renameMap[item]
+    except (KeyError, ):
+        pass
+    item = item.replace('p_', '').replace('m_', '')
+    return item
+
+
 class Source(list):
     def __init__(self, name=''):
         list.__init__(self)
         self.name = name
 
-    def show(self, *nodes):
-        for node in nodes:
-            print '###', node
-        
     def __str__(self):
         out = StringIO()
         self.writeTo(out, 0)
@@ -38,12 +52,10 @@ class Source(list):
                 output.write('%s%s\n' % (indent*I, obj))
 
     def addComment(self, node):
-        if isinstance(node, basestring):
-            text = node
-        elif node:
+        try:
             text = node.getText()
-        else:
-            text = '<emtpy>'
+        except (AttributeError, ):
+            text = node
         comment = '## %s' % (text, )
         self.append(comment)
 
@@ -51,13 +63,13 @@ class Source(list):
         self.append('')
 
     def isExpression(self):
-        return self.__class__ is Expression
+        return (self.__class__ is Expression)
 
     def isClass(self):
-        return self.__class__ is Class
+        return (self.__class__ is Class)
 
     def isMethod(self):
-        return self.__class__ is Method
+        return (self.__class__ is Method)
     
     def newClass(self):
         c = Class(self)
@@ -75,30 +87,50 @@ class Source(list):
         e = Expression(self)
         self.append(e)
         return e
+
+    def newIf(self):
+        i = If(self)
+        self.append(i)
+        return i
     
     def setName(self, node):
-        if not self.name:
-            self.name = node.getText()
-
-    def setType(self, node):
-        pass
+        if self.name:
+            return
+        try:
+            name = node.getText()
+        except (AttributeError, ):
+            name = node
+        self.name = name
 
 class Module(Source):
-    def __init__(self):
+    def __init__(self, infile, outfile):
         Source.__init__(self)
+        self.infile = infile
+        self.outfile = outfile
         self.addSheBang()
         self.addNewLine()
         self.addMainComment()
         self.addNewLine()
-
+        self.addExtraImports()
+        self.append('')
+        
     def addSheBang(self):
         self.append('#!/usr/bin/env python')
         self.append('# -*- coding: utf-8 -*-')
         
     def addMainComment(self):
         self.addComment('')
-        self.addComment('generated module')
+        self.addComment('source: "%s"' % (self.infile, ))
+        self.addComment('input source code copyright original author(s)')
         self.addComment('')    
+        self.addComment('target: "%s"' % (self.outfile, ))
+        self.addComment('output source code (this file) copyright Troy Melhase <troy@gci.net>')        
+        self.addComment('')        
+
+    def addExtraImports(self):
+        imports = astextra.imports.get(self.infile, [])
+        for line in imports:
+            self.append(line)
 
 
 class Method(Source):
@@ -113,7 +145,9 @@ class Method(Source):
         Source.writeTo(self, output, indent)
 
     def addParameter(self, node):
-        self.params.append(node.getText())
+        param = node.getText()
+        param = rename(param)
+        self.params.append(param)
 
 
 class Class(Source):
@@ -140,15 +174,21 @@ class Expression(Source):
         self.typ = None
         self.switch = None
         self.right = self.left = self.op = None
-
+        self.prefix = self.suffix = ''
+        
     def setLeft(self, node):
-        left = node.getText()
+        try:
+            left = node.getText()
+        except (AttributeError, ):
+            left = node
+            
         if self.parent.isClass():
             self.parent.classvars.add(left)
         elif self.parent.isMethod():
             if self.parent.parent.isClass():
                 if left in self.parent.parent.classvars:
                     left = 'self.%s' % (left, )
+        left = rename(left)
         self.left = left
             
     def setType(self, node):
@@ -159,13 +199,17 @@ class Expression(Source):
 
     def setRight(self, node):
         try:
-            self.right = node.getText()
+            right = node.getText()
         except (AttributeError, ):
-            self.right = node
-
+            right = node
+        self.right = rename(right)
+        
     def setExpression(self, left, op, right):
-        if right.getType() == walker.LITERAL_new:
-            right = '%s()' % (right.getFirstChild().getText(), )
+        try:
+            if right.getType() == walker.LITERAL_new:
+                right = '%s()' % (right.getFirstChild().getText(), )
+        except (AttributeError, ):
+            pass
         self.setLeft(left)
         self.setOp(op)
         self.setRight(right)
@@ -178,8 +222,12 @@ class Expression(Source):
         if right is None:
             right = typeMap.get(typ, None)
         if not (left == right == op == None):
-            #output.write('%s%s %s %s\n' % (I*indent+1, left, op, right))
-            self.append('%s %s %s' % (left, op, right))
+            if self.prefix:
+                prefix = '%s ' % (self.prefix)
+            else:
+                prefix = ''
+            suffix = self.suffix
+            self.append('%s%s %s %s%s' % (prefix, left, op, right, suffix))
         if self.parent.isMethod():
             indent += 1
         Source.writeTo(self, output, indent)
@@ -195,3 +243,19 @@ class Expression(Source):
                 break
         return getattr(p, 'classvars', ())
 
+
+    def setPrefix(self, value):
+        self.prefix = value
+
+    def setSuffix(self, value):
+        self.suffix = value
+
+class If(Expression):
+    def setClause(self, *v):
+        return
+        print "#####",
+        for a in v:
+            #print a.getType(), a.getText(),
+            print a
+            print
+        

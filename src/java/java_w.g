@@ -24,9 +24,9 @@ options {
 }
 
 
-module
+module [infile, outfile]
     {
-        m = Module()
+        m = Module(infile, outfile)
     }
     : (packageDefinition [m])?
       (importDefinition [m])*
@@ -77,7 +77,10 @@ typeSpecArray [b]
 type [b]
     : id0:identifier[b]
     {
-        b.setType(id0)
+        try:
+            b.setType(id0)
+        except (AttributeError, ):
+            pass
     }
     | builtInType[b]
     ;
@@ -277,13 +280,18 @@ slist [b]
 
 stat [b]
     {
-        // e = b.newExpression()
+        e = b.newExpression()
     }
     : typeDefinition[b]
     | variableDef[b]
     | expression[b]
     | #(LABELED_STAT IDENT stat[b])
-    | #("if" expression[b] stat[b] (stat[b])? )
+    | #("if" e0:expression[b] s0:stat[b] (s1:stat[b])? )
+        {
+            i = b.newIf()
+            i.setClause(e0, s0, s1)
+        }
+
     | #("for"
           #(FOR_INIT ((variableDef[b])+ | elist[b])?)
           #(FOR_CONDITION (expression[b])?)
@@ -296,8 +304,7 @@ stat [b]
     | #("continue" (IDENT)? )
     | #("return" (r:expression[b])? )
     {
-        // n = b.newExpression()
-        // n.addReturn(r)
+        e.setExpression("return", r, "")
     }
 
     |
@@ -397,36 +404,37 @@ expr [b]
 
     | #(LT lh19:expr[b] rh19:expr[b])
     {
-        b.addBinary(lh19, rh19, "<")
+        b.setExpression(lh19, "<", rh19)
     }
 
     | #(GT lh20:expr[b] rh20:expr[b])
     {
-        b.addBinary(lh20, rh20, ">")
+        b.setExpression(lh20, ">", rh20)
     }
 
-    | #(LE expr[b] expr[b])
+    | #(LE lh21:expr[b] rh21:expr[b])
     {
-        b.addBinary(lh, rh, "<=")
+        b.setExpression(lh21, "<=", rh21)
     }
 
-    | #(GE expr[b] expr[b])
+    | #(GE lh22:expr[b] rh22:expr[b])
     {
-        b.addBinary(lh, rh, ">=")
+        b.setExpression(lh22, ">=", rh22)
     }
 
-    | #(SL expr[b] expr[b])
-    | #(SR expr[b] expr[b])
-    | #(BSR expr[b] expr[b])
+    // shift left, shift right
+    | #(SL lh23:expr[b] rh23:expr[b])
+    | #(SR lh24:expr[b] rh24:expr[b])
+    | #(BSR lh25:expr[b] rh25:expr[b])
 
-    | #(PLUS expr[b] expr[b])
+    | #(PLUS lh26:expr[b] rh26:expr[b])
     {
-        b.addBinary(lh, rh, "+")
+        b.setExpression(lh26, "+", rh26)
     }
 
     | #(MINUS expr[b] expr[b])
     {
-        b.addBinary(lh, rh, "-")
+        // b.addBinary(lh, rh, "-")
     }
 
     | #(DIV expr[b] expr[b])
@@ -442,7 +450,7 @@ expr [b]
 
     | #(UNARY_MINUS um:expr[b])
     {
-        b.addUnary(um, "-")
+        // b.addUnary(um, "-")
     }
 
     | #(UNARY_PLUS expr[b])
@@ -451,7 +459,11 @@ expr [b]
 
 
 primaryExpression [e]
-    : IDENT
+    : i0:IDENT
+        {
+            e.setLeft(i0)
+        }
+
     | #(DOT
            (expr[e]
                (IDENT
@@ -484,7 +496,6 @@ primaryExpression [e]
     | "false"
     | "this"
     | "null"
-
     // type name used with instanceof
     | typeSpec[e]
     ;
