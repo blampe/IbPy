@@ -8,6 +8,11 @@ headings = {
     'from socket import socket',
     ],
 
+    'ScannerSubscription.java' : [
+    'from helpers import *',
+    ],
+    
+
     'Foo.java' : [],
     'Bar.java' : [],
     }
@@ -16,3 +21,11 @@ headings = {
 features = {
     'ContractDetails.java' : 'rename strip frobinate',
     }
+
+
+defaults = {
+    'writemods':False
+    }
+
+
+

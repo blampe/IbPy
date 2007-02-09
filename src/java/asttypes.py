@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-todo:  add property get/set on duplicate method names
+todo:
+       add decorator for overloaded methods
+       fix compound expressions
+       fix statements
+done:
+       add property get/set on duplicate method names
+       reorder class statements to place inner classes first       
+       fix missing self references (in expressions w/o all values defined)
        add property for some modifiers (e.g., syncronized)
        for classes without bases, add object as base
        for classes that implement something, add something as base
-
-done:
-       reorder class statements to place inner classes first       
-
+       
 """
 from cStringIO import StringIO
 
@@ -52,7 +56,8 @@ class Source:
         self.parent = parent
         self.name = name
         self.modifiers = set()
-        self.source = []        
+        self.preable = []
+        self.lines = []        
         self.type = None
         self.variables = set()
         
@@ -68,7 +73,7 @@ class Source:
         self.addSource('')
 
     def addSource(self, text):
-        self.source.append(text)
+        self.lines.append(text)
 
     def addVariable(self, name):
         ##print "##### %s(name=%s).addVariable(%s)" % (self.__class__.__name__, self.name, name, )                    
@@ -83,12 +88,22 @@ class Source:
         return self.__class__ is Method
     
     def writeTo(self, output, indent):
-        for obj in self.source:
+        for obj in self.lines:
+            if callable(obj):
+                obj = obj()
+            elif isinstance(obj, (tuple, list)):
+                obj = self.reFormat(obj)
             try:
                 obj.writeTo(output, indent)
             except (AttributeError, ):
                 output.write('%s%s\n' % (indent*I, obj))
-    
+
+    def reFormat(self, seq):
+        try:
+            return seq[0] % tuple([self.reFormat(s) for s in seq[1:]])
+        except:
+            return self.fixDecl(seq)
+        
     def newClass(self):
         c = Class(parent=self, name=None)
         self.addSource(c)
@@ -126,7 +141,7 @@ class Source:
             scan = list(args)            
             while parent:
                 for d in scan[:]:
-                    s = 'self.%s' % d
+                    s = 'self.%s' % (d, )
                     if (d in parent.variables) and (s not in fixed):
                         fixed.append(s)
                     elif (d not in fixed):
@@ -135,12 +150,6 @@ class Source:
                 parent = parent.parent
         else:
             fixed = args
-
-        if 'checkConnected' in args:
-            #print '#@@@@@@@@@@@@@@@@@', args            
-            #print '#!!!!!!!!!!!!!!!!!', fixed
-            #print '#$$$$$$$$$$$$$$$$$', 'checkConnected' in self.allDecls()
-            pass
         assert len(fixed) == len(args)
         if len(fixed) == 1:
             return fixed[0]
@@ -152,6 +161,8 @@ class Source:
 
     def addModifier(self, mod):
         if mod:
+            if mod == 'synchronized' and self.isMethod:
+                self.preable.append('@synchronized(mlock)')
             self.modifiers.add(mod)
 
 
@@ -185,11 +196,13 @@ class Method(Source):
         self.parameters = ['self', ]
         
     def writeTo(self, output, indent):
-        if self.modifiers:
+        if self.modifiers and astextra.defaults['writemods']:
             output.write('%s## modifiers: %s\n' % (I*indent, str.join(',', self.modifiers)))
+        for obj in self.preable:
+            output.write('%s%s\n' % (I*indent, obj))
         output.write(self.formatDecl(indent))
         output.write('\n')
-        if not self.source:
+        if not self.lines:
             self.addSource('pass')
         Source.writeTo(self, output, indent+1)
 
@@ -215,22 +228,72 @@ class Method(Source):
 class Class(Source):
     def __init__(self, parent, name):
         Source.__init__(self, parent=parent, name=name)
-        self.classvars = set()
+        self.bases = []
         
     def writeTo(self, output, indent):
-        if not self.source:
-            self.addSource('pass')
-        output.write('%sclass %s:\n' % (I*indent, self.name, ))
+        self.propertyMethodScan()
+        self.overloadMethodScan()
+        
+        name = self.name
+        offset = I*(indent+1)
+        output.write('%s%s\n' % (I*indent, self.formatDecl()))
+        output.write('%s""" generated source for %s\n\n' % (offset, name))
+        output.write('%s"""\n' % (offset, ))
         Source.writeTo(self, output, indent+1)
         output.write('\n')
 
+    def formatDecl(self):
+        bases = self.bases or ['object', ]
+        bases = str.join(', ', bases)
+        return 'class %s(%s):' % (self.name, bases)
+    
+    def addBaseClass(self, clause):
+        if not clause:
+            return
+        elif clause not in self.bases:
+            ## in case java ever grows MI... (giggle)
+            self.bases.append(clause) 
+        
     def addParameter(self, *a, **b):
         print '#### warning:  Class.addParameter called (', a, ')'
 
     def newClass(self):
         c = Class(parent=self, name=None)
-        self.source.insert(0, c)
+        ## move inner classes to the top; allows for referencing
+        ## later in this class definition.
+        self.lines.insert(0, c)
         return c
+
+    def propertyMethodScan(self):
+        lines = self.lines
+        methods = [m for m in lines if getattr(m, 'isMethod', False)]
+        mapping = [(m.name, len(m.parameters)) for m in methods]
+        propmap = {}
+        
+        for meth in methods:
+            if (meth.name, 1) in mapping and (meth.name, 2) in mapping:
+                argc = len(meth.parameters)
+                pmmap = propmap.setdefault(meth.name, {1:None, 2:None})
+                pmmap[argc] = meth
+                if argc == 1:
+                    meth.name = 'get_%s' % (meth.name)
+                else:
+                    meth.name = 'set_%s' % (meth.name)
+
+        for methname, propmethods in propmap.items():
+            lines.remove(propmethods[1])
+            lines.remove(propmethods[2])
+        while not lines[-1]:
+            lines.pop()
+        for methname, propmethods in propmap.items():            
+            lines.append('')
+            lines.append(propmethods[1])
+            lines.append(propmethods[2])            
+            lines.append('%s = property(%s, %s)' % (methname, propmethods[1].name, propmethods[2].name))
+            
+    def overloadMethodScan(self):
+        pass
+
 
 class Statement(Source):
     def __init__(self, parent, name=None):
@@ -240,7 +303,8 @@ class Statement(Source):
     def writeTo(self, output, indent):
         output.write('%s%s' % (I*(indent), self.name))
         if self.expr is not None:
-            output.write(' %s' % (self.expr, ))
+            expr = self.reFormat(self.expr)
+            output.write(' %s' % (expr))
         if self.isBlock:
             output.write(':')
         output.write('\n')
