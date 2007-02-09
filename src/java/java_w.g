@@ -1,10 +1,19 @@
 /*
-This file is part of PyANTLR. See LICENSE.txt for license
-details..........Copyright (C) Wolfgang Haefelinger, 2004.
+Current:
 
-Java 1.3 AST Recognizer Grammar
-Author: (see java.g preamble)
-This grammar is in the PUBLIC DOMAIN
+    This file is part of IbPy.  Redistributed under terms of original
+    license below.  Modifications Copyright (C) Troy Melhase
+    <troy@gci.net>.
+
+
+Original:
+
+    This file is part of PyANTLR. See LICENSE.txt for license
+    details..........Copyright (C) Wolfgang Haefelinger, 2004.
+
+    Java 1.3 AST Recognizer Grammar
+    Author: (see java.g preamble)
+    This grammar is in the PUBLIC DOMAIN
 */
 
 
@@ -12,531 +21,558 @@ options {
     language=Python;
 }
 
-{
-    from asttypes import Module
+
+/* our module statements  */ {
+from asttypes import Module, typeMap
+noassignment = "<noassign>"
+missing = "<missing>"
+unknown = "<unknown>"
+
 }
 
 
 class walker extends TreeParser;
+
 
 options {
     importVocab = Java;
 }
 
 
+/* our method for starting a walk */
 module [infile, outfile]
-    {
-        m = Module(infile, outfile)
-    }
-    : (packageDefinition [m])?
-      (importDefinition [m])*
-      (typeDefinition [m])*
-    {
-        return m
-    }
+returns [mod=Module(infile, outfile)]
+    : (pkg=package_def[mod])?
+      (imp=import_def[mod])*
+      (typ=type_def[mod])*
     ;
 
 
-packageDefinition [b]
-    : #(PACKAGE_DEF identifier[b])
+package_def [block]
+returns [definition = ""]
+    : #(PACKAGE_DEF definition = identifier[block])
     ;
 
 
-importDefinition [b]
-    : #(IMPORT identifierStar[b] )
+import_def [block]
+returns [definition = ""]
+    : #(IMPORT definition = identifier_star[block] )
     ;
 
 
-typeDefinition [b]
-    { 
-        c = b.newClass()
-    }
-    : #(CLASS_DEF modifiers[c]
-                  identifier[c] 
-                  extendsClause[c]
-                  implementsClause[c]
-                  objBlock[c])
-    | #(INTERFACE_DEF modifiers[c]
-                      identifier[c]
-                      extendsClause[c]
-                      interfaceBlock[c])
+type_def [block]
+returns [klass = block.newClass()]
+    : #(CLASS_DEF
+          modifiers[klass]
+          name = identifier[klass] {klass.name = name}
+          ext_clause = extends_clause[klass]
+          imp_clause = implements_clause[klass]
+          obj_block[klass]
+       )
+    | #(INTERFACE_DEF
+          modifiers[klass]
+          name = identifier[klass] {klass.name = name}
+          ext_clause = extends_clause[klass]
+          interface_block[klass]
+       )
     ;
 
 
-typeSpec [b]
-    : #(TYPE typeSpecArray[b])
+type_spec [block]
+returns [spec]
+    : #(type0:TYPE type_spec_array[block])
+          {spec = type0.getFirstChild().getText()}
     ;
 
 
-typeSpecArray [b]
-    : #(ARRAY_DECLARATOR typeSpecArray[b])
-    | type[b]
+type_spec_array [block]
+    : #(ARRAY_DECLARATOR type_spec_array[block])
+    | spec = type[block]
     ;
 
 
-type [b]
-    : id0:identifier[b]
-    {
-        try:
-            b.setType(id0)
-        except (AttributeError, ):
-            pass
-    }
-    | builtInType[b]
+type [block]
+returns [t]
+    : t = identifier[block]   {block.setType(t)}
+    | t = builtin_type[block] {block.setType(t)}
     ;
 
 
-builtInType [b]
-    : "void"
-    | "boolean"
-    | "byte"
-    | "char"
-    | "short"
-    | "int"
-    | "float"
-    | "long"
-    | "double"
+builtin_type [block]
+returns [t]
+    : v0:"void"    {t = v0.getText()}
+    | b0:"boolean" {t = "bool"}
+    | y0:"byte"    {t = y0.getText()}
+    | c0:"char"    {t = c0.getText()}
+    | s0:"short"   {t = s0.getText()}
+    | i0:"int"     {t = i0.getText()}
+    | f0:"float"   {t = f0.getText()}
+    | l0:"long"    {t = l0.getText()}
+    | d0:"double"  {t = d0.getText()}
     ;
 
 
-modifiers [b]
-    : #(MODIFIERS (modifier[b])*)
+modifiers [block, m=None]
+    : #(MODIFIERS (m = modifier[block])*) {block.addModifier(m)}
     ;
 
 
-modifier [b]
-    : "private"
-    | "public"
-    | "protected"
-    | "static"
-    | "transient"
-    | "final"
-    | "abstract"
-    | "native"
-    | "threadsafe"
-    | "synchronized"
-    | "const"
-    | "volatile"
-    | "strictfp"
+modifier [block]
+returns [m]
+    : pri0:"private"       {m = pri0.getText()}
+    | pub0:"public"        {m = pub0.getText()}
+    | pro0:"protected"     {m = pro0.getText()}
+    | sta0:"static"        {m = sta0.getText()}
+    | tra0:"transient"     {m = tra0.getText()}
+    | fin0:"final"         {m = fin0.getText()}
+    | abt0:"abstract"      {m = abt0.getText()}
+    | nat0:"native"        {m = nat0.getText()}
+    | ths0:"threadsafe"    {m = ths0.getText()}
+    | syn0:"synchronized"  {m = syn0.getText()}
+    | con0:"const"         {m = con0.getText()}
+    | vol0:"volatile"      {m = vol0.getText()}
+    | sfp0:"strictfp"      {m = sfp0.getText()}
     ;
 
 
-extendsClause [b]
-    : #(EXTENDS_CLAUSE (identifier[b])* )
+extends_clause [block]
+returns [clause=None]
+    : #(EXTENDS_CLAUSE (clause=identifier[block])* )
     ;
 
 
-implementsClause [b]
-    : #(IMPLEMENTS_CLAUSE (identifier[b])* )
+implements_clause [block]
+returns [clause=None]
+    : #(IMPLEMENTS_CLAUSE (clause=identifier[block])* )
     ;
 
 
-interfaceBlock [b]
+interface_block [block]
     : #(OBJBLOCK
-           (methodDecl[b]
-            |variableDef[b]
-            |typeDefinition[b]
+           (method_decl[block]
+            |variable_def[block]
+            |d = type_def[block] {print "### interface type", d}
         )*
     )
     ;
 
 
-objBlock [b]
+obj_block [block]
     : #(OBJBLOCK
-           (ctorDef[b]
-            |methodDef[b]
-            |variableDef[b]
-            |typeDefinition[b]
-            |#(STATIC_INIT slist[b])
-            |#(INSTANCE_INIT slist[b])
+           (ctor_def[block]
+            | method_def[block]
+            | variable_def[block]
+            | t = type_def[block]
+            | #(STATIC_INIT slist[block])
+            | #(INSTANCE_INIT slist[block])
         )*
     )
     ;
 
 
-ctorDef [b]
+ctor_def [block]
     {
-        m = b.newMethod()
-        m.name = "__init__"
+        m = block.newMethod()
     }
     : #(CTOR_DEF modifiers[m]
-                 methodHead[m]
+                 method_head[m]
                  (slist[m])?)
+        {m.name = "__init__"}
     ;
 
 
-methodDecl [b]
-    : #(METHOD_DEF modifiers[b]
-                   typeSpec[b]
-                   methodHead[b])
+method_decl [block]
+{
+m = block.newMethod()
+}
+
+    : #(METHOD_DEF modifiers[block]
+                   t=type_spec[block]
+                   method_head[block])
     ;
 
 
-methodDef [b]
+method_head [m]
+    : i = identifier[m] {m.name = i}
+      #(PARAMETERS (parameter_def[m])* ) (throws_clause[m])?
+    ;
+
+
+method_def [block]
     {
-        m = b.newMethod()
+        m = block.newMethod()
     }
     : #(METHOD_DEF modifiers[m]
-                   typeSpec[b]
-                   methodHead[m]
+                   t=type_spec[block]
+                   method_head[m]
                    (slist[m])?)
     ;
 
 
-variableDef [b]
-    {
-        e = b.newExpression()
-    }
-    : #(VARIABLE_DEF modifiers[e]
-                     t:typeSpec[e]
-                     d:varDecl[e]
-                     i:varInit[e])
+variable_def [block]
+    : #(VARIABLE_DEF modifiers[block]
+                     t = type_spec[block]
+                     d = var_decl[block]
+                     v = var_init[block])
         {
-            e.setType(t.getFirstChild())
+            block.addDecl(d)
+            d = block.fixDecl(d)
+            if v == noassignment:
+                v = typeMap.get(t, None)
+            block.append("%s = %s" % (d, v))
         }
+
     ;
 
 
-parameterDef [method]
-    : #(PARAMETER_DEF modifiers[method]
-                      typeSpec[method]
-                      i0:identifier[method])
-    {
-        method.addParameter(i0)
-    }
+parameter_def [method]
+    : #(PARAMETER_DEF
+          modifiers[method]
+          ptype = type_spec[method]
+          ident = identifier[method]) {method.addParameter(ident)}
     ;
 
 
-objectInit [b]
-    : #(INSTANCE_INIT slist[b])
+object_init [block]
+    : #(INSTANCE_INIT slist[block])
     ;
 
 
-varDecl [e]
-    : i0:identifier[e]
-    {
-        e.setLeft(i0)
-    }
-    | LBRACK varDecl[e]
+var_decl [block]
+returns [decl]
+    : decl = identifier[block]
+    | LBRACK inner = var_decl[block] { decl = "(%s)" % inner  }
     ;
 
 
-varInit [b]
-    : #(ASSIGN id0:initializer[b])
-    {
-        b.setOp("=")
-    }
-    | // purpose
-    {
-        b.setOp("=")
-    }
+var_init [block]
+returns [init = noassignment]
+    : #(ASSIGN init = initializer[block])
+    | // on purpose
     ;
 
 
-initializer [b]
-    : expression[b]
-    | arrayInitializer[b]
+initializer [block]
+returns [init]
+    : init = expression[block, False]
+    | init = array_initializer[block]
     ;
 
 
-arrayInitializer [b]
-    : #(ARRAY_INIT (initializer[b])*)
+array_initializer [block]
+returns [init]
+    : #(ARRAY_INIT (init = initializer[block])*)
     ;
 
 
-methodHead [m]
-    : identifier[m]
-      #(PARAMETERS (parameterDef[m])* ) (throwsClause[m])?
+throws_clause [block, ident=None]
+    : #("throws" (ident = identifier[block])*)
+      { if ident:
+            block.addModifier("throws %s" % ident)
+      }
     ;
 
 
-throwsClause [b]
-    : #("throws" (identifier[b])*)
+identifier [block]
+returns [ident]
+    : id0:IDENT {ident = id0.getText()}
+    | #(DOT id1=identifier[block] id2:IDENT)
+          {ident = "%s.%s" % (id1, id2.getText())}
     ;
 
 
-identifier [b]
-    : i0:IDENT
-    {
-        b.setName(i0)
-    }
-
-    | #(DOT identifier[b] i1:IDENT)
-    {
-        b.setName(i1)
-    }
+identifier_star [block]
+returns [ident]
+    : id0:IDENT {ident = id0.getText()}
+    | #(DOT id1=identifier[block] id2:(STAR|IDENT))
+          // needs work
+          {ident = "%s ****** %s" % (id1, id2)}
     ;
 
 
-identifierStar [b]
-    : IDENT
-    | #(DOT identifier[b] (STAR|IDENT) )
+slist [block]
+    : #(SLIST (stat[block])*)
     ;
 
 
-slist [b]
-    : #(SLIST (stat[b])*)
-    ;
+stat [block]
+    : typ = type_def[block]
+    | var = variable_def[block]
+    | exp = expression[block]
+    | #(LABELED_STAT IDENT stat[block])
 
-stat [b]
-    {
-        e = b.newExpression()
-    }
-    : typeDefinition[b]
-    | variableDef[b]
-    | expression[b]
-    | #(LABELED_STAT IDENT stat[b])
-    | #("if" e0:expression[b] s0:stat[b] (s1:stat[b])? )
-        {
-            i = b.newIf()
-            i.setClause(e0, s0, s1)
-        }
+    | {
+          s = block.newStatement("if")
+          t = block.newStatement("else")
+      }
+      #("if" e0=expression[s, False] s0:stat[s] (s1:stat[t])? )
+      {
+          s.setExpression(e0)
+      }
+
 
     | #("for"
-          #(FOR_INIT ((variableDef[b])+ | elist[b])?)
-          #(FOR_CONDITION (expression[b])?)
-          #(FOR_ITERATOR (elist[b])?)
-          stat[b]
+          #(FOR_INIT ((variable_def[block])+ | elist[block])?)
+          #(FOR_CONDITION (r=expression[block])?)
+          #(FOR_ITERATOR (elist[block])?)
+          stat[block]
         )
-    | #("while" expression[b] stat[b])
-    | #("do" stat[b] expression[b])
+        {
+            s = block.newStatement("for")
+        }
+
+    | #("while" r=expression[block] stat[block])
+      {
+          s = block.newStatement("while")
+      }
+
+    | #("do" stat[block] r=expression[block])
+      {
+          s = block.newStatement("do-while")
+      }
+
     | #("break" (IDENT)? )
+      {
+          s = block.newStatement("break")
+      }
+
     | #("continue" (IDENT)? )
-    | #("return" (r:expression[b])? )
-    {
-        e.setExpression("return", r, "")
-    }
+      {
+          s = block.newStatement("continue")
+      }
 
-    |
-    {
-        // e.addSwitch()
-        // e.op = "=="
-    }
-        #("switch" x:expression[b] (c:caseGroup[b])*)
-    {
-        // e.addSwitchExpr(x)
-    }
+    | {r = None }
+      #("return" (r=expression[block, False])? )
+      {block.append("return %s" % (block.fixDecl(r)))}
 
-    | #("throw" expression[b])
-    | #("synchronized" expression[b] stat[b])
-    | tryBlock[b]
-    | slist[b]
+
+    | #("switch" x=expression[block] (c:case_group[block])*)
+      {
+          s = block.newStatement("if-switch")
+      }
+
+    | #("throw" x=expression[block])
+      {
+          s = block.newStatement("raise")
+      }
+
+    | try_block[block]
+    | slist[block]
     | EMPTY_STAT
     ;
 
 
-caseGroup [b]
-    : #(CASE_GROUP (#("case" e:expression[b]) | "default")+ s:slist[b])
+case_group [block]
+    : #(CASE_GROUP
+          (#("case" e=expression[block]) | "default")+
+           slist[block]
+          )
+    ;
+
+
+try_block [block]
+    : #("try" slist[block] (handler[block])* (#("finally" slist[block]))?)
+    ;
+
+
+handler [block]
+    : #("catch" parameter_def[block] slist[block])
+    ;
+
+
+elist [block]
+    : #(ELIST (x=expression[block])*)
+    ;
+
+
+expression [block, append=True]
+returns [r]
+    : #(EXPR r=expr[block])
     {
-        // b.addCase(e, s)
+        if append:
+            block.append(r)
     }
     ;
 
 
-tryBlock [b]
-    : #("try" slist[b] (handler[b])* (#("finally" slist[b]))?)
-    ;
+expr  [block]
+returns [exp = unknown]
 
-
-handler [b]
-    : #("catch" parameterDef[b] slist[b])
-    ;
-
-
-elist [b]
-    : #(ELIST (expression[b])*)
-    ;
-
-
-expression [b]
-    {
-    if not b.isExpression():
-        b = b.newExpression()
-    }
-    : #(EXPR expr[b])
-    ;
-
-
-expr [b]
     // trinary operator
-    : #(QUESTION expr[b] expr[b] expr[b])
+    : #(QUESTION a0=expr[block] b0=expr[block] c0=expr[block])
+      {exp = "(%s and %s or %s)" % (a0, b0, c0) }
 
     // binary operators
-    | #(ASSIGN lh0:expr[b] rh0:expr[b])
-    {
-        b.setExpression(lh0, "=", rh0)
-    }
+    | #(ASSIGN left=expr[block] right=expr[block])
+      {exp = "%s = %s" % block.fixDecl(left, right)}
 
-    | #(PLUS_ASSIGN lh1:expr[b] rh1:expr[b])
-    {
-        b.setExpression(lh1, "+=", rh1)
-    }
+    | #(PLUS_ASSIGN left=expr[block] right=expr[block])
+      {exp = "%s += %s" % (left, right)}
 
-    | #(MINUS_ASSIGN lh2:expr[b] rh2:expr[b])
-    {
-        b.setExpression(lh2, "-=", rh2)
-    }
+    | #(MINUS_ASSIGN left=expr[block] right=expr[block])
+      {exp = "%s -= %s" % (left, right)}
 
-    | #(STAR_ASSIGN lh3:expr[b] rh3:expr[b])
-    {
-        b.setExpression(lh3, "*=", rh3)
-    }
+    | #(STAR_ASSIGN left=expr[block] right=expr[block])
+      {exp = "%s *= %s" (left, right)}
 
-    | #(DIV_ASSIGN expr[b] expr[b])
-    | #(MOD_ASSIGN expr[b] expr[b])
-    | #(SR_ASSIGN expr[b] expr[b])
-    | #(BSR_ASSIGN expr[b] expr[b])
-    | #(SL_ASSIGN expr[b] expr[b])
-    | #(BAND_ASSIGN expr[b] expr[b])
-    | #(BXOR_ASSIGN expr[b] expr[b])
-    | #(BOR_ASSIGN expr[b] expr[b])
-    | #(LOR expr[b] expr[b])
-    | #(LAND expr[b] expr[b])
-    | #(BOR expr[b] expr[b])
-    | #(BXOR expr[b] expr[b])
-    | #(BAND expr[b] expr[b])
-    | #(NOT_EQUAL expr[b] expr[b])
+    | #(DIV_ASSIGN left=expr[block] right=expr[block])
+    | #(MOD_ASSIGN left=expr[block] right=expr[block])
+    | #(SR_ASSIGN left=expr[block] right=expr[block])
+    | #(BSR_ASSIGN left=expr[block] right=expr[block])
+    | #(SL_ASSIGN left=expr[block] right=expr[block])
+    | #(BAND_ASSIGN left=expr[block] right=expr[block])
+    | #(BXOR_ASSIGN left=expr[block] right=expr[block])
+    | #(BOR_ASSIGN left=expr[block] right=expr[block])
 
-    | #(EQUAL lh18:expr[b] rh18:expr[b])
-    {
-        b.setExpression(lh18, "==", rh18)
-    }
+    | #(LOR left=expr[block] right=expr[block])
+      {exp = "(%s or %s)" % block.fixDecl(left, right)}
 
-    | #(LT lh19:expr[b] rh19:expr[b])
-    {
-        b.setExpression(lh19, "<", rh19)
-    }
+    | #(LAND left=expr[block] right=expr[block])
+      {exp = "(%s and %s)" % block.fixDecl(left, right)}
 
-    | #(GT lh20:expr[b] rh20:expr[b])
-    {
-        b.setExpression(lh20, ">", rh20)
-    }
+    | #(BOR left=expr[block] right=expr[block])
+    | #(BXOR left=expr[block] right=expr[block])
+    | #(BAND left=expr[block] right=expr[block])
+    | #(NOT_EQUAL left=expr[block] right=expr[block])
 
-    | #(LE lh21:expr[b] rh21:expr[b])
-    {
-        b.setExpression(lh21, "<=", rh21)
-    }
+    | #(EQUAL left=expr[block] right=expr[block])
+      {exp = "%s == %s" % block.fixDecl(left, right)}
 
-    | #(GE lh22:expr[b] rh22:expr[b])
-    {
-        b.setExpression(lh22, ">=", rh22)
-    }
+    | #(LT left=expr[block] right=expr[block])
+      {exp = "(%s < %s)" % block.fixDecl(left, right)}
+
+    | #(GT left=expr[block] right=expr[block])
+      {exp = "(%s > %s)" % block.fixDecl(left, right)}
+
+    | #(LE left=expr[block] right=expr[block])
+      {exp = "(%s <= %s)" % block.fixDecl(left, right)}
+
+    | #(GE left=expr[block] right=expr[block])
+      {exp = "(%s >= %s)" % block.fixDecl(left, right)}
 
     // shift left, shift right
-    | #(SL lh23:expr[b] rh23:expr[b])
-    | #(SR lh24:expr[b] rh24:expr[b])
-    | #(BSR lh25:expr[b] rh25:expr[b])
+    | #(SL left=expr[block] right=expr[block])
+    | #(SR left=expr[block] right=expr[block])
+    | #(BSR left=expr[block] right=expr[block])
 
-    | #(PLUS lh26:expr[b] rh26:expr[b])
-    {
-        b.setExpression(lh26, "+", rh26)
-    }
+    | #(PLUS left=expr[block] right=expr[block])
+      {exp = "(%s + %s)" % block.fixDecl(left, right)}
 
-    | #(MINUS expr[b] expr[b])
-    {
-        // b.addBinary(lh, rh, "-")
-    }
+    | #(MINUS left=expr[block] right=expr[block])
+      {exp = "(%s - %s)" % block.fixDecl(left, right)}
 
-    | #(DIV expr[b] expr[b])
-    | #(MOD expr[b] expr[b])
-    | #(STAR expr[b] expr[b])
-    | #(INC expr[b])
-    | #(DEC expr[b])
-    | #(POST_INC expr[b])
-    | #(POST_DEC expr[b])
-    | #(BNOT expr[b])
-    | #(LNOT expr[b])
-    | #("instanceof" expr[b] expr[b])
+    | #(DIV left=expr[block] right=expr[block])
+      {exp = "(%s / %s)" % block.fixDecl(left, right)}
 
-    | #(UNARY_MINUS um:expr[b])
-    {
-        // b.addUnary(um, "-")
-    }
+    | #(MOD left=expr[block] right=expr[block])
+      {exp = "(%s % %s)" % block.fixDecl(left, right)}
 
-    | #(UNARY_PLUS expr[b])
-    | primaryExpression[b]
+    | #(STAR left=expr[block] right=expr[block])
+      {exp = "(%s * %s)" % block.fixDecl(left, right)}
+
+    | #(INC left=expr[block])
+      {exp = "%s += 1" % block.fixDecl(left)}
+
+    | #(DEC left=expr[block])
+      {exp = "%s -= 1" % block.fixDecl(left)}
+
+    | #(POST_INC left=expr[block])
+      {exp = "%s += 1" % block.fixDecl(left)}
+
+    | #(POST_DEC left=expr[block])
+      {exp = "%s -= 1" % block.fixDecl(left)}
+
+    | #(BNOT left=expr[block])
+      {exp = "~%s" % block.fixDecl(left)}
+
+    | #(LNOT left=expr[block])
+      {exp = "not %s" % block.fixDecl(left)}
+
+    | #("instanceof" left=expr[block] right=expr[block])
+      {exp = "isinstance(%s, (%s))" % block.fixDecl(left, right)}
+
+    | #(UNARY_MINUS right=expr[block])
+      {exp = "-%s" % (right, )}
+
+    | #(UNARY_PLUS left=expr[block])
+      {exp = "+%s" % (right, )}
+
+    | exp = primary_expr[block]
     ;
 
 
-primaryExpression [e]
-    : i0:IDENT
-        {
-            e.setLeft(i0)
-        }
-
+primary_expr [e]
+returns [r=missing]
+    : j:IDENT { r = j.getText() }
     | #(DOT
-           (expr[e]
-               (IDENT
-                | arrayIndex[e]
+           (x=expr[e]
+               (a:IDENT
+                | array_index[e]
                 | "this"
                 | "class"
-                | #("new" IDENT elist[e] )
+                | #("new" k:IDENT elist[e] )
                 | "super"
                 )
-            | #(ARRAY_DECLARATOR typeSpecArray[e])
-            | builtInType[e]("class")?
+            | #(ARRAY_DECLARATOR type_spec_array[e])
+            | t=builtin_type[e]("class")?
             )
-        )
+        ) {r = "%s.%s" % (x, a.getText())}
 
-    | arrayIndex[e]
-    | #(METHOD_CALL primaryExpression[e] elist[e])
-    | ctorCall[e]
-    | #(TYPECAST typeSpec[e] ex0:expr[e])
-        {
-        }
-
-    | n0:newExpression[e]
-
-    | c0:constant[e]
-        {
-            e.setRight(c0)
-        }
+    | array_index[e]
+    | #(METHOD_CALL r = primary_expr[e] elist[e])
+    | ctor_call[e] {r = "()" }
+    | #(TYPECAST t=type_spec[e] r=expr[e])
+    | r = new_expression[e]
+    | r = constant[e]
     | "super"
-    | "true"
-    | "false"
-    | "this"
-    | "null"
+    | "true" {r = "True" }
+    | "false" {r = "False" }
+    | "this" {r = "self" }
+    | "null" {r = "None" }
     // type name used with instanceof
-    | typeSpec[e]
+    | t=type_spec[e]
     ;
 
 
-ctorCall [b]
-    : #(CTOR_CALL elist[b] )
+ctor_call [block]
+    : #(CTOR_CALL elist[block] )
     | #(SUPER_CTOR_CALL
-           (elist[b]
-            | primaryExpression[b] elist[b]
+           (elist[block]
+            | p=primary_expr[block] elist[block]
             )
        )
     ;
 
 
-arrayIndex [b]
-    : #(INDEX_OP expr[b] expression[b])
+array_index [block]
+    : #(INDEX_OP r = expr[block] e=expression[block])
+        {block.append("%s[%s]" % (r, e))}
     ;
 
 
-constant [b]
-    : NUM_INT
-    | CHAR_LITERAL
-    | STRING_LITERAL
-    | NUM_FLOAT
-    | NUM_DOUBLE
-    | NUM_LONG
+constant [block]
+returns [value]
+    : i0:NUM_INT        {value = i0.getText()}
+    | c0:CHAR_LITERAL   {value = c0.getText()}
+    | s0:STRING_LITERAL {value = s0.getText()}
+    | f0:NUM_FLOAT      {value = f0.getText()}
+    | d0:NUM_DOUBLE     {value = d0.getText()}
+    | l0:NUM_LONG       {value = l0.getText()}
     ;
 
 
-newExpression [b]
-    : #("new" type[b]
-           (newArrayDeclarator[b] (arrayInitializer[b])?
-            | elist[b] (objBlock[b])?
+new_expression [block]
+returns [value = missing]
+    : #("new" typ=type[block] {value="%s" % typeMap.get(typ, typ+"()")}
+           (new_array_declarator[block] (a=array_initializer[block])?
+            | elist[block] (obj_block[block])?
             )
        )
     ;
 
 
-newArrayDeclarator [b]
-    : #(ARRAY_DECLARATOR (newArrayDeclarator[b])? 
-                         (expression[b])?
+new_array_declarator [block]
+    : #(ARRAY_DECLARATOR (new_array_declarator[block])? 
+                         (e=expression[block])?
        )
     ;

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os.path
+import sys
 
 from java import lexer
 from java import parser
@@ -8,14 +9,14 @@ from java import walker
 
 
 def transform(filename):
-    if not filename:
-        args = []
+    if filename:
+        args = [filename, ]        
     else:
-        args = [filename, ]
+        args = []
     
     L = lexer.Lexer(*args)
     P = parser.Parser(L)
-    P.setFilename(L.getFilename())
+    #P.setFilename(L.getFilename())
 
     try:
         P.compilationUnit()
@@ -30,14 +31,16 @@ def transform(filename):
        return 2
 
     W = walker.Walker()
-    filein = os.path.basename(filename)
-    fileout = '%s.py' % (os.path.splitext(filein)[0])
+    if filename:
+        filein = os.path.basename(filename)
+        fileout = '%s.py' % (os.path.splitext(filein)[0])
+    else:
+        filein = fileout = '-'
     print W.module(ast, filein, fileout)
     return 0
 
 
 if __name__ == '__main__':
-    import sys
     import psyco
     psyco.full()
 
@@ -45,6 +48,7 @@ if __name__ == '__main__':
         name = sys.argv[1]
     except (IndexError, ):
         name = None
+
     ret = transform(name)
     sys.exit(ret)
 

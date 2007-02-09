@@ -21,5 +21,4 @@ clean:
 
 java:
 	cd java && $(MAKE)
-
-
+	@echo
