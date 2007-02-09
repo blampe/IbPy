@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 todo:  add property get/set on duplicate method names
-       indent long method signatures
-       reorder class statements to place inner classes first
        add property for some modifiers (e.g., syncronized)
+       for classes without bases, add object as base
+       for classes that implement something, add something as base
+
+done:
+       reorder class statements to place inner classes first       
 
 """
 from cStringIO import StringIO
@@ -14,12 +17,14 @@ import walker
 
 
 I = ' '*4
+
 typeMap = {
     'String':"''",
     'int':'0',
     'double':'0.0',
     'Vector':'[]',
     }
+
 renameMap = {
     'this':'self',
     'null':'None',
@@ -27,6 +32,7 @@ renameMap = {
     'true':'True',
     'equals':'__eq__',
     }
+
 conflictRenameMap = {
     '__init__':'new',
 }
@@ -41,78 +47,108 @@ def rename(item):
     return item
 
 
-class Source(list):
-    isClass = isMethod = False
-    
-    def __init__(self, name=''):
-        list.__init__(self)
+class Source:
+    def __init__(self, parent=None, name=None):
+        self.parent = parent
         self.name = name
-        self.decls = set()
         self.modifiers = set()
+        self.source = []        
+        self.type = None
+        self.variables = set()
         
     def __str__(self):
         out = StringIO()
         self.writeTo(out, 0)
         return out.getvalue()
 
+    def addComment(self, text):
+        self.addSource('## %s' % text)
+
+    def addNewLine(self):
+        self.addSource('')
+
+    def addSource(self, text):
+        self.source.append(text)
+
+    def addVariable(self, name):
+        ##print "##### %s(name=%s).addVariable(%s)" % (self.__class__.__name__, self.name, name, )                    
+        self.variables.add(str(name))
+
+    @property
+    def isClass(self):
+        return self.__class__ is Class
+
+    @property
+    def isMethod(self):
+        return self.__class__ is Method
+    
     def writeTo(self, output, indent):
-        for obj in self:
-            if callable(obj):
-                obj = obj()
+        for obj in self.source:
             try:
                 obj.writeTo(output, indent)
             except (AttributeError, ):
                 output.write('%s%s\n' % (indent*I, obj))
-
-    def addComment(self, text):
-        comment = '## %s' % (text, )
-        self.append(comment)
-
-    def addNewLine(self):
-        self.append('')
     
     def newClass(self):
-        c = Class(self)
-        self.append(c)
+        c = Class(parent=self, name=None)
+        self.addSource(c)
         return c
 
     def newMethod(self, name=''):
-        m = Method(self)
-        m.name = name
-        self.append('')
-        self.append(m)
+        m = Method(parent=self, name=name)
+        self.addNewLine()
+        self.addSource(m)
         return m
 
-    def newExpression(self):
-        e = Expression(self)
-        self.append(e)
-        return e
-
     def newStatement(self, name):
-        s = Statement(self, name)
-        self.append(s)
+        s = Statement(parent=self, name=name)
+        self.addSource(s)
         return s
 
-    def addDecl(self, name):
-        self.decls.add(name)
+    def nodeText(self, node):
+        try:
+            return node.getText()
+        except (AttributeError, ):
+            return node
 
-    def fixDecl(self, *decls):
-        if self.isMethod:
-            r = []
-            for d in decls:
-                if d in self.parent.decls:
-                    d = 'self.%s' % (d, )
-                r.append(d)
+    def allDecls(self):
+        decls = []
+        parent = self.parent
+        while parent:
+            decls.extend(parent.variables)
+            parent = parent.parent
+        return decls
+
+    def fixDecl(self, *args):
+        parent = self.parent
+        if parent:
+            fixed = []
+            scan = list(args)            
+            while parent:
+                for d in scan[:]:
+                    s = 'self.%s' % d
+                    if (d in parent.variables) and (s not in fixed):
+                        fixed.append(s)
+                    elif (d not in fixed):
+                        fixed.append(d)
+                    scan.remove(d)
+                parent = parent.parent
         else:
-            r = decls
-        if len(r) == 1:
-            return r[0]
+            fixed = args
+
+        if 'checkConnected' in args:
+            #print '#@@@@@@@@@@@@@@@@@', args            
+            #print '#!!!!!!!!!!!!!!!!!', fixed
+            #print '#$$$$$$$$$$$$$$$$$', 'checkConnected' in self.allDecls()
+            pass
+        assert len(fixed) == len(args)
+        if len(fixed) == 1:
+            return fixed[0]
         else:
-            return tuple(r)
+            return tuple(fixed)
 
     def setType(self, node):
-        #self.typ = node
-        pass
+        self.type = node
 
     def addModifier(self, mod):
         if mod:
@@ -121,167 +157,84 @@ class Source(list):
 
 class Module(Source):
     def __init__(self, infile, outfile):
-        Source.__init__(self)
+        Source.__init__(self, parent=None, name=None)
         self.infile = infile
         self.outfile = outfile
-        self.addSheBang()
-        self.addNewLine()
-        self.addMainComment()
-        self.addNewLine()
         self.addHeading()
-        self.append('')
-        
-    def addSheBang(self):
-        self.append('#!/usr/bin/env python')
-        self.append('# -*- coding: utf-8 -*-')
-        
-    def addMainComment(self):
-        self.addComment('')
-        self.addComment('source: "%s"' % (self.infile, ))
-        self.addComment('target: "%s"' % (self.outfile, ))
-        self.addComment('')        
-        self.addComment('input source code copyright original author(s)')
-        self.addComment('output source code (this file) copyright Troy Melhase <troy@gci.net>')        
-        self.addComment('')        
 
     def addHeading(self):
+        self.addSource('#!/usr/bin/env python')
+        self.addSource('# -*- coding: utf-8 -*-')
+        self.addNewLine()
+        self.addComment('')
+        self.addComment('Source file: "%s"' % (self.infile, ))
+        self.addComment('Target file: "%s"' % (self.outfile, ))
+        self.addComment('')        
+        self.addComment('Original file copyright original author(s).')
+        self.addComment('This file copyright Troy Melhase <troy@gci.net>.')        
+        self.addComment('')        
+        self.addNewLine()
         for line in astextra.headings.get(self.infile, ()):
-            self.append(line)
+            self.addSource(line)
+        self.addNewLine()
 
 
 class Method(Source):
-    isMethod = True
-    
-    def __init__(self, parent):
-        Source.__init__(self)
-        self.parent = parent
-        self.params = ['self', ]
+    def __init__(self, parent, name):
+        Source.__init__(self, parent=parent, name=name)
+        self.parameters = ['self', ]
         
     def writeTo(self, output, indent):
-        params = str.join(', ', self.params)
-        name = rename(self.name)
         if self.modifiers:
             output.write('%s## modifiers: %s\n' % (I*indent, str.join(',', self.modifiers)))
-        output.write('%sdef %s(%s):\n' % (I*indent, name, params))
+        output.write(self.formatDecl(indent))
+        output.write('\n')
+        if not self.source:
+            self.addSource('pass')
         Source.writeTo(self, output, indent+1)
 
+    def formatDecl(self, indent):
+        name = rename(self.name)
+        parameters = self.parameters
+        if len(parameters) > 5:
+            first, others = parameters[0], parameters[1:]            
+            prefix = '%sdef %s(%s, ' % (I*indent, name, first, )
+            offset = '\n' + (' ' * len(prefix))
+            decl = '%s%s):' % (prefix, str.join(', '+offset, others))
+        else:
+            params = str.join(', ', self.parameters)            
+            decl = '%sdef %s(%s):' % (I*indent, name, params)
+        return decl
+        
     def addParameter(self, node):
-        try:
-            param = node.getText()
-        except (AttributeError, ):
-            param = node
+        param = self.nodeText(node)
         param = rename(param)
-        self.params.append(param)
+        self.parameters.append(param)
 
 
 class Class(Source):
-    isClass = True
-    
-    def __init__(self, parent):
-        Source.__init__(self)
-        self.parent = parent
+    def __init__(self, parent, name):
+        Source.__init__(self, parent=parent, name=name)
         self.classvars = set()
         
     def writeTo(self, output, indent):
+        if not self.source:
+            self.addSource('pass')
         output.write('%sclass %s:\n' % (I*indent, self.name, ))
         Source.writeTo(self, output, indent+1)
+        output.write('\n')
 
     def addParameter(self, *a, **b):
         print '#### warning:  Class.addParameter called (', a, ')'
 
-class Expression(Source):
-    def __init__(self, parent):
-        Source.__init__(self)
-        self.parent = parent
-        self.expr = []
-        self.typ = None
-        self.switch = None
-        self.right = self.left = self.op = None
-        self.prefix = self.suffix = ''
-        
-    def setLeft(self, node):
-        try:
-            left = node.getText()
-        except (AttributeError, ):
-            left = node
-            
-        if self.parent.isClass:
-            self.parent.classvars.add(left)
-        elif self.parent.isMethod:
-            if self.parent.parent.isClass:
-                if left in self.parent.parent.classvars:
-                    left = 'self.%s' % (left, )
-        left = rename(left)
-        self.left = left
-            
-    def setType(self, node):
-        self.typ = node.getText()
-
-    def setOp(self, op):
-        self.op = op
-
-    def setRight(self, node):
-        try:
-            right = node.getText()
-        except (AttributeError, ):
-            right = node
-        self.right = rename(right)
-        
-    def setExpression(self, left, op, right):
-        try:
-            if right.getType() == walker.LITERAL_new:
-                right = '%s()' % (right.getFirstChild().getText(), )
-        except (AttributeError, ):
-            pass
-        self.setLeft(left)
-        self.setOp(op)
-        self.setRight(right)
-        
-    def __writeTo(self, output, indent):
-        left = self.left
-        op = self.op
-        right = self.right
-        typ = self.typ
-        if right is None:
-            right = typeMap.get(typ, None)
-        if not (left == right == op == None):
-            if self.prefix:
-                prefix = '%s ' % (self.prefix)
-            else:
-                prefix = ''
-            suffix = self.suffix
-            self.append('%s%s %s %s%s' % (prefix, left, op, right, suffix))
-        if self.parent.isMethod:
-            indent += 1
-        Source.writeTo(self, output, indent)
-
-    def toString(self):
-        out = StringIO()
-        self.writeTo(out, 0)
-        return out.getvalue()
-    
-    @property
-    def classvars(self):
-        p = self.parent
-        while p:
-            if hasattr(p, 'parent'):
-                p = p.parent
-            else:
-                break
-        return getattr(p, 'classvars', ())
-
-
-    def setPrefix(self, value):
-        self.prefix = value
-
-    def setSuffix(self, value):
-        self.suffix = value
-
+    def newClass(self):
+        c = Class(parent=self, name=None)
+        self.source.insert(0, c)
+        return c
 
 class Statement(Source):
-    def __init__(self, parent, name=''):
-        Source.__init__(self, name)
-        self.parent = parent
+    def __init__(self, parent, name=None):
+        Source.__init__(self, parent=parent, name=name)
         self.expr = None
         
     def writeTo(self, output, indent):
@@ -295,8 +248,6 @@ class Statement(Source):
 
     def setExpression(self, e):
         self.expr = e
-
-        
 
     @property
     def isBlock(self):

@@ -41,10 +41,10 @@ options {
 
 /* our method for starting a walk */
 module [infile, outfile]
-returns [mod=Module(infile, outfile)]
-    : (pkg=package_def[mod])?
-      (imp=import_def[mod])*
-      (typ=type_def[mod])*
+returns [mod = Module(infile, outfile)]
+    : (pkg = package_def[mod])?
+      (imp = import_def[mod])*
+      (typ = type_def[mod])*
     ;
 
 
@@ -151,7 +151,7 @@ interface_block [block]
     : #(OBJBLOCK
            (method_decl[block]
             |variable_def[block]
-            |d = type_def[block] {print "### interface type", d}
+            |d = type_def[block]
         )*
     )
     ;
@@ -184,16 +184,21 @@ ctor_def [block]
 method_decl [block]
 {
 m = block.newMethod()
+m.addSource("raise NotImplementedError()")
 }
 
-    : #(METHOD_DEF modifiers[block]
-                   t=type_spec[block]
-                   method_head[block])
+    : #(METHOD_DEF modifiers[m]
+                   t=type_spec[m]
+                   method_head[m])
     ;
 
 
 method_head [m]
-    : i = identifier[m] {m.name = i}
+    : i = identifier[m]
+      {
+       m.name = i
+       m.parent.addVariable(i)
+      }
       #(PARAMETERS (parameter_def[m])* ) (throws_clause[m])?
     ;
 
@@ -215,11 +220,11 @@ variable_def [block]
                      d = var_decl[block]
                      v = var_init[block])
         {
-            block.addDecl(d)
+            block.addVariable(d)
             d = block.fixDecl(d)
             if v == noassignment:
                 v = typeMap.get(t, None)
-            block.append("%s = %s" % (d, v))
+            block.addSource("%s = %s" % (d, v))
         }
 
     ;
@@ -297,7 +302,7 @@ slist [block]
 
 stat [block]
     : typ = type_def[block]
-    | var = variable_def[block]
+    | variable_def[block]
     | exp = expression[block]
     | #(LABELED_STAT IDENT stat[block])
 
@@ -307,14 +312,14 @@ stat [block]
       }
       #("if" e0=expression[s, False] s0:stat[s] (s1:stat[t])? )
       {
-          s.setExpression(e0)
+          s.setExpression(block.fixDecl(e0))
       }
 
 
     | #("for"
-          #(FOR_INIT ((variable_def[block])+ | elist[block])?)
+          #(FOR_INIT ((variable_def[block])+ | el0=elist[block])?)
           #(FOR_CONDITION (r=expression[block])?)
-          #(FOR_ITERATOR (elist[block])?)
+          #(FOR_ITERATOR (el1=elist[block])?)
           stat[block]
         )
         {
@@ -343,7 +348,7 @@ stat [block]
 
     | {r = None }
       #("return" (r=expression[block, False])? )
-      {block.append("return %s" % (block.fixDecl(r)))}
+      {block.addSource("return %s" % (block.fixDecl(r), ))}
 
 
     | #("switch" x=expression[block] (c:case_group[block])*)
@@ -381,7 +386,16 @@ handler [block]
 
 
 elist [block]
-    : #(ELIST (x=expression[block])*)
+returns [seq=""]
+    : #(ELIST (r = expression[block, False]
+           {
+           if seq:
+               seq = "%s, %s" % (seq, r)
+           else:
+               seq += r
+           }
+       )*
+    )
     ;
 
 
@@ -390,7 +404,7 @@ returns [r]
     : #(EXPR r=expr[block])
     {
         if append:
-            block.append(r)
+            block.addSource(r)
     }
     ;
 
@@ -434,6 +448,7 @@ returns [exp = unknown]
     | #(BXOR left=expr[block] right=expr[block])
     | #(BAND left=expr[block] right=expr[block])
     | #(NOT_EQUAL left=expr[block] right=expr[block])
+      {exp = "%s != %s" % block.fixDecl(left, right)}
 
     | #(EQUAL left=expr[block] right=expr[block])
       {exp = "%s == %s" % block.fixDecl(left, right)}
@@ -497,33 +512,37 @@ returns [exp = unknown]
     | #(UNARY_PLUS left=expr[block])
       {exp = "+%s" % (right, )}
 
-    | exp = primary_expr[block]
+    | exp = primary_expr[block] {exp = block.fixDecl(exp)}
     ;
 
 
 primary_expr [e]
 returns [r=missing]
-    : j:IDENT { r = j.getText() }
+    : j:IDENT { r = e.fixDecl(j.getText()) }
     | #(DOT
            (x=expr[e]
                (a:IDENT
                 | array_index[e]
                 | "this"
                 | "class"
-                | #("new" k:IDENT elist[e] )
+                | #("new" k:IDENT el0=elist[e] )
                 | "super"
                 )
             | #(ARRAY_DECLARATOR type_spec_array[e])
             | t=builtin_type[e]("class")?
             )
-        ) {r = "%s.%s" % (x, a.getText())}
+        ) {r = "%s.%s" % (e.fixDecl(x), a.getText())}
 
     | array_index[e]
-    | #(METHOD_CALL r = primary_expr[e] elist[e])
+    | #(METHOD_CALL r = primary_expr[e] el2=elist[e])
+        {
+            r = "%s(%s)" % (e.fixDecl(r), el2)
+        }
+
     | ctor_call[e] {r = "()" }
-    | #(TYPECAST t=type_spec[e] r=expr[e])
-    | r = new_expression[e]
-    | r = constant[e]
+    | #(TYPECAST t=type_spec[e] r=expr[e]) {r = e.fixDecl(r)}
+    | r = new_expression[e] {r = e.fixDecl(r)}
+    | r = constant[e] {r = e.fixDecl(r)}
     | "super"
     | "true" {r = "True" }
     | "false" {r = "False" }
@@ -535,18 +554,21 @@ returns [r=missing]
 
 
 ctor_call [block]
-    : #(CTOR_CALL elist[block] )
+    : #(CTOR_CALL el0=elist[block] )
     | #(SUPER_CTOR_CALL
-           (elist[block]
-            | p=primary_expr[block] elist[block]
+           (el0=elist[block]
+            | p=primary_expr[block] el2=elist[block]
             )
        )
     ;
 
 
 array_index [block]
-    : #(INDEX_OP r = expr[block] e=expression[block])
-        {block.append("%s[%s]" % (r, e))}
+    : #(INDEX_OP 
+          r = expr[block] 
+          e = expression[block]
+          )
+      {block.addSource("%s[%s]" % (r, e))}
     ;
 
 
@@ -563,11 +585,15 @@ returns [value]
 
 new_expression [block]
 returns [value = missing]
-    : #("new" typ=type[block] {value="%s" % typeMap.get(typ, typ+"()")}
+{
+el = ""
+}
+    : #("new" typ=type[block] 
            (new_array_declarator[block] (a=array_initializer[block])?
-            | elist[block] (obj_block[block])?
+            | el=elist[block] (obj_block[block])?
             )
        )
+       {value="%s" % typeMap.get(typ, typ+"(%s)" % el)}
     ;
 
 
