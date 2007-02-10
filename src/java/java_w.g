@@ -418,7 +418,7 @@ returns [exp = unknown]
 
     // trinary operator
     : #(QUESTION a0=expr[block] b0=expr[block] c0=expr[block])
-      {exp = ("(%s and %s or %s)", a0, b0, c0)}
+      {exp = ("%s if %s else %s", b0, a0, c0)}
 
     // binary operators
     | #(ASSIGN left=expr[block] right=expr[block])

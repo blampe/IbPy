@@ -226,23 +226,20 @@ class Class(Source):
         methods = [m for m in lines if getattr(m, 'isMethod', False)]
         mapping = [(m.name, len(m.parameters)) for m in methods]
         propmap = {}
-        
         for meth in methods:
             if (meth.name, 1) in mapping and (meth.name, 2) in mapping:
                 argc = len(meth.parameters)
                 pmmap = propmap.setdefault(meth.name, {1:None, 2:None})
                 pmmap[argc] = meth
-                if argc == 1:
-                    meth.name = 'get_%s' % (meth.name)
-                else:
-                    meth.name = 'set_%s' % (meth.name)
-
+                meth.name = 'get_%s' if argc == 1 else 'set_%s' % meth.name
         for methname, propmethods in propmap.items():
             lines.remove(propmethods[1])
             lines.remove(propmethods[2])
         while not lines[-1]:
             lines.pop()
-        for methname, propmethods in propmap.items():            
+        for methname, propmethods in propmap.items():
+            assert propmethods[1]
+            assert propmethods[2]
             lines.append('')
             lines.append(propmethods[1])
             lines.append(propmethods[2])            

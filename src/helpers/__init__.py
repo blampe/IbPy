@@ -37,3 +37,6 @@ class Integer(int):
 
 class Double(float):
     MAX_VALUE = sys.maxint
+
+class Cloneable(object):
+    pass
