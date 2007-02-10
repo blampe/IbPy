@@ -184,51 +184,6 @@ class Module(Source):
             self.addSource(line)
         self.addNewLine()
 
-
-class Method(Source):
-    def __init__(self, parent, name):
-        Source.__init__(self, parent=parent, name=name)
-        self.parameters = ['self', ]
-
-    def addModifier(self, mod):
-        try:
-            mod = modifierRenameMap[mod]
-        except (KeyError, ):
-            Source.addModifier(self, mod)
-        else:
-            if mod not in self.preable:
-                self.preable.append(mod)
-
-    def addParameter(self, node):
-        param = self.nodeText(node)
-        param = self.reName(param)
-        self.parameters.append(param)
-
-    def formatDecl(self, indent):
-        name = self.reName(self.name)
-        parameters = self.parameters
-        if len(parameters) > 5:
-            first, others = parameters[0], parameters[1:]            
-            prefix = '%sdef %s(%s, ' % (I*indent, name, first, )
-            offset = '\n' + (' ' * len(prefix))
-            decl = '%s%s):' % (prefix, str.join(', '+offset, others))
-        else:
-            params = str.join(', ', self.parameters)            
-            decl = '%sdef %s(%s):' % (I*indent, name, params)
-        return decl
-
-    def writeTo(self, output, indent):
-        offset = I * indent
-        if self.modifiers and astextra.defaults['writemods']:
-            output.write('%s## modifiers: %s\n' % (offset, str.join(',', self.modifiers)))
-        for obj in self.preable:
-            output.write('%s%s\n' % (offset, obj))
-        output.write('%s\n' % (self.formatDecl(indent), ))
-        if not self.lines:
-            self.addSource('pass')
-        Source.writeTo(self, output, indent+1)
-
-
 class Class(Source):
     def __init__(self, parent, name):
         Source.__init__(self, parent=parent, name=name)
@@ -297,6 +252,50 @@ class Class(Source):
         pass
 
 
+class Method(Source):
+    def __init__(self, parent, name):
+        Source.__init__(self, parent=parent, name=name)
+        self.parameters = ['self', ]
+
+    def addModifier(self, mod):
+        try:
+            mod = modifierRenameMap[mod]
+        except (KeyError, ):
+            Source.addModifier(self, mod)
+        else:
+            if mod not in self.preable:
+                self.preable.append(mod)
+
+    def addParameter(self, node):
+        param = self.nodeText(node)
+        param = self.reName(param)
+        self.parameters.append(param)
+
+    def formatDecl(self, indent):
+        name = self.reName(self.name)
+        parameters = self.parameters
+        if len(parameters) > 5:
+            first, others = parameters[0], parameters[1:]            
+            prefix = '%sdef %s(%s, ' % (I*indent, name, first, )
+            offset = '\n' + (' ' * len(prefix))
+            decl = '%s%s):' % (prefix, str.join(', '+offset, others))
+        else:
+            params = str.join(', ', self.parameters)            
+            decl = '%sdef %s(%s):' % (I*indent, name, params)
+        return decl
+
+    def writeTo(self, output, indent):
+        offset = I * indent
+        if self.modifiers and astextra.defaults['writemods']:
+            output.write('%s## modifiers: %s\n' % (offset, str.join(',', self.modifiers)))
+        for obj in self.preable:
+            output.write('%s%s\n' % (offset, obj))
+        output.write('%s\n' % (self.formatDecl(indent), ))
+        if not self.lines:
+            self.addSource('pass')
+        Source.writeTo(self, output, indent+1)
+
+
 class Statement(Source):
     def __init__(self, parent, name=None):
         Source.__init__(self, parent=parent, name=name)
@@ -314,4 +313,3 @@ class Statement(Source):
 
     def setExpression(self, e):
         self.expr = e
-
