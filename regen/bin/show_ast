@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from antlr import ASTVisitor
-from java import lexer
-from java import parser
+from lib import lexer
+from lib import parser
 
 
 class Printer(ASTVisitor):

@@ -17,7 +17,7 @@ done:
 from cStringIO import StringIO
 
 import astextra
-import walker
+from lib import walker
 
 
 I = ' '*4

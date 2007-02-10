@@ -7,18 +7,18 @@ javasources := $(wordlist 1,$(words $(javafiles)),$(javafiles))
 
 
 
-.PHONY: all clean java
+.PHONY: all clean lib
 
 
-all: java
+all: lib
 
 
 clean:
 	rm -f *.pyo
 	rm -f *.pyc
-	cd java && $(MAKE) clean
+	cd lib && $(MAKE) clean
 
 
-java:
-	cd java && $(MAKE)
+lib:
+	cd lib && $(MAKE)
 	@echo

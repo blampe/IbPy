@@ -3,9 +3,9 @@
 import os.path
 import sys
 
-from java import lexer
-from java import parser
-from java import walker
+from lib import lexer
+from lib import parser
+from lib import walker
 
 
 def transform(filename):
