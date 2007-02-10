@@ -41,14 +41,9 @@ conflictRenameMap = {
     '__init__':'new',
 }
 
-
-def rename(item):
-    try:
-        return renameMap[item]
-    except (KeyError, ):
-        pass
-    ##item = item.replace('p_', '').replace('m_', '')
-    return item
+modifierRenameMap = {
+    'synchronized':'@synchronized(mlock)'
+}
 
 
 class Source:
@@ -69,6 +64,10 @@ class Source:
     def addComment(self, text):
         self.addSource('## %s' % text)
 
+    def addModifier(self, mod):
+        if mod:
+            self.modifiers.add(mod)
+
     def addNewLine(self):
         self.addSource('')
 
@@ -76,8 +75,11 @@ class Source:
         self.lines.append(text)
 
     def addVariable(self, name):
-        ##print "##### %s(name=%s).addVariable(%s)" % (self.__class__.__name__, self.name, name, )                    
-        self.variables.add(str(name))
+        self.variables.add(name)
+
+    @property
+    def isBlock(self):
+        return self.name in ('if', 'while', 'for', 'else', 'elif')
 
     @property
     def isClass(self):
@@ -86,24 +88,7 @@ class Source:
     @property
     def isMethod(self):
         return self.__class__ is Method
-    
-    def writeTo(self, output, indent):
-        for obj in self.lines:
-            if callable(obj):
-                obj = obj()
-            elif isinstance(obj, (tuple, list)):
-                obj = self.reFormat(obj)
-            try:
-                obj.writeTo(output, indent)
-            except (AttributeError, ):
-                output.write('%s%s\n' % (indent*I, obj))
 
-    def reFormat(self, seq):
-        try:
-            return seq[0] % tuple([self.reFormat(s) for s in seq[1:]])
-        except:
-            return self.fixDecl(seq)
-        
     def newClass(self):
         c = Class(parent=self, name=None)
         self.addSource(c)
@@ -126,14 +111,33 @@ class Source:
         except (AttributeError, ):
             return node
 
-    def allDecls(self):
-        decls = []
-        parent = self.parent
-        while parent:
-            decls.extend(parent.variables)
-            parent = parent.parent
-        return decls
+    def reFormat(self, seq):
+        try:
+            return seq[0] % tuple([self.reFormat(s) for s in seq[1:]])
+        except:
+            return self.fixDecl(seq)
 
+    def reName(self, item):
+        try:
+            return renameMap[item]
+        except (KeyError, ):
+            return item
+
+    def setType(self, node):
+        self.type = node
+
+    def writeTo(self, output, indent):
+        offset = I*indent
+        for obj in self.lines:
+            if callable(obj):
+                obj = obj()
+            elif isinstance(obj, (tuple, list)):
+                obj = self.reFormat(obj)
+            try:
+                obj.writeTo(output, indent)
+            except (AttributeError, ):
+                output.write('%s%s\n' % (offset, obj))
+        
     def fixDecl(self, *args):
         parent = self.parent
         if parent:
@@ -155,15 +159,6 @@ class Source:
             return fixed[0]
         else:
             return tuple(fixed)
-
-    def setType(self, node):
-        self.type = node
-
-    def addModifier(self, mod):
-        if mod:
-            if mod == 'synchronized' and self.isMethod:
-                self.preable.append('@synchronized(mlock)')
-            self.modifiers.add(mod)
 
 
 class Module(Source):
@@ -194,20 +189,23 @@ class Method(Source):
     def __init__(self, parent, name):
         Source.__init__(self, parent=parent, name=name)
         self.parameters = ['self', ]
-        
-    def writeTo(self, output, indent):
-        if self.modifiers and astextra.defaults['writemods']:
-            output.write('%s## modifiers: %s\n' % (I*indent, str.join(',', self.modifiers)))
-        for obj in self.preable:
-            output.write('%s%s\n' % (I*indent, obj))
-        output.write(self.formatDecl(indent))
-        output.write('\n')
-        if not self.lines:
-            self.addSource('pass')
-        Source.writeTo(self, output, indent+1)
+
+    def addModifier(self, mod):
+        try:
+            mod = modifierRenameMap[mod]
+        except (KeyError, ):
+            Source.addModifier(self, mod)
+        else:
+            if mod not in self.preable:
+                self.preable.append(mod)
+
+    def addParameter(self, node):
+        param = self.nodeText(node)
+        param = self.reName(param)
+        self.parameters.append(param)
 
     def formatDecl(self, indent):
-        name = rename(self.name)
+        name = self.reName(self.name)
         parameters = self.parameters
         if len(parameters) > 5:
             first, others = parameters[0], parameters[1:]            
@@ -218,17 +216,36 @@ class Method(Source):
             params = str.join(', ', self.parameters)            
             decl = '%sdef %s(%s):' % (I*indent, name, params)
         return decl
-        
-    def addParameter(self, node):
-        param = self.nodeText(node)
-        param = rename(param)
-        self.parameters.append(param)
+
+    def writeTo(self, output, indent):
+        offset = I * indent
+        if self.modifiers and astextra.defaults['writemods']:
+            output.write('%s## modifiers: %s\n' % (offset, str.join(',', self.modifiers)))
+        for obj in self.preable:
+            output.write('%s%s\n' % (offset, obj))
+        output.write('%s\n' % (self.formatDecl(indent), ))
+        if not self.lines:
+            self.addSource('pass')
+        Source.writeTo(self, output, indent+1)
 
 
 class Class(Source):
     def __init__(self, parent, name):
         Source.__init__(self, parent=parent, name=name)
         self.bases = []
+
+    def addBaseClass(self, clause):
+        if clause and clause not in self.bases:
+            ## in case java ever grows MI... (giggle)
+            self.bases.append(clause) 
+
+    def addParameter(self, *a, **b):
+        print '#### warning:  Class.addParameter called (', a, ')'
+
+    def formatDecl(self):
+        bases = self.bases or ['object', ]
+        bases = str.join(', ', bases)
+        return 'class %s(%s):' % (self.name, bases)
         
     def writeTo(self, output, indent):
         self.propertyMethodScan()
@@ -241,21 +258,6 @@ class Class(Source):
         output.write('%s"""\n' % (offset, ))
         Source.writeTo(self, output, indent+1)
         output.write('\n')
-
-    def formatDecl(self):
-        bases = self.bases or ['object', ]
-        bases = str.join(', ', bases)
-        return 'class %s(%s):' % (self.name, bases)
-    
-    def addBaseClass(self, clause):
-        if not clause:
-            return
-        elif clause not in self.bases:
-            ## in case java ever grows MI... (giggle)
-            self.bases.append(clause) 
-        
-    def addParameter(self, *a, **b):
-        print '#### warning:  Class.addParameter called (', a, ')'
 
     def newClass(self):
         c = Class(parent=self, name=None)
@@ -313,6 +315,3 @@ class Statement(Source):
     def setExpression(self, e):
         self.expr = e
 
-    @property
-    def isBlock(self):
-        return self.name in ('if', 'while', 'for', 'else', 'elif')
