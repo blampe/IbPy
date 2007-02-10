@@ -235,8 +235,9 @@ class Class(Source):
         for methname, propmethods in propmap.items():
             lines.remove(propmethods[1])
             lines.remove(propmethods[2])
-        while not lines[-1]:
-            lines.pop()
+        if lines:
+            while not lines[-1]:
+                lines.pop()
         for methname, propmethods in propmap.items():
             assert propmethods[1]
             assert propmethods[2]
