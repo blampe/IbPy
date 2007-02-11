@@ -172,13 +172,9 @@ ctor_def [block]
         }
         #(CTOR_DEF
             modifiers[meth]
-            method_head[meth]
+            method_head[meth, "__init__"]
             (stat_list[meth])?
         )
-        // method_head rule sets the name so we fix it here
-        {
-        meth.name = "__init__"
-        }
     ;
 
 
@@ -198,11 +194,13 @@ method_decl [block]
     ;
 
 
-method_head [meth]
-    :   i = identifier[meth]
+method_head [meth, name=None]
+    :   ident = identifier[meth]
         {
-        meth.name = i
-        meth.parent.addVariable(i)
+        if name is None:
+            name = ident
+        meth.name = name
+        meth.parent.addVariable(name)
         }
         #(PARAMETERS (parameter_def[meth])*)
         (throws_clause[meth])?
@@ -431,14 +429,16 @@ handler [block]
 
 
 expr_list [block]
-returns [seq=()]
-{c = []}
+returns [seq]
     :   #(ELIST
-            (r = expression[block, False]
-            {c.append(r)}
-            //{seq = (seq, r) if seq else r}
+            (exp = expression[block, False]
+            {
+            if seq:
+                seq = ("%s, %s", (("%s", seq), ("%s", exp)))
+            else:
+                seq = ("%s", exp)
+            }
         )*
-            //{seq=("%s"*len(c), tuple(c))}
     )
     ;
 
@@ -453,7 +453,7 @@ returns [exp]
     ;
 
 
-expr  [block]
+expr [block]
 returns [exp = unknown]
     :   #(QUESTION a0=expr[block] b0=expr[block] c0=expr[block])
         {exp = ("(%s %s ", (("%s", b0), ("%s %s", (("if %s", a0), ("else %s)", c0)))))}
@@ -619,12 +619,13 @@ returns [r = missing]
         }
 
     |   call = ctor_call[e]
-        {r = ("%s", call)}
+        {
+        r = ("%s", call)
+        }
 
     |   #(TYPECAST ts3=type_spec[e] ex3=expr[e])
         {
-        // print "######### TYPECAST", r, t
-        // r = ("%s", r)
+        r = ("%s", ex3)
         }
 
     |   ex = new_expression[e] 
@@ -633,13 +634,15 @@ returns [r = missing]
         }
 
     |   con = constant[e]
-        {r = ("%s", con)}
+        {
+        r = ("%s", con)
+        }
 
-    |   "super"
-    |   "true"  {r = ("%s", "True",  )}
-    |   "false" {r = ("%s", "False", )}
-    |   "this"  {r = ("%s", "self",  )}
-    |   "null"  {r = ("%s", "None",  )}
+    |   "super" {r = ("%s", "super"  )}
+    |   "true"  {r = ("%s", "True"   )}
+    |   "false" {r = ("%s", "False"  )}
+    |   "this"  {r = ("%s", "self"   )}
+    |   "null"  {r = ("%s", "None"   )}
 
     // type name used with instanceof
     |   typ = type_spec[e] 
@@ -658,9 +661,7 @@ returns [seq=()]
             (el0=expr_list[block]
                 | p=primary_expr[block] el2=expr_list[block]
             )
-            {
-            print "#### SUPER"
-            }
+            {raise NotImplementedError("SUPER_CTOR_CALL")}
         )
     ;
 
@@ -690,21 +691,21 @@ returns [value]
 new_expression [block]
 returns [value = missing]
     {
-    el = ()
+    exp = ()
     }
     :   #("new"
-            typ=type[block] 
+            typ = type[block] 
             (new_array_declarator[block]
-                (a=array_initializer[block])?
-                | el=expr_list[block] (obj_block[block])?
+                ( arrexp = array_initializer[block])?
+                | exp = expr_list[block] (obj_block[block])?
             )
         )
-        {print "####CTOR_CALL", typ, el}
-
         {
-        if el:
-            //value = ("%s(%s)", (typ, el))
-            value = ("%s(%s)", (("%s", typ), ("%s", el)))
+
+        if exp:
+            value = ("%s(%s)", (("%s", typ), ("%s", exp)))
+        elif typ in typeMap:
+            value = ("%s", typeMap[typ])
         else:
             value = ("%s()", typ)
         }

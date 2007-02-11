@@ -3,18 +3,19 @@
 """
 todo:
        add decorator for overloaded methods
-       fix compound expressions
        fix statements
+
 done:
+       fix compound expressions
        add property get/set on duplicate method names
        reorder class statements to place inner classes first       
        fix missing self references (in expressions w/o all values defined)
        add property for some modifiers (e.g., syncronized)
        for classes without bases, add object as base
        for classes that implement something, add something as base
-       
 """
 from cStringIO import StringIO
+import re
 
 import astextra
 import walker
@@ -27,6 +28,7 @@ typeMap = {
     'int':'0',
     'double':'0.0',
     'Vector':'[]',
+    'boolean':'False',
     }
 
 renameMap = {
@@ -59,8 +61,11 @@ class Source:
     def __str__(self):
         out = StringIO()
         self.writeTo(out, 0)
-        return out.getvalue()
-
+        source = out.getvalue()
+        for sub in astextra.globalSubs:
+            source = re.sub(sub[0], sub[1], source)
+        return source
+    
     def addComment(self, text):
         self.addSource('## %s' % text)
 
@@ -71,10 +76,12 @@ class Source:
     def addNewLine(self):
         self.addSource('')
 
-    def addSource(self, text):
-        self.lines.append(text)
+    def addSource(self, value):
+        self.lines.append(value)
 
-    def addVariable(self, name):
+    def addVariable(self, name, classOnly=True):
+        if not self.isClass and classOnly:
+            return
         self.variables.add(name)
 
     @property
@@ -96,7 +103,6 @@ class Source:
 
     def newMethod(self, name=''):
         m = Method(parent=self, name=name)
-        self.addNewLine()
         self.addSource(m)
         return m
 
@@ -115,7 +121,7 @@ class Source:
         def err(e):
             import sys
             print '###########', s
-            print e
+            print repr(e), e
             sys.exit(-1)
         fix = self.fixDecl
         ref = self.reFormat
@@ -140,8 +146,8 @@ class Source:
         except (KeyError, ):
             return item
 
-    def setType(self, node):
-        self.type = node
+    def setType(self, value):
+        self.type = value
 
     def writeTo(self, output, indent):
         offset = I*indent
@@ -157,33 +163,11 @@ class Source:
 
     def fixDecl(self, *args):
         decls = list(self.allDecls())
-        fixed = list(args[:])
+        fixed = list(args)
         for i, arg in enumerate(args):
             if arg in decls:
                 fixed[i] = "self.%s" % (arg, )
                 
-        assert len(fixed) == len(args)
-        if len(fixed) == 1:
-            return fixed[0]
-        else:
-            return tuple(fixed)
-        
-    def __fixDecl(self, *args):
-        parent = self.parent
-        if parent:
-            fixed = []
-            scan = list(args)            
-            while parent:
-                for d in scan[:]:
-                    s = 'self.%s' % (d, )
-                    if (d in parent.variables) and (s not in fixed):
-                        fixed.append(s)
-                    elif (d not in fixed):
-                        fixed.append(d)
-                    scan.remove(d)
-                parent = parent.parent
-        else:
-            fixed = args
         assert len(fixed) == len(args)
         if len(fixed) == 1:
             return fixed[0]
@@ -196,10 +180,11 @@ class Source:
                 yield v
 
     def allParents(self):
-        next = self.parent
-        while next:
-            yield next
-            next = next.parent
+        previous = self.parent
+        while previous:
+            yield previous
+            previous = previous.parent
+
 
 class Module(Source):
     def __init__(self, infile, outfile):
@@ -224,6 +209,7 @@ class Module(Source):
             self.addSource(line)
         self.addNewLine()
 
+
 class Class(Source):
     def __init__(self, parent, name):
         Source.__init__(self, parent=parent, name=name)
@@ -243,8 +229,8 @@ class Class(Source):
         return 'class %s(%s):' % (self.name, bases)
         
     def writeTo(self, output, indent):
-        self.propertyMethodScan()
-        self.overloadMethodScan()
+        self.scanPropMethods()
+        self.scanOverloadMethods()
         
         name = self.name
         offset = I*(indent+1)
@@ -261,33 +247,48 @@ class Class(Source):
         self.lines.insert(0, c)
         return c
 
-    def propertyMethodScan(self):
+    def scanPropMethods(self):
         lines = self.lines
         methods = [m for m in lines if getattr(m, 'isMethod', False)]
         mapping = [(m.name, len(m.parameters)) for m in methods]
         propmap = {}
+
         for meth in methods:
-            if (meth.name, 1) in mapping and (meth.name, 2) in mapping:
+            name = meth.name
+            if (name, 1) in mapping and (name, 2) in mapping:
                 argc = len(meth.parameters)
-                pmmap = propmap.setdefault(meth.name, {1:None, 2:None})
-                pmmap[argc] = meth
-                meth.name = 'get_%s' if argc == 1 else 'set_%s' % meth.name
-        for methname, propmethods in propmap.items():
-            lines.remove(propmethods[1])
-            lines.remove(propmethods[2])
+                methmap = propmap.setdefault(name, {1:None, 2:None})
+                methmap[argc] = meth
+                meth.name = ('get_%s' if argc==1 else 'set_%s') % name
+
+        for name, meths in propmap.items():
+            lines.remove(meths[1])
+            lines.remove(meths[2])
+
         if lines:
             while not lines[-1]:
                 lines.pop()
-        for methname, propmethods in propmap.items():
-            assert propmethods[1]
-            assert propmethods[2]
-            lines.append('')
-            lines.append(propmethods[1])
-            lines.append(propmethods[2])            
-            lines.append('%s = property(%s, %s)' % (methname, propmethods[1].name, propmethods[2].name))
+
+        format = '%s = property(%s, %s)'                
+        for name, meths in propmap.items():
+            lines.append(meths[1])
+            lines.append(meths[2])            
+            lines.append(format % (name, meths[1].name, meths[2].name))
             
-    def overloadMethodScan(self):
-        pass
+    def scanOverloadMethods(self):
+        lines = self.lines        
+        methods = [m for m in lines if getattr(m, 'isMethod', False)]
+        overloads = {}
+        for method in methods:
+            name = method.name
+            overloads[name] = 1 + overloads.setdefault(name, 0)
+
+        overnames = set()
+        for name, count in overloads.items():
+            if count > 1:
+                overnames.add(name)
+        if overnames:
+            print '### overloaded methods and counts:', overnames
 
 
 class Method(Source):
@@ -324,6 +325,7 @@ class Method(Source):
 
     def writeTo(self, output, indent):
         offset = I * indent
+        output.write('\n')
         if self.modifiers and astextra.defaults['writemods']:
             output.write('%s## modifiers: %s\n' % (offset, str.join(',', self.modifiers)))
         for obj in self.preable:
@@ -342,7 +344,6 @@ class Statement(Source):
     def writeTo(self, output, indent):
         if self.name == 'else' and not self.lines:
             return
-        
         output.write('%s%s' % (I*(indent), self.name))
         if self.expr is not None:
             expr = self.reFormat(self.expr)
@@ -354,17 +355,5 @@ class Statement(Source):
             self.addSource('pass')
         Source.writeTo(self, output, indent+1)
 
-    def setExpression(self, expr):
-        self.expr = expr
-
-
-    def bar():
-        for obj in self.lines:
-            if callable(obj):
-                obj = obj()
-            elif isinstance(obj, (tuple, list)):
-                obj = self.reFormat(obj)
-            try:
-                obj.writeTo(output, indent)
-            except (AttributeError, ):
-                output.write('%s%s\n' % (offset, obj))
+    def setExpression(self, value):
+        self.expr = value

@@ -36,9 +36,7 @@ def transform(filename):
         fileout = '%s.py' % (os.path.splitext(filein)[0])
     else:
         filein = fileout = '-'
-    print '\n'*2
     print W.module(ast, filein, fileout)
-    print '\n'*2    
     return 0
 
 

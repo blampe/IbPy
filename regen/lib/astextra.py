@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 headings = {
     'Contract.java' : [
     'from helpers import *',
@@ -28,5 +27,17 @@ defaults = {
     'writemods':False
 }
 
+
+
+globalSubs = [
+    (r"(\.self\.)", "."),
+###    (r"(.*)(\.size\(\))", r"\1len(\2)"),
+    
+    
+    ]
+
+
+## l_thisSecType.equals("BOND"):
+## l_thisSecType == "BOND"
 
 
