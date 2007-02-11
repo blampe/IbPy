@@ -17,7 +17,7 @@ done:
 from cStringIO import StringIO
 
 import astextra
-from lib import walker
+import walker
 
 
 I = ' '*4
@@ -111,11 +111,28 @@ class Source:
         except (AttributeError, ):
             return node
 
-    def reFormat(self, seq):
+    def reFormat(self, s):
+        def err(e):
+            import sys
+            print '###########', s
+            print e
+            sys.exit(-1)
+        fix = self.fixDecl
+        ref = self.reFormat
         try:
-            return seq[0] % tuple([self.reFormat(s) for s in seq[1:]])
-        except:
-            return self.fixDecl(seq)
+            if isinstance(s, basestring):
+                return fix(s)
+            if isinstance(s[0], basestring) and isinstance(s[1], basestring):
+                return fix(s[0]) % fix(s[1])
+            if isinstance(s[0], basestring) and isinstance(s[1], tuple):
+                return fix(s[0]) % ref(s[1])
+            if isinstance(s[0], tuple) and isinstance(s[1], basestring):
+                return ref(s[0]) % ref(s[1])
+            if isinstance(s[0], tuple) and isinstance(s[1], tuple):
+                return (ref(s[0]), ref(s[1]))
+            assert 0            
+        except (Exception, ), ex:
+            err(ex)
 
     def reName(self, item):
         try:
@@ -137,8 +154,21 @@ class Source:
                 obj.writeTo(output, indent)
             except (AttributeError, ):
                 output.write('%s%s\n' % (offset, obj))
-        
+
     def fixDecl(self, *args):
+        decls = list(self.allDecls())
+        fixed = list(args[:])
+        for i, arg in enumerate(args):
+            if arg in decls:
+                fixed[i] = "self.%s" % (arg, )
+                
+        assert len(fixed) == len(args)
+        if len(fixed) == 1:
+            return fixed[0]
+        else:
+            return tuple(fixed)
+        
+    def __fixDecl(self, *args):
         parent = self.parent
         if parent:
             fixed = []
@@ -160,6 +190,16 @@ class Source:
         else:
             return tuple(fixed)
 
+    def allDecls(self):
+        for parent in self.allParents():
+            for v in parent.variables:
+                yield v
+
+    def allParents(self):
+        next = self.parent
+        while next:
+            yield next
+            next = next.parent
 
 class Module(Source):
     def __init__(self, infile, outfile):
@@ -300,14 +340,31 @@ class Statement(Source):
         self.expr = None
         
     def writeTo(self, output, indent):
+        if self.name == 'else' and not self.lines:
+            return
+        
         output.write('%s%s' % (I*(indent), self.name))
         if self.expr is not None:
             expr = self.reFormat(self.expr)
-            output.write(' %s' % (expr))
+            output.write(' %s' % (expr, ))
         if self.isBlock:
             output.write(':')
         output.write('\n')
+        if not self.lines:
+            self.addSource('pass')
         Source.writeTo(self, output, indent+1)
 
-    def setExpression(self, e):
-        self.expr = e
+    def setExpression(self, expr):
+        self.expr = expr
+
+
+    def bar():
+        for obj in self.lines:
+            if callable(obj):
+                obj = obj()
+            elif isinstance(obj, (tuple, list)):
+                obj = self.reFormat(obj)
+            try:
+                obj.writeTo(output, indent)
+            except (AttributeError, ):
+                output.write('%s%s\n' % (offset, obj))

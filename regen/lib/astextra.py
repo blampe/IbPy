@@ -9,7 +9,6 @@ headings = {
     
     'ContractDetails.java' : [
     'from Contract import Contract',
-    'from socket import socket',
     ],
 
     'ScannerSubscription.java' : [
