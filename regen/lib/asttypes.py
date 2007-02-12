@@ -31,6 +31,15 @@ typeMap = {
     'boolean':'False',
     }
 
+otherTypeMap = {
+    'String':'str',
+    'int':'int',
+    'double':'float',
+    'Vector':'list',
+    'boolean':'bool',
+    }
+
+
 renameMap = {
     'this':'self',
     'null':'None',
@@ -185,6 +194,10 @@ class Source:
             yield previous
             previous = previous.parent
 
+    @property
+    def blockMethods(self):
+        return [m for m in self.lines if getattr(m, 'isMethod', False)]
+
 
 class Module(Source):
     def __init__(self, infile, outfile):
@@ -249,7 +262,7 @@ class Class(Source):
 
     def scanPropMethods(self):
         lines = self.lines
-        methods = [m for m in lines if getattr(m, 'isMethod', False)]
+        methods = self.blockMethods
         mapping = [(m.name, len(m.parameters)) for m in methods]
         propmap = {}
 
@@ -276,25 +289,36 @@ class Class(Source):
             lines.append(format % (name, meths[1].name, meths[2].name))
             
     def scanOverloadMethods(self):
-        lines = self.lines        
-        methods = [m for m in lines if getattr(m, 'isMethod', False)]
+        methods = self.blockMethods
         overloads = {}
+
         for method in methods:
             name = method.name
             overloads[name] = 1 + overloads.setdefault(name, 0)
 
-        overnames = set()
         for name, count in overloads.items():
-            if count > 1:
-                overnames.add(name)
-        if overnames:
-            print '### overloaded methods and counts:', overnames
+            if count == 1:
+                del(overloads[name])
+
+        for name, count in overloads.items():
+            renames = [m for m in methods if m.name == name]
+            renames.sort(key=lambda m:len(m.parameters))
+            first, remainder = renames[0], renames[1:]
+            first.preable.append('@overloaded')
+            firstname = first.name
+            for index, method in enumerate(remainder):
+                params = str.join(', ', [p[0] for p in method.parameters])
+                method.preable.append('@%s.register(%s)' % (firstname, params))
+                method.name = '%s_%s' % (method.name, index)
+
+
+
 
 
 class Method(Source):
     def __init__(self, parent, name):
         Source.__init__(self, parent=parent, name=name)
-        self.parameters = ['self', ]
+        self.parameters = [('object', 'self'), ]
 
     def addModifier(self, mod):
         try:
@@ -305,21 +329,20 @@ class Method(Source):
             if mod not in self.preable:
                 self.preable.append(mod)
 
-    def addParameter(self, node):
-        param = self.nodeText(node)
-        param = self.reName(param)
-        self.parameters.append(param)
+    def addParameter(self, typ, name):
+        name = self.reName(name)
+        self.parameters.append((typ, name))
 
     def formatDecl(self, indent):
         name = self.reName(self.name)
         parameters = self.parameters
         if len(parameters) > 5:
             first, others = parameters[0], parameters[1:]            
-            prefix = '%sdef %s(%s, ' % (I*indent, name, first, )
+            prefix = '%sdef %s(%s, ' % (I*indent, name, first[1], )
             offset = '\n' + (' ' * len(prefix))
-            decl = '%s%s):' % (prefix, str.join(', '+offset, others))
+            decl = '%s%s):' % (prefix, str.join(', '+offset, [o[1] for o in others]))
         else:
-            params = str.join(', ', self.parameters)            
+            params = str.join(', ', [p[1] for p in parameters])
             decl = '%sdef %s(%s):' % (I*indent, name, params)
         return decl
 

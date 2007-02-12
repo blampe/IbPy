@@ -7,6 +7,7 @@ headings = {
     ],
     
     'ContractDetails.java' : [
+    'from overloading import overloaded',
     'from Contract import Contract',
     ],
 

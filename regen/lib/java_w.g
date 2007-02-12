@@ -17,7 +17,7 @@ Original:
 
 options { language=Python; }
 {
-from asttypes import Module, typeMap
+from asttypes import Module, typeMap, otherTypeMap
 noassignment = ("<noassign>", )
 missing = ("%s", "<missing>", )
 unknown = ("%s", "<unknown>", )
@@ -69,7 +69,13 @@ returns [klass = block.newClass()]
 type_spec [block]
 returns [spec]
     :   #(t0:TYPE type_spec_array[block])
-        {spec = t0.getFirstChild().getText()}
+        {
+        value = t0.getFirstChild().getText()
+        try:
+            spec = otherTypeMap[value]
+        except (KeyError, ):
+            spec = value
+        }
     ;
 
 
@@ -81,10 +87,8 @@ type_spec_array [block]
 
 type [block]
 returns [typ]
-    :   typ = identifier[block]
-        {block.setType(typ)}
-    |   typ = builtin_type[block]
-        {block.setType(typ)}
+    :   typ = identifier[block]   {block.setType(typ)}
+    |   typ = builtin_type[block] {block.setType(typ)}
     ;
 
 
@@ -98,14 +102,13 @@ returns [typ]
     |   "int"     {typ = "int"   }
     |   "float"   {typ = "float" }
     |   "long"    {typ = "long"  }
-    |   "double"  {typ = "float"}
+    |   "double"  {typ = "float" }
     ;
 
 
 modifiers [block, mod=None]
     :   #(MODIFIERS
-            (mod = modifier[block])*)
-            {block.addModifier(mod)}
+            (mod = modifier[block])*) {block.addModifier(mod)}
     ;
 
 
@@ -130,16 +133,14 @@ returns [mod]
 extends_clause [block]
 returns [clause = None]
     :   #(EXTENDS_CLAUSE
-            (clause = identifier[block])*)
-            {block.addBaseClass(clause)}
+            (clause = identifier[block])*) {block.addBaseClass(clause)}
     ;
 
 
 implements_clause [block]
 returns [clause = None]
     :   #(IMPLEMENTS_CLAUSE
-            (clause = identifier[block])*)
-            {block.addBaseClass(clause)}
+            (clause = identifier[block])*) {block.addBaseClass(clause)}
     ;
 
 
@@ -159,8 +160,8 @@ obj_block [block]
                 | method_def[block]
                 | variable_def[block]
                 | typ = type_def[block]
-                | #(STATIC_INIT stat_list[block])
-                | #(INSTANCE_INIT stat_list[block])
+                | #(STATIC_INIT statement_list[block])
+                | #(INSTANCE_INIT statement_list[block])
             )*
         )
     ;
@@ -173,7 +174,7 @@ ctor_def [block]
         #(CTOR_DEF
             modifiers[meth]
             method_head[meth, "__init__"]
-            (stat_list[meth])?
+            (statement_list[meth])?
         )
     ;
 
@@ -187,19 +188,14 @@ method_decl [block]
             modifiers[meth]
             typ = type_spec[meth]
             method_head[meth]
-        )
-        {
-        meth.setType(typ)
-        }
+        ) {meth.setType(typ)}
     ;
 
 
 method_head [meth, name=None]
     :   ident = identifier[meth]
         {
-        if name is None:
-            name = ident
-        meth.name = name
+        meth.name = name if name else ident
         meth.parent.addVariable(name)
         }
         #(PARAMETERS (parameter_def[meth])*)
@@ -215,7 +211,7 @@ method_def [block]
             modifiers[meth]
             typ = type_spec[block]
             method_head[meth]
-            (stat_list[meth])?
+            (statement_list[meth])?
         )
     ;
 
@@ -241,28 +237,19 @@ parameter_def [meth]
             modifiers[meth]
             ptype = type_spec[meth]
             ident = identifier[meth]
-        )
-        {
-        meth.addParameter(ident)
-        }
+        ) {meth.addParameter(ptype, ident)}
     ;
 
 
 obj_init [block]
-    :   #(INSTANCE_INIT stat_list[block])
+    :   #(INSTANCE_INIT statement_list[block])
     ;
 
 
 var_decl [block]
 returns [decl]
-    :   ident = identifier[block]
-        {
-        decl = ("%s", ident)
-        }
-    |   LBRACK inner = var_decl[block] 
-        {
-        decl = ("(%s)", inner)
-        }
+    :   ident = identifier[block]      {decl = ("%s", ident)}
+    |   LBRACK inner = var_decl[block] {decl = ("(%s)", inner)}
     ;
 
 
@@ -321,49 +308,53 @@ returns [ident]
     ;
 
 
-stat_list [block]
-    :   #(SLIST (stat[block])*)
+statement_list [block]
+    :   #(SLIST (statement[block])*)
     ;
 
 
-stat [block]
+statement [block]
     :   typ = type_def[block]
     |   variable_def[block]
     |   exp = expression[block]
-    |   #(LABELED_STAT IDENT stat[block])
+    |   #(LABELED_STAT IDENT statement[block])
 
     |   {
-            s = block.newStatement("if")
-            t = block.newStatement("else")
+        ifstat = block.newStatement("if")
+        elsestat = block.newStatement("else")
         }
         #("if"
-            e0 = expression[s, False]
-            s0:stat[s]
-            (s1:stat[t])?
+            e0 = expression[ifstat, False]
+            s0:statement[ifstat]
+            (s1:statement[elsestat])?
         )
         {
-            s.setExpression(e0)
+        ifstat.setExpression(e0)
         }
 
     |   {
-            s = block.newStatement("for")
+        forstat = block.newStatement("for")
+        forex1 = forex2 = forex3 = ""
         }
         #("for"
-            #(FOR_INIT ((variable_def[block])+ | el0=expr_list[block])?)
-            #(FOR_CONDITION (r=expression[block])?)
-            #(FOR_ITERATOR (el1=expr_list[block])?)
-            stat[block]
+            #(FOR_INIT ((variable_def[block])+ | forex1=expr_list[block])?)
+            #(FOR_CONDITION (forex2=expression[block])?)
+            #(FOR_ITERATOR (forex3=expr_list[block])?)
+            statement[block]
         )
+        {
+        forstat.setExpression(("%s", forex1))
+        }
 
     |   {
             s = block.newStatement("while")
         }
-        #("while" r=expression[block] stat[block])
+        #("while" r=expression[block] statement[block])
 
     |   {
             s = block.newStatement("do_while")
         }
-        #("do" stat[block] r=expression[block])
+        #("do" statement[block] r=expression[block])
 
     |   {
             s = block.newStatement("break")
@@ -398,7 +389,7 @@ stat [block]
         }
 
     |   try_block[block]
-    |   stat_list[block]
+    |   statement_list[block]
     |   EMPTY_STAT
     ;
 
@@ -406,16 +397,16 @@ stat [block]
 case_group [block]
     :   #(CASE_GROUP
             (#("case" e=expression[block]) | "default")+
-            stat_list[block]
+            statement_list[block]
         )
     ;
 
 
 try_block [block]
     :   #("try"
-            stat_list[block]
+            statement_list[block]
             (handler[block])*
-            (#("finally" stat_list[block]))?
+            (#("finally" statement_list[block]))?
         )
     ;
 
@@ -423,7 +414,7 @@ try_block [block]
 handler [block]
     :   #("catch"
             parameter_def[block]
-            stat_list[block]
+            statement_list[block]
         )
     ;
 

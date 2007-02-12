@@ -12,7 +12,7 @@ $(ibsources_jar):
 	wget $(ibsources_url)
 
 IBJts:
-	jar -xf $(ibsources_jar)
+	jar -xf $(ibsources_jar) IBJts/java/com/ IBJts/API_VersionNum.txt
 
 clean:
 	@echo
