@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 todo:
-       add decorator for overloaded methods
        fix statements
-
+       enable project configuration files
 done:
+       add decorator for overloaded methods
        fix compound expressions
        add property get/set on duplicate method names
        reorder class statements to place inner classes first       
@@ -23,41 +23,36 @@ import walker
 
 I = ' '*4
 
-typeMap = {
-    'String':"''",
-    'int':'0',
-    'double':'0.0',
-    'Vector':'[]',
-    'boolean':'False',
-    }
-
-otherTypeMap = {
-    'String':'str',
-    'int':'int',
-    'double':'float',
-    'Vector':'list',
-    'boolean':'bool',
-    }
-
-
-renameMap = {
-    'this':'self',
-    'null':'None',
-    'false':'False',
-    'true':'True',
-    'equals':'__eq__',
-    }
-
-conflictRenameMap = {
-    '__init__':'new',
-}
-
-modifierRenameMap = {
-    'synchronized':'@synchronized(mlock)'
-}
-
 
 class Source:
+    typeTypeMap = {
+        'String':'str',
+        'int':'int',
+        'double':'float',
+        'Vector':'list',
+        'boolean':'bool',
+    }
+
+    typeValueMap = {
+        'String':"''",
+        'int':'0',
+        'double':'0.0',
+        'Vector':'[]',
+        'boolean':'False',
+    }
+
+    renameMap = {
+        'this':'self',
+        'null':'None',
+        'false':'False',
+        'true':'True',
+        'equals':'__eq__',
+    }
+
+    modifierDecoratorMap = {
+        'synchronized':'@synchronized(mlock)'
+    }
+    
     def __init__(self, parent=None, name=None):
         self.parent = parent
         self.name = name
@@ -88,14 +83,30 @@ class Source:
     def addSource(self, value):
         self.lines.append(value)
 
-    def addVariable(self, name, classOnly=True):
-        if not self.isClass and classOnly:
-            return
-        self.variables.add(name)
+    def addVariable(self, name, force=True):
+        if force or (name and self.isClass):
+            self.variables.add(name)
+
+    @property
+    def allDecls(self):
+        for parent in self.allParents:
+            for v in parent.variables:
+                yield v
+
+    @property
+    def allParents(self):
+        previous = self.parent
+        while previous:
+            yield previous
+            previous = previous.parent
+
+    @property
+    def blockMethods(self):
+        return [m for m in self.lines if getattr(m, 'isMethod', False)]
 
     @property
     def isBlock(self):
-        return self.name in ('if', 'while', 'for', 'else', 'elif')
+        return self.name in ('if', 'while', 'for', 'else', 'elif', 'try', 'except', 'finally')
 
     @property
     def isClass(self):
@@ -105,16 +116,38 @@ class Source:
     def isMethod(self):
         return self.__class__ is Method
 
+    def fixDecl(self, *args):
+        decls = list(self.allDecls)
+        fixed = list(args)
+        for i, arg in enumerate(args):
+            if arg in decls:
+                fixed[i] = "self.%s" % (arg, )
+        assert len(fixed) == len(args)
+        if len(fixed) == 1:
+            return fixed[0]
+        else:
+            return tuple(fixed)
+
     def newClass(self):
         c = Class(parent=self, name=None)
         self.addSource(c)
         return c
 
+    def newFor(self):
+        f = ForStatement(self)
+        self.addSource(f)
+        return f
+    
     def newMethod(self, name=''):
         m = Method(parent=self, name=name)
         self.addSource(m)
         return m
 
+    def newSwitch(self):
+        s = SwitchStatement(self)
+        self.addSource(s)
+        return s
+    
     def newStatement(self, name):
         s = Statement(parent=self, name=name)
         self.addSource(s)
@@ -127,76 +160,32 @@ class Source:
             return node
 
     def reFormat(self, s):
-        def err(e):
-            import sys
-            print '###########', s
-            print repr(e), e
-            sys.exit(-1)
-        fix = self.fixDecl
-        ref = self.reFormat
-        try:
-            if isinstance(s, basestring):
-                return fix(s)
-            if isinstance(s[0], basestring) and isinstance(s[1], basestring):
-                return fix(s[0]) % fix(s[1])
-            if isinstance(s[0], basestring) and isinstance(s[1], tuple):
-                return fix(s[0]) % ref(s[1])
-            if isinstance(s[0], tuple) and isinstance(s[1], basestring):
-                return ref(s[0]) % ref(s[1])
-            if isinstance(s[0], tuple) and isinstance(s[1], tuple):
-                return (ref(s[0]), ref(s[1]))
-            assert 0            
-        except (Exception, ), ex:
-            err(ex)
+        if isinstance(s, basestring):
+            return self.fixDecl(s)
+        if isinstance(s[0], basestring) and isinstance(s[1], basestring):
+            return self.fixDecl(s[0]) % self.fixDecl(s[1])
+        if isinstance(s[0], basestring) and isinstance(s[1], tuple):
+            return self.fixDecl(s[0]) % self.reFormat(s[1])
+        if isinstance(s[0], tuple) and isinstance(s[1], basestring):
+            return self.reFormat(s[0]) % self.reFormat(s[1])
+        if isinstance(s[0], tuple) and isinstance(s[1], tuple):
+            return (self.reFormat(s[0]), self.reFormat(s[1]))
 
-    def reName(self, item):
+    def reName(self, value):
         try:
-            return renameMap[item]
+            return self.renameMap[value]
         except (KeyError, ):
-            return item
-
-    def setType(self, value):
-        self.type = value
+            return value
 
     def writeTo(self, output, indent):
-        offset = I*indent
-        for obj in self.lines:
-            if callable(obj):
-                obj = obj()
-            elif isinstance(obj, (tuple, list)):
-                obj = self.reFormat(obj)
+        offset = I * indent
+        for line in self.lines:
+            if isinstance(line, tuple):
+                line = self.reFormat(line)
             try:
-                obj.writeTo(output, indent)
+                line.writeTo(output, indent)
             except (AttributeError, ):
-                output.write('%s%s\n' % (offset, obj))
-
-    def fixDecl(self, *args):
-        decls = list(self.allDecls())
-        fixed = list(args)
-        for i, arg in enumerate(args):
-            if arg in decls:
-                fixed[i] = "self.%s" % (arg, )
-                
-        assert len(fixed) == len(args)
-        if len(fixed) == 1:
-            return fixed[0]
-        else:
-            return tuple(fixed)
-
-    def allDecls(self):
-        for parent in self.allParents():
-            for v in parent.variables:
-                yield v
-
-    def allParents(self):
-        previous = self.parent
-        while previous:
-            yield previous
-            previous = previous.parent
-
-    @property
-    def blockMethods(self):
-        return [m for m in self.lines if getattr(m, 'isMethod', False)]
+                output.write('%s%s\n' % (offset, line))
 
 
 class Module(Source):
@@ -233,25 +222,10 @@ class Class(Source):
             ## in case java ever grows MI... (giggle)
             self.bases.append(clause) 
 
-    def addParameter(self, *a, **b):
-        print '#### warning:  Class.addParameter called (', a, ')'
-
     def formatDecl(self):
         bases = self.bases or ['object', ]
         bases = str.join(', ', bases)
         return 'class %s(%s):' % (self.name, bases)
-        
-    def writeTo(self, output, indent):
-        self.scanPropMethods()
-        self.scanOverloadMethods()
-        
-        name = self.name
-        offset = I*(indent+1)
-        output.write('%s%s\n' % (I*indent, self.formatDecl()))
-        output.write('%s""" generated source for %s\n\n' % (offset, name))
-        output.write('%s"""\n' % (offset, ))
-        Source.writeTo(self, output, indent+1)
-        output.write('\n')
 
     def newClass(self):
         c = Class(parent=self, name=None)
@@ -259,6 +233,7 @@ class Class(Source):
         ## later in this class definition.
         self.lines.insert(0, c)
         return c
+        
 
     def scanPropMethods(self):
         lines = self.lines
@@ -304,15 +279,37 @@ class Class(Source):
             renames = [m for m in methods if m.name == name]
             renames.sort(key=lambda m:len(m.parameters))
             first, remainder = renames[0], renames[1:]
+
             first.preable.append('@overloaded')
             firstname = first.name
+
             for index, method in enumerate(remainder):
                 params = str.join(', ', [p[0] for p in method.parameters])
                 method.preable.append('@%s.register(%s)' % (firstname, params))
                 method.name = '%s_%s' % (method.name, index)
 
+        def sorter(x, y):
+            try:
+                if x.isMethod and y.isMethod:
+                    return cmp(x.name, y.name)
+            except:
+                pass
+            return 0
 
+        if 0: # make a project option
+            self.lines.sort(sorter)
 
+    def writeTo(self, output, indent):
+        self.scanPropMethods()
+        self.scanOverloadMethods()
+        
+        name = self.name
+        offset = I*(indent+1)
+        output.write('%s%s\n' % (I*indent, self.formatDecl()))
+        output.write('%s""" generated source for %s\n\n' % (offset, name))
+        output.write('%s"""\n' % (offset, ))
+        Source.writeTo(self, output, indent+1)
+        output.write('\n')
 
 
 class Method(Source):
@@ -322,7 +319,7 @@ class Method(Source):
 
     def addModifier(self, mod):
         try:
-            mod = modifierRenameMap[mod]
+            mod = self.modifierDecoratorMap[mod]
         except (KeyError, ):
             Source.addModifier(self, mod)
         else:
@@ -365,7 +362,9 @@ class Statement(Source):
         self.expr = None
         
     def writeTo(self, output, indent):
-        if self.name == 'else' and not self.lines:
+        if self.name == 'break' and self.parent.name in ('if', 'elif'):
+            return
+        if self.name in ('else', 'finally') and not self.lines:
             return
         output.write('%s%s' % (I*(indent), self.name))
         if self.expr is not None:
@@ -374,9 +373,24 @@ class Statement(Source):
         if self.isBlock:
             output.write(':')
         output.write('\n')
-        if not self.lines:
+        if not self.lines and self.name not in ('break', ):
             self.addSource('pass')
         Source.writeTo(self, output, indent+1)
 
     def setExpression(self, value):
         self.expr = value
+
+class SwitchStatement(Statement):
+    def __init__(self, parent, name=None):
+        Statement.__init__(self, parent=parent, name='if')
+        self.expr = 'False'
+
+    def setExpression(self, value):
+        self.expr = value
+    
+
+class ForStatement(Statement):
+    def __init__(self, parent, name=None):
+        Statement.__init__(self, parent=parent, name='for')
+        self.expr = 'False'
+    

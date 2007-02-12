@@ -31,14 +31,11 @@ defaults = {
 
 
 globalSubs = [
-    (r"(\.self\.)", "."),
-###    (r"(.*)(\.size\(\))", r"\1len(\2)"),
-    
-    
+    (r'(\.self\.)', '.'),
+    (r'String\.valueOf\((.*?)\)', r'str(\1)'),
+    (r'System\.out\.println\((.*?)\)', r'print \1'),
     ]
-
 
 ## l_thisSecType.equals("BOND"):
 ## l_thisSecType == "BOND"
-
 
