@@ -225,8 +225,8 @@ variable_def [block]
         )
         {
         block.addVariable(dec[1])
-        if val == noassignment:
-            val = ("%s", block.typeValueMap.get(typ, "None"))
+         if val == noassignment:
+             val = ("%s", block.typeValueMap.get(typ, "None"))
         block.addSource( ("%s = %s", (dec, val)) )
         }
     ;
@@ -242,7 +242,7 @@ parameter_def [meth, add=True]
         if add:
             meth.addParameter(ptype, ident)
         else:
-            meth.setExpression(("%s", ptype))
+            meth.setExpression(("(%s, ), %s", (("%s", ptype), ("%s", ident))))
         }
     ;
 
@@ -330,49 +330,68 @@ statement [block]
         else_stat = block.newStatement("else")
         }
         #("if"
-            e0 = expression[if_stat, False]
-            s0:statement[if_stat]
-            (s1:statement[else_stat])?
+            if_expr = expression[if_stat, False]
+            statement[if_stat]
+            (statement[else_stat])?
         )
         {
-        if_stat.setExpression(e0)
+        if_stat.setExpression(if_expr)
         }
 
+
     |   {
-        for_stat = block.newFor()
-        forex1 = forex2 = forex3 = ""
+        block.addComment("for-while")
+        for_init, for_stat = block.newFor()
         }
         #("for"
-            #(FOR_INIT ((variable_def[block])+ | forex1=expr_list[block])?)
-            #(FOR_CONDITION (forex2=expression[block])?)
-            #(FOR_ITERATOR (forex3=expr_list[block])?)
-            statement[block]
+            #(FOR_INIT
+                ((variable_def[for_init])+ | for_exp = expr_list[for_init])?)
+            #(FOR_CONDITION (for_cond=expression[for_stat, False])?)
+            #(FOR_ITERATOR  (for_iter=expr_list[for_stat, False])?)
+            statement[for_stat]
         )
         {
-        for_stat.setExpression(("%s", forex1))
+        for_stat.setExpression(("%s", for_cond))
+        for_stat.addSource(("%s", for_iter))
         }
+
 
     |   {
         while_stat = block.newStatement("while")
         }
         #("while" while_expr = expression[block, False] 
-                  statement[block])
+                  statement[while_stat])
         {
         while_stat.setExpression(while_expr)
         }
 
-    |   #("do" statement[block] r=expression[block])
+
+    |   #("do" statement[block] do_exp = expression[block])
         {raise NotImplementedError("do statement")}
+
 
     |   {
         break_stat = block.newStatement("break")
+        break_label = missing
         }
-        #("break" (IDENT)? )
+        #("break" (break_label:IDENT)? )
+        {
+        if break_label != missing:
+            raise NotImplementedError("break with label")
+        }
+
+
 
     |   {
         continue_stat = block.newStatement("continue")
+        continue_label = missing
         }
-        #("continue" (IDENT)? )
+        #("continue" (continue_label:IDENT)? )
+        {
+        if continue_label != missing:
+            raise NotImplementedError("continue with label")
+        }
+
 
     |   {
         return_value = None
@@ -385,6 +404,7 @@ statement [block]
             block.addSource(("return %s", return_value))
         }
 
+
     |   {
         switch_block = block.newSwitch()
         }
@@ -392,12 +412,13 @@ statement [block]
                    (c:case_group[block, switch_expr])*
         )
 
+
     |   {
         raise_stat = block.newStatement("raise")
         }
-        #("throw" exc = expression[block])
+        #("throw" raise_exp = expression[block])
         {
-        raise_stat.setExpression(exc)
+        raise_stat.setExpression(raise_exp)
         }
 
     |   try_block[block]
@@ -449,10 +470,10 @@ handler [block]
     ;
 
 
-expr_list [block]
+expr_list [block, append=False]
 returns [seq]
     :   #(ELIST
-            (exp = expression[block, False]
+            (exp = expression[block, append]
             {
             if seq:
                 seq = ("%s, %s", (("%s", seq), ("%s", exp)))
@@ -477,7 +498,7 @@ returns [exp]
 expr [block]
 returns [exp = unknown]
     :   #(QUESTION a0=expr[block] b0=expr[block] c0=expr[block])
-        {exp = ("(%s %s ", (("%s", b0), ("%s %s", (("if %s", a0), ("else %s)", c0)))))}
+        {exp = ("%s %s ", (("%s", b0), ("%s %s", (("if %s", a0), ("else %s", c0)))))}
 
     |   #(ASSIGN left=expr[block] right=expr[block])
         {exp = ("%s = %s", (left, right))}
@@ -517,19 +538,19 @@ returns [exp = unknown]
         {exp = ("%s |= %s", (left, right))}
 
     |   #(LOR left=expr[block] right=expr[block])
-        {exp = ("(%s or %s)", (left, right))}
+        {exp = ("%s or %s", (left, right))}
 
     |   #(LAND left=expr[block] right=expr[block])
-        {exp = ("(%s and %s)", (left, right))}
+        {exp = ("%s and %s", (left, right))}
 
     |   #(BOR left=expr[block] right=expr[block])
-        {exp = ("(%s | %s)", (left, right))}
+        {exp = ("%s | %s", (left, right))}
 
     |   #(BXOR left=expr[block] right=expr[block])
-        {exp = ("(%s ^ %s)", (left, right))}
+        {exp = ("%s ^ %s", (left, right))}
 
     |   #(BAND left=expr[block] right=expr[block])
-        {exp = ("(%s & %s)", (left, right))}
+        {exp = ("%s & %s", (left, right))}
 
     |   #(NOT_EQUAL left=expr[block] right=expr[block])
         {exp = ("%s != %s", (left, right))}
@@ -607,10 +628,7 @@ returns [exp = unknown]
 
 primary_expr [block]
 returns [exp = missing]
-    :   i0:IDENT
-        {
-        exp = ("%s", i0.getText())
-        }
+    :   i0:IDENT {exp = ("%s", i0.getText())}
 
     |   #(DOT
             (x=expr[block]
@@ -637,12 +655,12 @@ returns [exp = missing]
             exp = ("%s(%s)", (pex, el44))
         else:
             exp = ("%s()", pex)
-        }
+       }
 
     |   call = ctor_call[block] {exp = ("%s", call)}
 
-    |   #(TYPECAST ts3=type_spec[block] ex3=expr[block])
-        {exp = ("%s", ex3)}
+    |   #(TYPECAST type_cast = type_spec[block] cast_exp = expr[block])
+        {exp = ("%s", cast_exp)}
 
     |   other_exp = new_expression[block] {exp = ("%s", other_exp)}
     |   con = constant[block] {exp = ("%s", con)}
@@ -651,10 +669,8 @@ returns [exp = missing]
     |   "false" {exp = ("%s", "False"  )}
     |   "this"  {exp = ("%s", "self"   )}
     |   "null"  {exp = ("%s", "None"   )}
-
     // type name used with instanceof
-    |   typ = type_spec[block] 
-        {exp = ("%s", typ)}
+    |   typ = type_spec[block] {exp = ("%s", typ)}
     ;
 
 
@@ -676,11 +692,11 @@ returns [seq=()]
 
 array_index [block]
     :   #(INDEX_OP 
-            r = expr[block] 
-            e = expression[block]
+            array_exp = expr[block] 
+            index_exp = expression[block]
         )
         {
-        block.addSource("%s[%s]" % (r, e))
+        block.addSource("%s[%s]" % (array_exp, index_exp))
         }
     ;
 
@@ -709,7 +725,6 @@ returns [value = missing]
             )
         )
         {
-
         if exp:
             value = ("%s(%s)", (("%s", typ), ("%s", exp)))
         elif typ in block.typeValueMap:

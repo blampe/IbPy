@@ -34,11 +34,12 @@ class Source:
     }
 
     typeValueMap = {
-        'String':"''",
+        'String':'""',
         'int':'0',
         'double':'0.0',
         'Vector':'[]',
         'boolean':'False',
+        'str':'""',
     }
 
     renameMap = {
@@ -83,7 +84,7 @@ class Source:
     def addSource(self, value):
         self.lines.append(value)
 
-    def addVariable(self, name, force=True):
+    def addVariable(self, name, force=False):
         if force or (name and self.isClass):
             self.variables.add(name)
 
@@ -134,9 +135,11 @@ class Source:
         return c
 
     def newFor(self):
-        f = ForStatement(self)
+        s = Source(self)
+        f = Statement(self, 'while')
+        self.addSource(s)
         self.addSource(f)
-        return f
+        return s, f
     
     def newMethod(self, name=''):
         m = Method(parent=self, name=name)
@@ -159,17 +162,17 @@ class Source:
         except (AttributeError, ):
             return node
 
-    def reFormat(self, s):
+    def formatExpression(self, s):
         if isinstance(s, basestring):
             return self.fixDecl(s)
         if isinstance(s[0], basestring) and isinstance(s[1], basestring):
             return self.fixDecl(s[0]) % self.fixDecl(s[1])
         if isinstance(s[0], basestring) and isinstance(s[1], tuple):
-            return self.fixDecl(s[0]) % self.reFormat(s[1])
+            return self.fixDecl(s[0]) % self.formatExpression(s[1])
         if isinstance(s[0], tuple) and isinstance(s[1], basestring):
-            return self.reFormat(s[0]) % self.reFormat(s[1])
+            return self.formatExpression(s[0]) % self.formatExpression(s[1])
         if isinstance(s[0], tuple) and isinstance(s[1], tuple):
-            return (self.reFormat(s[0]), self.reFormat(s[1]))
+            return (self.formatExpression(s[0]), self.formatExpression(s[1]))
 
     def reName(self, value):
         try:
@@ -181,7 +184,7 @@ class Source:
         offset = I * indent
         for line in self.lines:
             if isinstance(line, tuple):
-                line = self.reFormat(line)
+                line = self.formatExpression(line)
             try:
                 line.writeTo(output, indent)
             except (AttributeError, ):
@@ -277,7 +280,7 @@ class Class(Source):
 
         for name, count in overloads.items():
             renames = [m for m in methods if m.name == name]
-            renames.sort(key=lambda m:len(m.parameters))
+            #renames.sort(key=lambda m:len(m.parameters))
             first, remainder = renames[0], renames[1:]
 
             first.preable.append('@overloaded')
@@ -362,35 +365,34 @@ class Statement(Source):
         self.expr = None
         
     def writeTo(self, output, indent):
-        if self.name == 'break' and self.parent.name in ('if', 'elif'):
+        name = self.name
+        parents = self.allParents
+        
+        if name == 'break':
+            parent_names = [p.name for p in parents]
+            if 'while' not in parent_names and 'for' not in parent_names:
+                return
+
+        if name in ('else', 'finally') and not self.lines:
             return
-        if self.name in ('else', 'finally') and not self.lines:
-            return
-        output.write('%s%s' % (I*(indent), self.name))
+
+        offset = I*indent
+        output.write('%s%s' % (offset, name))
         if self.expr is not None:
-            expr = self.reFormat(self.expr)
+            expr = self.formatExpression(self.expr)
             output.write(' %s' % (expr, ))
         if self.isBlock:
             output.write(':')
         output.write('\n')
-        if not self.lines and self.name not in ('break', ):
+        if not self.lines and name not in ('break', 'continue', ):
             self.addSource('pass')
         Source.writeTo(self, output, indent+1)
 
     def setExpression(self, value):
         self.expr = value
 
+
 class SwitchStatement(Statement):
     def __init__(self, parent, name=None):
         Statement.__init__(self, parent=parent, name='if')
         self.expr = 'False'
-
-    def setExpression(self, value):
-        self.expr = value
-    
-
-class ForStatement(Statement):
-    def __init__(self, parent, name=None):
-        Statement.__init__(self, parent=parent, name='for')
-        self.expr = 'False'
-    
