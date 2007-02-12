@@ -12,8 +12,8 @@ parser.py: java.g
 	antlr java.g
 
 
-walker.py: java_w.g lexer.py
-	antlr java_w.g
+walker.py: walker.g lexer.py
+	antlr walker.g
 
 
 clean:
