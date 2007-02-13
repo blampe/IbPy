@@ -22,7 +22,7 @@ import astextra
 import walker
 
 
-I = ' '*4
+I = ' ' * 4
 
 
 class Source:
@@ -54,6 +54,10 @@ class Source:
     modifierDecoratorMap = {
         'synchronized':'@synchronized(mlock)'
     }
+
+    emptyAssign = ('%s', '<empty>')
+    missingValue = ('%s', '<missing>')
+    unknownExpression = ('%s', '<unknown>')
     
     def __init__(self, parent=None, name=None):
         self.parent = parent
@@ -105,10 +109,6 @@ class Source:
     @property
     def blockMethods(self):
         return [m for m in self.lines if getattr(m, 'isMethod', False)]
-
-    @property
-    def isBlock(self):
-        return self.name in ('if', 'while', 'for', 'else', 'elif', 'try', 'except', 'finally')
 
     @property
     def isClass(self):
@@ -176,6 +176,9 @@ class Source:
         except (KeyError, ):
             return value
 
+    def setName(self, name):
+        self.name = name
+        
     def writeTo(self, output, indent):
         offset = I * indent
         for line in self.lines:
@@ -217,7 +220,7 @@ class Class(Source):
         self.bases = []
 
     def addBaseClass(self, clause):
-        if clause and clause not in self.bases:
+        if clause and (clause not in self.bases):
             ## in case java ever grows MI... (giggle)
             self.bases.append(clause) 
 
@@ -301,10 +304,9 @@ class Class(Source):
     def writeTo(self, output, indent):
         self.scanPropMethods()
         self.scanOverloadMethods()
-        
         name = self.name
-        offset = I*(indent+1)
-        output.write('%s%s\n' % (I*indent, self.formatDecl()))
+        offset = I * (indent+1)
+        output.write('%s%s\n' % (I * indent, self.formatDecl()))
         output.write('%s""" generated source for %s\n\n' % (offset, name))
         output.write('%s"""\n' % (offset, ))
         Source.writeTo(self, output, indent+1)
@@ -334,12 +336,12 @@ class Method(Source):
         parameters = self.parameters
         if len(parameters) > 5:
             first, others = parameters[0], parameters[1:]            
-            prefix = '%sdef %s(%s, ' % (I*indent, name, first[1], )
+            prefix = '%sdef %s(%s, ' % (I * indent, name, first[1], )
             offset = '\n' + (' ' * len(prefix))
             decl = '%s%s):' % (prefix, str.join(', '+offset, [o[1] for o in others]))
         else:
             params = str.join(', ', [p[1] for p in parameters])
-            decl = '%sdef %s(%s):' % (I*indent, name, params)
+            decl = '%sdef %s(%s):' % (I * indent, name, params)
         return decl
 
     def writeTo(self, output, indent):
@@ -356,31 +358,40 @@ class Method(Source):
 
 
 class Statement(Source):
-    def __init__(self, parent, name=None):
+    def __init__(self, parent, name=None, expr=None):
         Source.__init__(self, parent=parent, name=name)
-        self.expr = None
-        
+        self.expr = expr
+
+    @property
+    def isBadLabel(self):
+        if self.name in ('break', 'continue'):
+            parent_names = [p.name for p in self.allParents]
+            if 'while' not in parent_names and 'for' not in parent_names:
+                return True
+    @property
+    def isNoOp(self):
+        return self.name in ('else', 'finally') and (not self.lines)
+
+    @property
+    def isBlock(self):
+        return self.name in ('if', 'while', 'for', 'else', 'elif', 'try', 'except', 'finally')
+
     def writeTo(self, output, indent):
         name = self.name
         parents = self.allParents
         lines = self.lines
         
-        if name == 'break':
-            parent_names = [p.name for p in parents]
-            if 'while' not in parent_names and 'for' not in parent_names:
-                return
-
-        if name in ('else', 'finally') and (not lines):
+        if self.isBadLabel or self.isNoOp:
             return
 
-        offset = I*indent
+        offset = I * indent
         output.write('%s%s' % (offset, name))
         if self.expr is not None:
             expr = self.formatExpression(self.expr)
             output.write(' %s' % (expr, ))
-        if self.isBlock:
-            output.write(':')
-        output.write('\n')
+        #if self.isBlock:
+        #    output.write(':')
+        output.write(':\n')
         if (not lines) and name not in ('break', 'continue', ):
             self.addSource('pass')
         Source.writeTo(self, output, indent+1)

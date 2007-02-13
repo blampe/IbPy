@@ -16,23 +16,14 @@ Original:
 
 
 options { language=Python; }
-{
-from asttypes import Module
-noassignment = ("<noassign>", )
-missing = ("%s", "<missing>", )
-unknown = ("%s", "<unknown>", )
-}
-
-
 class walker extends TreeParser;
 options { importVocab = Java; }
 
 
-module [infile, outfile]
-returns [source = Module(infile, outfile)]
-    :   (pkg = package_def[source])?
-        (imp = import_def[source])*
-        (typ = type_def[source])*
+walk [source]
+    :   (pkg = package_def[source] )?
+        (imp = import_def[source]  )*
+        (typ = type_def[source]    )*
     ;
 
 
@@ -46,10 +37,7 @@ returns [defn]
 import_def [block]
 returns [defn]
     :   #(IMPORT defn = identifier_star[block])
-        {
-        block.addSource(("### import %s", defn))
-        block.addSource("")
-        }
+        {block.addSource(("### import %s", defn))}
     ;
 
 
@@ -57,14 +45,14 @@ type_def [block]
 returns [klass = block.newClass()]
     :   #(CLASS_DEF
           modifiers[klass]
-          name = identifier[klass] {klass.name = name}
+          name = identifier[klass] {klass.setName(name)}
           ext_clause = extends_clause[klass]
           imp_clause = implements_clause[klass]
           obj_block[klass]
         )
     |   #(INTERFACE_DEF
           modifiers[klass]
-          name = identifier[klass] {klass.name = name}
+          name = identifier[klass] {klass.setName(name)}
           ext_clause = extends_clause[klass]
           interface_block[klass]
         )
@@ -200,7 +188,7 @@ method_decl [block]
 method_head [meth, name=None]
     :   ident = identifier[meth]
         {
-        meth.name = name if name else ident
+        meth.setName(name if name else ident)
         meth.parent.addVariable(meth.name)
         }
         #(PARAMETERS (parameter_def[meth])*)
@@ -230,8 +218,8 @@ variable_def [block]
         )
         {
         block.addVariable(dec[1])
-         if val == noassignment:
-             val = ("%s", block.typeValueMap.get(typ, "%s()" % typ))
+        if val == block.emptyAssign:
+            val = ("%s", block.typeValueMap.get(typ, "%s()" % typ))
         block.addSource( ("%s = %s", (dec, val)) )
         }
     ;
@@ -265,7 +253,7 @@ returns [decl]
 
 
 var_init [block]
-returns [init = noassignment]
+returns [init = block.emptyAssign]
     :   #(ASSIGN init = initializer[block])
     |   // on purpose
     ;
@@ -359,8 +347,8 @@ statement [block]
         #("for"
             #(FOR_INIT
                 ((variable_def[for_init])+ | for_exp = expr_list[for_init])?)
-            #(FOR_CONDITION (for_cond=expression[for_stat, False])?)
-            #(FOR_ITERATOR  (for_iter=expr_list[for_stat, False])?)
+            #(FOR_CONDITION (for_cond = expression[for_stat, False])?)
+            #(FOR_ITERATOR  (for_iter = expr_list[for_stat, False])?)
             statement[for_stat]
         )
         {
@@ -385,11 +373,11 @@ statement [block]
 
     |   {
         break_stat = block.newStatement("break")
-        break_label = missing
+        break_label = block.missingValue
         }
         #("break" (break_label:IDENT)? )
         {
-        if break_label != missing:
+        if break_label is not block.missingValue:
             raise NotImplementedError("break with label")
         }
 
@@ -397,11 +385,11 @@ statement [block]
 
     |   {
         continue_stat = block.newStatement("continue")
-        continue_label = missing
+        continue_label = block.missingValue
         }
         #("continue" (continue_label:IDENT)? )
         {
-        if continue_label != missing:
+        if continue_label is not block.missingValue:
             raise NotImplementedError("continue with label")
         }
 
@@ -441,18 +429,18 @@ statement [block]
 
 
 case_group [block, switch_expr]
-    {
-    other = block.newStatement("elif")
-    right = missing
-    }
-    :   #(CASE_GROUP
+    :   {
+        other = block.newStatement("elif")
+        right = block.missingValue
+        }
+        #(CASE_GROUP
             (#("case" 
                right = expression[other, False]) | "default")+
                statement_list[other]
         )
         {
-        if right is missing:
-            other.name = "else"
+        if right is block.missingValue:
+            other.setName("else")
             other.setExpression(None)
         else:
             other.setExpression(("%s == %s", (switch_expr, ("%s", right))))
@@ -509,7 +497,7 @@ returns [exp]
 
 
 expr [block]
-returns [exp = unknown]
+returns [exp = block.unknownExpression]
     :   #(QUESTION a0=expr[block] b0=expr[block] c0=expr[block])
         {exp = ("%s %s ", (("%s", b0), ("%s %s", (("if %s", a0), ("else %s", c0)))))}
 
@@ -640,7 +628,7 @@ returns [exp = unknown]
 
 
 primary_expr [block]
-returns [exp = missing]
+returns [exp = block.missingValue]
     :   i0:IDENT {exp = ("%s", i0.getText())}
 
     |   #(DOT
@@ -727,7 +715,7 @@ returns [value]
 
 
 new_expression [block]
-returns [value = missing]
+returns [value = block.missingValue]
     {
     exp = ()
     arrexp = None
