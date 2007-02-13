@@ -632,12 +632,13 @@ primary_expr [block]
 returns [exp = block.missingValue]
     :   i0:IDENT {exp = ("%s", i0.getText())}
 
-    |   #(DOT
+    |   {x = ""}
+        #(DOT
             (x=expr[block]
                 (a:IDENT
                     | index = array_index[block]
                     | "this"
-                    | "class"
+                    | a0:"class"
                     | #("new" k:IDENT el0=expr_list[block] )
                     | "super"
                 )
@@ -646,7 +647,8 @@ returns [exp = block.missingValue]
             )
         )
         {
-        exp = ("%s.%s", (x, ("%s", a.getText())))
+        if a:
+            exp = ("%s.%s", (x, ("%s", a.getText())))
         }
 
     |   index = array_index[block] {exp = index}

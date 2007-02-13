@@ -18,7 +18,7 @@ done:
 from cStringIO import StringIO
 import re
 
-import astextra
+import defaultconfig
 import walker
 
 
@@ -72,8 +72,8 @@ class Source:
         out = StringIO()
         self.writeTo(out, 0)
         source = out.getvalue()
-        for sub in astextra.globalSubs:
-            source = re.sub(sub[0], sub[1], source)
+        #for sub in astextra.globalSubs:
+        #    source = re.sub(sub[0], sub[1], source)
         return source
     
     def addComment(self, text):
@@ -209,8 +209,8 @@ class Module(Source):
         self.addComment('This file copyright Troy Melhase <troy@gci.net>.')        
         self.addComment('')        
         self.addNewLine()
-        for line in astextra.headings.get(self.infile, ()):
-            self.addSource(line)
+        #for line in astextra.headings.get(self.infile, ()):
+        #    self.addSource(line)
         self.addNewLine()
 
 
@@ -347,8 +347,8 @@ class Method(Source):
     def writeTo(self, output, indent):
         offset = I * indent
         output.write('\n')
-        if self.modifiers and astextra.defaults['writemods']:
-            output.write('%s## modifiers: %s\n' % (offset, str.join(',', self.modifiers)))
+        #if self.modifiers and astextra.defaults['writemods']:
+        #    output.write('%s## modifiers: %s\n' % (offset, str.join(',', self.modifiers)))
         for obj in self.preable:
             output.write('%s%s\n' % (offset, obj))
         output.write('%s\n' % (self.formatDecl(indent), ))

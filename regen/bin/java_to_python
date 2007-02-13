@@ -4,11 +4,12 @@ import optparse
 import os.path
 import sys
 
+
 from lib.lexer import Lexer
 from lib.parser import Parser
 from lib.walker import Walker
 
-from lib.asttypes import Module
+from lib.sourcetypes import Module
 
 try:
     import psyco
