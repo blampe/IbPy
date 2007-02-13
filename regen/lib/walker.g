@@ -39,12 +39,17 @@ returns [source = Module(infile, outfile)]
 package_def [block]
 returns [defn]
     :   #(PACKAGE_DEF defn = identifier[block])
+        {block.addSource(("### package %s", defn))}
     ;
 
 
 import_def [block]
 returns [defn]
     :   #(IMPORT defn = identifier_star[block])
+        {
+        block.addSource(("### import %s", defn))
+        block.addSource("")
+        }
     ;
 
 
@@ -226,7 +231,7 @@ variable_def [block]
         {
         block.addVariable(dec[1])
          if val == noassignment:
-             val = ("%s", block.typeValueMap.get(typ, "None"))
+             val = ("%s", block.typeValueMap.get(typ, "%s()" % typ))
         block.addSource( ("%s = %s", (dec, val)) )
         }
     ;
@@ -290,26 +295,34 @@ throws_clause [block, ident=None]
 
 identifier [block]
 returns [ident]
-    :   id0:IDENT
-        {
-        ident = id0.getText()
+    :   id0:IDENT {ident = id0.getText()}
+    |   {
+        exp = ()
         }
-    |   #(DOT id1 = identifier[block] id2:IDENT)
+        #(DOT exp = identifier[block] id1:IDENT)
         {
-        // raise NotImplementedError("DOT identifier" + s)
+        if exp:
+            ident = ("%s.%s", (("%s", exp), ("%s", id1.getText())))
+        else:
+            ident = id1.getText()
         }
     ;
 
 
 identifier_star [block]
 returns [ident]
-    :   id0:IDENT
-        {
-        ident = id0.getText()
+    :   id0:IDENT {ident = id0.getText()}
+    |   {
+        exp = ()
         }
-    |   #(DOT id1 = identifier[block] id2:(STAR|IDENT))
+        #(DOT exp = identifier[block] id1:(STAR|IDENT))
         {
-        // raise NotImplementedError("DOT identifier_star")
+        if exp and id1:
+            ident = ("%s.%s", (("%s", exp), ("%s", id1.getText())))
+        elif exp:
+            ident = ("%s.%s", (("%s", exp), ("%s", "*")))
+        else:
+            ident = id1
         }
     ;
 
@@ -633,7 +646,7 @@ returns [exp = missing]
     |   #(DOT
             (x=expr[block]
                 (a:IDENT
-                    | array_index[block]
+                    | index = array_index[block]
                     | "this"
                     | "class"
                     | #("new" k:IDENT el0=expr_list[block] )
@@ -647,7 +660,7 @@ returns [exp = missing]
         exp = ("%s.%s", (x, ("%s", a.getText())))
         }
 
-    |   array_index[block]
+    |   index = array_index[block] {exp = index}
 
     |   #(METHOD_CALL pex = primary_expr[block] el44=expr_list[block])
         {
@@ -691,12 +704,13 @@ returns [seq=()]
 
 
 array_index [block]
+returns [index]
     :   #(INDEX_OP 
             array_exp = expr[block] 
-            index_exp = expression[block]
+            index_exp = expression[block, False]
         )
         {
-        block.addSource("%s[%s]" % (array_exp, index_exp))
+        index = ("%s[%s]", (array_exp, index_exp))
         }
     ;
 
@@ -716,16 +730,20 @@ new_expression [block]
 returns [value = missing]
     {
     exp = ()
+    arrexp = None
+    arrdecl = None
     }
     :   #("new"
             typ = type[block] 
-            (new_array_declarator[block]
+            (arrdecl = new_array_declarator[block]
                 ( arrexp = array_initializer[block])?
                 | exp = expr_list[block] (obj_block[block])?
             )
         )
         {
-        if exp:
+        if arrdecl:
+            value = ("[%s() for __idx0 in range(%s)]", (("%s", typ), ("%s", arrdecl)))
+        elif exp:
             value = ("%s(%s)", (("%s", typ), ("%s", exp)))
         elif typ in block.typeValueMap:
             value = ("%s", block.typeValueMap[typ])
@@ -736,8 +754,9 @@ returns [value = missing]
 
 
 new_array_declarator [block]
-    :   #(ARRAY_DECLARATOR
-            (new_array_declarator[block])? 
-            (e=expression[block])?
+returns [exp = None]
+    :   #(ad0:ARRAY_DECLARATOR
+            (exp = new_array_declarator[block])? 
+            (exp = expression[block, False])?
         )
     ;

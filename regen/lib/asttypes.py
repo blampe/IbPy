@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 todo:
-       fix statements
-       enable project configuration files
+       add project override, file override options
 done:
+       fix empty type declarations
+       fix while, for statements
        add decorator for overloaded methods
        fix compound expressions
        add property get/set on duplicate method names
@@ -147,7 +148,8 @@ class Source:
         return m
 
     def newSwitch(self):
-        s = SwitchStatement(self)
+        s = Statement(self, 'if')
+        s.expr = 'False'
         self.addSource(s)
         return s
     
@@ -155,12 +157,6 @@ class Source:
         s = Statement(parent=self, name=name)
         self.addSource(s)
         return s
-
-    def nodeText(self, node):
-        try:
-            return node.getText()
-        except (AttributeError, ):
-            return node
 
     def formatExpression(self, s):
         if isinstance(s, basestring):
@@ -367,13 +363,14 @@ class Statement(Source):
     def writeTo(self, output, indent):
         name = self.name
         parents = self.allParents
+        lines = self.lines
         
         if name == 'break':
             parent_names = [p.name for p in parents]
             if 'while' not in parent_names and 'for' not in parent_names:
                 return
 
-        if name in ('else', 'finally') and not self.lines:
+        if name in ('else', 'finally') and (not lines):
             return
 
         offset = I*indent
@@ -384,15 +381,9 @@ class Statement(Source):
         if self.isBlock:
             output.write(':')
         output.write('\n')
-        if not self.lines and name not in ('break', 'continue', ):
+        if (not lines) and name not in ('break', 'continue', ):
             self.addSource('pass')
         Source.writeTo(self, output, indent+1)
 
     def setExpression(self, value):
         self.expr = value
-
-
-class SwitchStatement(Statement):
-    def __init__(self, parent, name=None):
-        Statement.__init__(self, parent=parent, name='if')
-        self.expr = 'False'
