@@ -25,6 +25,36 @@ import walker
 I = ' ' * 4
 
 
+def import_item(name):
+    """ import_item(name) -> import an item from a module by dotted name
+
+    """
+    names = name.split('.')
+    modname, itemname = names[0:-1], names[-1]
+    mod = import_name(str.join('.', modname))
+    return getattr(mod, itemname)
+
+
+def set_config(names, includeDefault=True):
+    if includeDefault:
+        names.insert(0, 'lib.defaultconfig')
+    Source.config = Config(*names)
+
+
+class Config:
+    def __init__(self, *names):
+        self.configs = [import_name(name) for name in names]
+        
+    def get(self, name, default=None):
+        for config in self.configs:
+            if hasattr(config, name):
+                return getattr(config, name)
+        return default
+
+    def all(self, name, missing=None):
+        return [getattr(config, name, missing) for config in self.configs]
+
+
 class Source:
     typeTypeMap = {
         'String':'str',
@@ -55,9 +85,11 @@ class Source:
         'synchronized':'@synchronized(mlock)'
     }
 
+
     emptyAssign = ('%s', '<empty>')
     missingValue = ('%s', '<missing>')
     unknownExpression = ('%s', '<unknown>')
+    config = Config()
     
     def __init__(self, parent=None, name=None):
         self.parent = parent

@@ -9,7 +9,7 @@ from lib.lexer import Lexer
 from lib.parser import Parser
 from lib.walker import Walker
 
-from lib.sourcetypes import Module
+from lib.sourcetypes import Module, set_config
 
 try:
     import psyco
@@ -50,6 +50,7 @@ def transform(options):
     else:
         output = open(fileout, 'w')
 
+    set_config(options.configs)
     M = Module(filein, fileout)
     W.walk(ast, M)    
     print >> output, M 
