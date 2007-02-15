@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+##
+## Source file: "ComboLeg.java"
+## Target file: "ComboLeg.py"
+##
+## Original file copyright original author(s).
+## This file copyright Troy Melhase <troy@gci.net>.
+##
+
+from ib.aux.overloading import overloaded
 
 class ComboLeg(object):
     """ generated source for ComboLeg
@@ -41,8 +50,8 @@ class ComboLeg(object):
             if p_other is None:
                 return False
         l_theOther = p_other
-        l_thisAction = self.m_action if self.m_action != None else "" 
-        l_thisExchange = self.m_exchange if self.m_exchange != None else "" 
-        return l_thisAction.compareToIgnoreCase(l_theOther.m_action) == 0 and l_thisExchange.compareToIgnoreCase(l_theOther.m_exchange) == 0 and self.m_conId == l_theOther.m_conId and self.m_ratio == l_theOther.m_ratio and self.m_openClose == l_theOther.m_openClose
+        l_thisAction = self.m_action if self.m_action != None else ""
+        l_thisExchange = self.m_exchange if self.m_exchange != None else ""
+        return (l_thisAction.compareToIgnoreCase(l_theOther.m_action) == 0) and (l_thisExchange.compareToIgnoreCase(l_theOther.m_exchange) == 0) and (self.m_conId == l_theOther.m_conId) and (self.m_ratio == l_theOther.m_ratio) and (self.m_openClose == l_theOther.m_openClose)
 
 

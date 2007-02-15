@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+##
+## Source file: "ScannerSubscription.java"
+## Target file: "ScannerSubscription.py"
+##
+## Original file copyright original author(s).
+## This file copyright Troy Melhase <troy@gci.net>.
+##
+
+from ib.aux import Double, Integer
+from ib.aux.overloading import overloaded
 
 class ScannerSubscription(object):
     """ generated source for ScannerSubscription
@@ -29,171 +39,172 @@ class ScannerSubscription(object):
     m_scannerSettingPairs = ""
     m_stockTypeFilter = ""
 
-    def get_couponRateBelow(self):
-        return self.m_couponRateBelow
-
-    def set_couponRateBelow(self, r):
-        self.m_couponRateBelow = r
-
-    couponRateBelow = property(get_couponRateBelow, set_couponRateBelow)
-
-    def get_scannerSettingPairs(self):
-        return self.m_scannerSettingPairs
-
-    def set_scannerSettingPairs(self, val):
-        self.m_scannerSettingPairs = val
-
-    scannerSettingPairs = property(get_scannerSettingPairs, set_scannerSettingPairs)
-
-    def get_maturityDateBelow(self):
-        return self.m_maturityDateBelow
-
-    def set_maturityDateBelow(self, d):
-        self.m_maturityDateBelow = d
-
-    maturityDateBelow = property(get_maturityDateBelow, set_maturityDateBelow)
-
-    def get_spRatingBelow(self):
-        return self.m_spRatingBelow
-
-    def set_spRatingBelow(self, r):
-        self.m_spRatingBelow = r
-
-    spRatingBelow = property(get_spRatingBelow, set_spRatingBelow)
-
-    def get_averageOptionVolumeAbove(self):
-        return self.m_averageOptionVolumeAbove
-
-    def set_averageOptionVolumeAbove(self, volume):
-        self.m_averageOptionVolumeAbove = volume
-
-    averageOptionVolumeAbove = property(get_averageOptionVolumeAbove, set_averageOptionVolumeAbove)
-
-    def get_scanCode(self):
-        return self.m_scanCode
-
-    def set_scanCode(self, txt):
-        self.m_scanCode = txt
-
-    scanCode = property(get_scanCode, set_scanCode)
-
-    def get_marketCapBelow(self):
-        return self.m_marketCapBelow
-
-    def set_marketCapBelow(self, cap):
-        self.m_marketCapBelow = cap
-
-    marketCapBelow = property(get_marketCapBelow, set_marketCapBelow)
-
-    def get_aboveVolume(self):
-        return self.m_aboveVolume
-
-    def set_aboveVolume(self, volume):
-        self.m_aboveVolume = volume
-
-    aboveVolume = property(get_aboveVolume, set_aboveVolume)
-
-    def get_stockTypeFilter(self):
-        return self.m_stockTypeFilter
-
-    def set_stockTypeFilter(self, val):
-        self.m_stockTypeFilter = val
-
-    stockTypeFilter = property(get_stockTypeFilter, set_stockTypeFilter)
-
-    def get_moodyRatingAbove(self):
-        return self.m_moodyRatingAbove
-
-    def set_moodyRatingAbove(self, r):
-        self.m_moodyRatingAbove = r
-
-    moodyRatingAbove = property(get_moodyRatingAbove, set_moodyRatingAbove)
-
-    def get_marketCapAbove(self):
-        return self.m_marketCapAbove
-
-    def set_marketCapAbove(self, cap):
-        self.m_marketCapAbove = cap
-
-    marketCapAbove = property(get_marketCapAbove, set_marketCapAbove)
-
-    def get_numberOfRows(self):
+    @overloaded
+    def numberOfRows(self):
         return self.m_numberOfRows
 
-    def set_numberOfRows(self, num):
-        self.m_numberOfRows = num
-
-    numberOfRows = property(get_numberOfRows, set_numberOfRows)
-
-    def get_abovePrice(self):
-        return self.m_abovePrice
-
-    def set_abovePrice(self, price):
-        self.m_abovePrice = price
-
-    abovePrice = property(get_abovePrice, set_abovePrice)
-
-    def get_instrument(self):
+    @overloaded
+    def instrument(self):
         return self.m_instrument
 
-    def set_instrument(self, txt):
-        self.m_instrument = txt
-
-    instrument = property(get_instrument, set_instrument)
-
-    def get_belowPrice(self):
-        return self.m_belowPrice
-
-    def set_belowPrice(self, price):
-        self.m_belowPrice = price
-
-    belowPrice = property(get_belowPrice, set_belowPrice)
-
-    def get_excludeConvertible(self):
-        return self.m_excludeConvertible
-
-    def set_excludeConvertible(self, c):
-        self.m_excludeConvertible = c
-
-    excludeConvertible = property(get_excludeConvertible, set_excludeConvertible)
-
-    def get_couponRateAbove(self):
-        return self.m_couponRateAbove
-
-    def set_couponRateAbove(self, r):
-        self.m_couponRateAbove = r
-
-    couponRateAbove = property(get_couponRateAbove, set_couponRateAbove)
-
-    def get_moodyRatingBelow(self):
-        return self.m_moodyRatingBelow
-
-    def set_moodyRatingBelow(self, r):
-        self.m_moodyRatingBelow = r
-
-    moodyRatingBelow = property(get_moodyRatingBelow, set_moodyRatingBelow)
-
-    def get_spRatingAbove(self):
-        return self.m_spRatingAbove
-
-    def set_spRatingAbove(self, r):
-        self.m_spRatingAbove = r
-
-    spRatingAbove = property(get_spRatingAbove, set_spRatingAbove)
-
-    def get_maturityDateAbove(self):
-        return self.m_maturityDateAbove
-
-    def set_maturityDateAbove(self, d):
-        self.m_maturityDateAbove = d
-
-    maturityDateAbove = property(get_maturityDateAbove, set_maturityDateAbove)
-
-    def get_locationCode(self):
+    @overloaded
+    def locationCode(self):
         return self.m_locationCode
 
-    def set_locationCode(self, txt):
+    @overloaded
+    def scanCode(self):
+        return self.m_scanCode
+
+    @overloaded
+    def abovePrice(self):
+        return self.m_abovePrice
+
+    @overloaded
+    def belowPrice(self):
+        return self.m_belowPrice
+
+    @overloaded
+    def aboveVolume(self):
+        return self.m_aboveVolume
+
+    @overloaded
+    def averageOptionVolumeAbove(self):
+        return self.m_averageOptionVolumeAbove
+
+    @overloaded
+    def marketCapAbove(self):
+        return self.m_marketCapAbove
+
+    @overloaded
+    def marketCapBelow(self):
+        return self.m_marketCapBelow
+
+    @overloaded
+    def moodyRatingAbove(self):
+        return self.m_moodyRatingAbove
+
+    @overloaded
+    def moodyRatingBelow(self):
+        return self.m_moodyRatingBelow
+
+    @overloaded
+    def spRatingAbove(self):
+        return self.m_spRatingAbove
+
+    @overloaded
+    def spRatingBelow(self):
+        return self.m_spRatingBelow
+
+    @overloaded
+    def maturityDateAbove(self):
+        return self.m_maturityDateAbove
+
+    @overloaded
+    def maturityDateBelow(self):
+        return self.m_maturityDateBelow
+
+    @overloaded
+    def couponRateAbove(self):
+        return self.m_couponRateAbove
+
+    @overloaded
+    def couponRateBelow(self):
+        return self.m_couponRateBelow
+
+    @overloaded
+    def excludeConvertible(self):
+        return self.m_excludeConvertible
+
+    @overloaded
+    def scannerSettingPairs(self):
+        return self.m_scannerSettingPairs
+
+    @overloaded
+    def stockTypeFilter(self):
+        return self.m_stockTypeFilter
+
+    @numberOfRows.register(object, int)
+    def numberOfRows_0(self, num):
+        self.m_numberOfRows = num
+
+    @instrument.register(object, str)
+    def instrument_0(self, txt):
+        self.m_instrument = txt
+
+    @locationCode.register(object, str)
+    def locationCode_0(self, txt):
         self.m_locationCode = txt
 
-    locationCode = property(get_locationCode, set_locationCode)
+    @scanCode.register(object, str)
+    def scanCode_0(self, txt):
+        self.m_scanCode = txt
+
+    @abovePrice.register(object, float)
+    def abovePrice_0(self, price):
+        self.m_abovePrice = price
+
+    @belowPrice.register(object, float)
+    def belowPrice_0(self, price):
+        self.m_belowPrice = price
+
+    @aboveVolume.register(object, int)
+    def aboveVolume_0(self, volume):
+        self.m_aboveVolume = volume
+
+    @averageOptionVolumeAbove.register(object, int)
+    def averageOptionVolumeAbove_0(self, volume):
+        self.m_averageOptionVolumeAbove = volume
+
+    @marketCapAbove.register(object, float)
+    def marketCapAbove_0(self, cap):
+        self.m_marketCapAbove = cap
+
+    @marketCapBelow.register(object, float)
+    def marketCapBelow_0(self, cap):
+        self.m_marketCapBelow = cap
+
+    @moodyRatingAbove.register(object, str)
+    def moodyRatingAbove_0(self, r):
+        self.m_moodyRatingAbove = r
+
+    @moodyRatingBelow.register(object, str)
+    def moodyRatingBelow_0(self, r):
+        self.m_moodyRatingBelow = r
+
+    @spRatingAbove.register(object, str)
+    def spRatingAbove_0(self, r):
+        self.m_spRatingAbove = r
+
+    @spRatingBelow.register(object, str)
+    def spRatingBelow_0(self, r):
+        self.m_spRatingBelow = r
+
+    @maturityDateAbove.register(object, str)
+    def maturityDateAbove_0(self, d):
+        self.m_maturityDateAbove = d
+
+    @maturityDateBelow.register(object, str)
+    def maturityDateBelow_0(self, d):
+        self.m_maturityDateBelow = d
+
+    @couponRateAbove.register(object, float)
+    def couponRateAbove_0(self, r):
+        self.m_couponRateAbove = r
+
+    @couponRateBelow.register(object, float)
+    def couponRateBelow_0(self, r):
+        self.m_couponRateBelow = r
+
+    @excludeConvertible.register(object, str)
+    def excludeConvertible_0(self, c):
+        self.m_excludeConvertible = c
+
+    @scannerSettingPairs.register(object, str)
+    def scannerSettingPairs_0(self, val):
+        self.m_scannerSettingPairs = val
+
+    @stockTypeFilter.register(object, str)
+    def stockTypeFilter_0(self, val):
+        self.m_stockTypeFilter = val
+
 

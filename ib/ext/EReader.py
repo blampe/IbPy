@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+##
+## Source file: "EReader.java"
+## Target file: "EReader.py"
+##
+## Original file copyright original author(s).
+## This file copyright Troy Melhase <troy@gci.net>.
+##
+
+from ib.aux import Thread
+from ib.aux import DataInputStream
+from ib.aux.overloading import overloaded
 
 class EReader(Thread):
     """ generated source for EReader
@@ -29,7 +40,7 @@ class EReader(Thread):
     TICK_OPTION_COMPUTATION = 21
     TICK_GENERIC = 45
     TICK_STRING = 46
-    m_parent = EClientSocket()
+    m_parent = object()
     m_dis = DataInputStream()
 
     def parent(self):
@@ -42,7 +53,7 @@ class EReader(Thread):
     def __init__(self, parent, dis):
         super(EReader, self).__init__("EReader", self.parent, dis)
 
-    @__init__.register(object, str, EClientSocket, DataInputStream)
+    @__init__.register(object, str, object, DataInputStream)
     def __init___0(self, name, parent, dis):
         self.setName(name)
         self.m_parent = self.parent
@@ -58,7 +69,7 @@ class EReader(Thread):
         self.m_parent.close()
 
     def processMsg(self, msgId):
-        if msgId == -1:
+        if (msgId == -1):
             return False
         if msgId == self.TICK_PRICE:
             version = self.readInt()
@@ -100,7 +111,7 @@ class EReader(Thread):
                 delta = Double.MAX_VALUE
             modelPrice = float()
             pvDividend = float()
-            if tickType == TickType.MODEL_OPTION:
+            if (tickType == TickType.MODEL_OPTION):
                 modelPrice = self.readDouble()
                 pvDividend = self.readDouble()
             else:
@@ -215,8 +226,8 @@ class EReader(Thread):
                 order.m_clientId = self.readInt()
             if version >= 4:
                 order.m_permId = self.readInt()
-                order.m_ignoreRth = self.readInt() == 1
-                order.m_hidden = self.readInt() == 1
+                order.m_ignoreRth = (self.readInt() == 1)
+                order.m_hidden = (self.readInt() == 1)
                 order.m_discretionaryAmt = self.readDouble()
             if version >= 5:
                 order.m_goodAfterTime = self.readStr()
@@ -257,14 +268,14 @@ class EReader(Thread):
             if version >= 11:
                 order.m_volatility = self.readDouble()
                 order.m_volatilityType = self.readInt()
-                if version == 11:
+                if (version == 11):
                     receivedInt = self.readInt()
-                    order.m_deltaNeutralOrderType = "NONE" if receivedInt == 0 else "MKT" 
+                    order.m_deltaNeutralOrderType = "NONE" if (receivedInt == 0) else "MKT"
                 else:
                     order.m_deltaNeutralOrderType = self.readStr()
                     order.m_deltaNeutralAuxPrice = self.readDouble()
                 order.m_continuousUpdate = self.readInt()
-                if self.m_parent.serverVersion() == 26:
+                if (self.m_parent.serverVersion() == 26):
                     order.m_stockRangeLower = self.readDouble()
                     order.m_stockRangeUpper = self.readDouble()
                 order.m_referencePriceType = self.readInt()
@@ -456,26 +467,26 @@ class EReader(Thread):
         buf = StringBuffer()
         while True:
             c = self.m_dis.readByte()
-            if c == 0:
+            if (c == 0):
                 break
             buf.append(c)
         strval = str(buf)
-        return None if len(strval) == 0 else strval 
+        return None if len((strval) == 0) else strval
 
     def readBoolFromInt(self):
         strval = self.readStr()
-        return False if strval is None else Integer.parseInt(strval) != 0 
+        return False if strval is None else Integer.parseInt(strval) != 0
 
     def readInt(self):
         strval = self.readStr()
-        return 0 if strval is None else Integer.parseInt(strval) 
+        return 0 if strval is None else Integer.parseInt(strval)
 
     def readLong(self):
         strval = self.readStr()
-        return 0l if strval is None else Long.parseLong(strval) 
+        return 0l if strval is None else Long.parseLong(strval)
 
     def readDouble(self):
         strval = self.readStr()
-        return 0 if strval is None else Double.parseDouble(strval) 
+        return 0 if strval is None else Double.parseDouble(strval)
 
 

@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+##
+## Source file: "ExecutionFilter.java"
+## Target file: "ExecutionFilter.py"
+##
+## Original file copyright original author(s).
+## This file copyright Troy Melhase <troy@gci.net>.
+##
+
+from ib.aux.overloading import overloaded
 
 class ExecutionFilter(object):
     """ generated source for ExecutionFilter
@@ -43,7 +52,7 @@ class ExecutionFilter(object):
                 l_bRetVal = True
             else:
                 l_theOther = p_other
-                l_bRetVal = self.m_clientId == l_theOther.m_clientId and self.m_acctCode.lower() == l_theOther.m_acctCode.lower() and self.m_time.lower() == l_theOther.m_time.lower() and self.m_symbol.lower() == l_theOther.m_symbol.lower() and self.m_secType.lower() == l_theOther.m_secType.lower() and self.m_exchange.lower() == l_theOther.m_exchange.lower() and self.m_side.lower() == l_theOther.m_side.lower()
+                l_bRetVal = (self.m_clientId == l_theOther.m_clientId) and self.m_acctCode.lower() == l_theOther.m_acctCode.lower() and self.m_time.lower() == l_theOther.m_time.lower() and self.m_symbol.lower() == l_theOther.m_symbol.lower() and self.m_secType.lower() == l_theOther.m_secType.lower() and self.m_exchange.lower() == l_theOther.m_exchange.lower() and self.m_side.lower() == l_theOther.m_side.lower()
         return l_bRetVal
 
 

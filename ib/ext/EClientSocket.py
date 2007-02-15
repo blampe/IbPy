@@ -1,6 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+##
+## Source file: "EClientSocket.java"
+## Target file: "EClientSocket.py"
+##
+## Original file copyright original author(s).
+## This file copyright Troy Melhase <troy@gci.net>.
+##
+
+from ib.ext.AnyWrapper import AnyWrapper
+from ib.ext.EClientErrors import EClientErrors
+from ib.ext.EReader import EReader
+
+from ib.aux.overloading import overloaded
+from ib.aux import synchronized, Socket, DataOutputStream
+
+from threading import Lock
+
+mlock = Lock()
 
 class EClientSocket(object):
     """ generated source for EClientSocket
@@ -53,7 +71,7 @@ class EClientSocket(object):
     m_socket = Socket()
     m_dos = DataOutputStream()
     m_connected = bool()
-    m_reader = EReader()
+    m_reader = None
     m_serverVersion = 1
     m_TwsTime = ""
 
@@ -75,8 +93,8 @@ class EClientSocket(object):
     def isConnected(self):
         return self.m_connected
 
-    @synchronized(mlock)
     @overloaded
+    @synchronized(mlock)
     def eConnect(self, host, port, clientId):
         host = self.checkConnected(host)
         if host is None:
@@ -99,8 +117,8 @@ class EClientSocket(object):
             host = "127.0.0.1"
         return host
 
-    @synchronized(mlock)
     @eConnect.register(object, Socket, int)
+    @synchronized(mlock)
     def eConnect_0(self, socket, clientId):
         self.m_socket = socket
         dis = DataInputStream(self.m_socket.getInputStream())
@@ -299,7 +317,7 @@ class EClientSocket(object):
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
             if self.m_serverVersion >= 31:
-                self.send(1 if contract.m_includeExpired else 0 )
+                self.send(1 if contract.m_includeExpired else 0)
             if self.m_serverVersion >= 20:
                 self.send(endDateTime)
                 self.send(barSizeSetting)
@@ -544,8 +562,8 @@ class EClientSocket(object):
                 self.sendMax(order.m_startingPrice)
                 self.sendMax(order.m_stockRefPrice)
                 self.sendMax(order.m_delta)
-                lower = Double.MAX_VALUE if self.m_serverVersion == 26 and order.m_orderType == "VOL" else order.m_stockRangeLower 
-                upper = Double.MAX_VALUE if self.m_serverVersion == 26 and order.m_orderType == "VOL" else order.m_stockRangeUpper 
+                lower = Double.MAX_VALUE if (self.m_serverVersion == 26) and order.m_orderType == "VOL" else order.m_stockRangeLower
+                upper = Double.MAX_VALUE if (self.m_serverVersion == 26) and order.m_orderType == "VOL" else order.m_stockRangeUpper
                 self.sendMax(lower)
                 self.sendMax(upper)
             if self.m_serverVersion >= 22:
@@ -559,9 +577,9 @@ class EClientSocket(object):
                     self.send(order.m_deltaNeutralOrderType)
                     self.sendMax(order.m_deltaNeutralAuxPrice)
                 self.send(order.m_continuousUpdate)
-                if self.m_serverVersion == 26:
-                    lower = order.m_stockRangeLower if order.m_orderType == "VOL" else Double.MAX_VALUE 
-                    upper = order.m_stockRangeUpper if order.m_orderType == "VOL" else Double.MAX_VALUE 
+                if (self.m_serverVersion == 26):
+                    lower = order.m_stockRangeLower if order.m_orderType == "VOL" else Double.MAX_VALUE
+                    upper = order.m_stockRangeUpper if order.m_orderType == "VOL" else Double.MAX_VALUE
                     self.sendMax(lower)
                     self.sendMax(upper)
                 self.sendMax(order.m_referencePriceType)
@@ -765,13 +783,13 @@ class EClientSocket(object):
             self.error(faDataType, EClientErrors.FAIL_SEND_FA_REPLACE, "" + e)
             self.close()
 
-    @synchronized(mlock)
     @overloaded
+    @synchronized(mlock)
     def error(self, err):
         self.m_anyWrapper.error(err)
 
-    @synchronized(mlock)
     @error.register(object, int, int, str)
+    @synchronized(mlock)
     def error_0(self, id, errorCode, errorMsg):
         self.m_anyWrapper.error(id, errorCode, errorMsg)
 
@@ -804,7 +822,7 @@ class EClientSocket(object):
     def send_0(self, val):
         self.send(str(val))
 
-    @send.register(object, char)
+    @send.register(object, str)
     def send_1(self, val):
         self.m_dos.write(val)
         self.sendEOL()
@@ -819,21 +837,21 @@ class EClientSocket(object):
 
     @overloaded
     def sendMax(self, val):
-        if val == Double.MAX_VALUE:
+        if (val == Double.MAX_VALUE):
             self.sendEOL()
         else:
             self.send(str(val))
 
     @sendMax.register(object, int)
     def sendMax_0(self, val):
-        if val == Integer.MAX_VALUE:
+        if (val == Integer.MAX_VALUE):
             self.sendEOL()
         else:
             self.send(str(val))
 
     @send.register(object, bool)
     def send_4(self, val):
-        self.send(1 if val else 0 )
+        self.send(1 if val else 0)
 
     def createReader(self, socket, dis):
         return EReader(socket, dis)

@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+##
+## Source file: "EClientErrors.java"
+## Target file: "EClientErrors.py"
+##
+## Original file copyright original author(s).
+## This file copyright Troy Melhase <troy@gci.net>.
+##
+
 
 class EClientErrors(object):
     """ generated source for EClientErrors

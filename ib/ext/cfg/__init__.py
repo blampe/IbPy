@@ -4,7 +4,7 @@ typeTypeMap = {
     }
 
 
-modulePreable = [
+modulePreamble = [
     '##',
     lambda module:'## Source file: "%s"' % module.infile,
     lambda module:'## Target file: "%s"' % module.outfile,
@@ -13,9 +13,6 @@ modulePreable = [
     '## This file copyright Troy Melhase <troy@gci.net>.',
     '##',
     '',
-    'from helpers import *',
-    'from overloading import overloaded',
-    'from Contract import Contract',
 ]
 
 
@@ -26,6 +23,7 @@ modifierDecoratorMap = {
 
 outputSubs = [
     (r'if self == p_other:', r'if self is p_other:'),
+    (r'if \(self == p_other\):', r'if self is p_other:'),
     ]
 
 
@@ -41,3 +39,10 @@ renameAnyMap = {
 variableNameMapping = {
     'exec':'exec_',
     }
+
+
+renameMethodMap = {
+    'equals':'__eq__',
+    'clone':'__copy__',
+    'is':'is_',
+}
