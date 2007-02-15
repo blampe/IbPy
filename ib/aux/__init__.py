@@ -1,6 +1,7 @@
 # from http://wiki.python.org/moin/PythonDecoratorLibrary
 import sys
 
+
 def synchronized(lock):
     """ Synchronization decorator. """
 
@@ -13,6 +14,8 @@ def synchronized(lock):
                 lock.release()
         return newFunction
     return wrap
+
+    myLock = Lock()
 
 # Example usage:
 if 0:
@@ -39,4 +42,17 @@ class Double(float):
     MAX_VALUE = sys.maxint
 
 class Cloneable(object):
+    pass
+
+class Socket(object):
+    pass
+
+class DataOutputStream(object):
+    pass
+
+
+class DataInputStream(object):
+    pass
+
+class Thread(object):
     pass
