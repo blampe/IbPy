@@ -10,15 +10,16 @@
 ##
 
 from ib.ext.AnyWrapper import AnyWrapper
+from ib.ext.ComboLeg import ComboLeg
 from ib.ext.EClientErrors import EClientErrors
 from ib.ext.EReader import EReader
 
 from ib.aux.overloading import overloaded
-from ib.aux import synchronized, Socket, DataOutputStream
+from ib.aux import synchronized, Socket, DataInputStream, DataOutputStream
+from ib.aux import Double, Integer
 
-from threading import Lock
-
-mlock = Lock()
+from threading import RLock
+mlock = RLock()
 
 class EClientSocket(object):
     """ generated source for EClientSocket
@@ -126,10 +127,10 @@ class EClientSocket(object):
         self.send(self.CLIENT_VERSION)
         self.m_reader = self.createReader(self, dis)
         self.m_serverVersion = self.m_reader.readInt()
-        print "Server Version:" + self.m_serverVersion
+        print "Server Version:", self.m_serverVersion
         if self.m_serverVersion >= 20:
             self.m_TwsTime = self.m_reader.readStr()
-            print "TWS Time at connection:" + self.m_TwsTime
+            print "TWS Time at connection:", self.m_TwsTime
         if self.m_serverVersion < self.SERVER_VERSION:
             self.m_anyWrapper.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return
@@ -143,9 +144,9 @@ class EClientSocket(object):
         if not self.m_connected:
             return
         try:
-            if self.m_reader != None:
+            if self.m_reader is not None:
                 self.m_reader.interrupt()
-            if self.m_socket != None:
+            if self.m_socket is not None:
                 self.m_socket.close()
         except (Exception, ), e:
             pass
@@ -253,7 +254,6 @@ class EClientSocket(object):
                 else:
                     self.send(len(contract.m_comboLegs))
                     comboLeg = ComboLeg()
-                    
                     ## for-while
                     i = 0
                     while i < len(contract.m_comboLegs):
@@ -287,13 +287,13 @@ class EClientSocket(object):
             self.close()
 
     @synchronized(mlock)
-    def reqHistoricalData(self, tickerId, 
-                                contract, 
-                                endDateTime, 
-                                durationStr, 
-                                barSizeSetting, 
-                                whatToShow, 
-                                useRTH, 
+    def reqHistoricalData(self, tickerId,
+                                contract,
+                                endDateTime,
+                                durationStr,
+                                barSizeSetting,
+                                whatToShow,
+                                useRTH,
                                 formatDate):
         if not self.m_connected:
             self.error(tickerId, EClientErrors.NOT_CONNECTED, "")
@@ -332,7 +332,6 @@ class EClientSocket(object):
                 else:
                     self.send(len(contract.m_comboLegs))
                     comboLeg = ComboLeg()
-                    
                     ## for-while
                     i = 0
                     while i < len(contract.m_comboLegs):
@@ -435,11 +434,11 @@ class EClientSocket(object):
             self.close()
 
     @synchronized(mlock)
-    def exerciseOptions(self, tickerId, 
-                              contract, 
-                              exerciseAction, 
-                              exerciseQuantity, 
-                              account, 
+    def exerciseOptions(self, tickerId,
+                              contract,
+                              exerciseAction,
+                              exerciseQuantity,
+                              account,
                               override):
         if not self.m_connected:
             self.error(tickerId, EClientErrors.NOT_CONNECTED, "")
@@ -520,7 +519,6 @@ class EClientSocket(object):
                 else:
                     self.send(len(contract.m_comboLegs))
                     comboLeg = ComboLeg()
-                    
                     ## for-while
                     i = 0
                     while i < len(contract.m_comboLegs):
@@ -799,7 +797,7 @@ class EClientSocket(object):
 
     @classmethod
     def is_(cls, strval):
-        return strval != None and len(strval) > 0
+        return strval is not None and len(strval) > 0
 
     @classmethod
     def isNull(cls, strval):
@@ -811,7 +809,7 @@ class EClientSocket(object):
 
     @overloaded
     def send(self, strval):
-        if strval != None:
+        if strval is not None:
             self.m_dos.write(strval.getBytes())
         self.sendEOL()
 

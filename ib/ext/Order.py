@@ -118,28 +118,28 @@ class Order(object):
         if not firstSetEquals:
             return False
         else:
-            l_thisAction = self.m_action if self.m_action != None else self.EMPTY_STR
-            l_thisOrderType = self.m_orderType if self.m_orderType != None else self.EMPTY_STR
-            l_thisTif = self.m_tif if self.m_tif != None else self.EMPTY_STR
-            l_thisOcaGroup = self.m_ocaGroup if self.m_ocaGroup != None else self.EMPTY_STR
-            l_thisAccount = self.m_account if self.m_account != None else self.EMPTY_STR
-            l_thisOpenClose = self.m_openClose if self.m_openClose != None else self.EMPTY_STR
-            l_thisOrderRef = self.m_orderRef if self.m_orderRef != None else self.EMPTY_STR
-            l_thisRule80A = self.m_rule80A if self.m_rule80A != None else self.EMPTY_STR
-            l_thisSettlingFirm = self.m_settlingFirm if self.m_settlingFirm != None else self.EMPTY_STR
-            l_thisDeltaNeutralOrderType = self.m_deltaNeutralOrderType if self.m_deltaNeutralOrderType != None else self.EMPTY_STR
-            l_otherAction = l_theOther.m_action if l_theOther.m_action != None else self.EMPTY_STR
-            l_otherOrderType = l_theOther.m_orderType if l_theOther.m_orderType != None else self.EMPTY_STR
-            l_otherTif = l_theOther.m_tif if l_theOther.m_tif != None else self.EMPTY_STR
-            l_otherOcaGroup = l_theOther.m_ocaGroup if l_theOther.m_ocaGroup != None else self.EMPTY_STR
-            l_otherAccount = l_theOther.m_account if l_theOther.m_account != None else self.EMPTY_STR
-            l_otherOpenClose = l_theOther.m_openClose if l_theOther.m_openClose != None else self.EMPTY_STR
-            l_otherOrderRef = l_theOther.m_orderRef if l_theOther.m_orderRef != None else self.EMPTY_STR
-            l_otherOrderGoodAfterTime = l_theOther.m_goodAfterTime if l_theOther.m_goodAfterTime != None else self.EMPTY_STR
-            l_otherOrderGoodTillDate = l_theOther.m_goodTillDate if l_theOther.m_goodTillDate != None else self.EMPTY_STR
-            l_otherRule80A = l_theOther.m_rule80A if l_theOther.m_rule80A != None else self.EMPTY_STR
-            l_otherSettlingFirm = l_theOther.m_settlingFirm if l_theOther.m_settlingFirm != None else self.EMPTY_STR
-            l_otherDeltaNeutralOrderType = l_theOther.m_deltaNeutralOrderType if l_theOther.m_deltaNeutralOrderType != None else self.EMPTY_STR
+            l_thisAction = self.m_action if self.m_action is not None else self.EMPTY_STR
+            l_thisOrderType = self.m_orderType if self.m_orderType is not None else self.EMPTY_STR
+            l_thisTif = self.m_tif if self.m_tif is not None else self.EMPTY_STR
+            l_thisOcaGroup = self.m_ocaGroup if self.m_ocaGroup is not None else self.EMPTY_STR
+            l_thisAccount = self.m_account if self.m_account is not None else self.EMPTY_STR
+            l_thisOpenClose = self.m_openClose if self.m_openClose is not None else self.EMPTY_STR
+            l_thisOrderRef = self.m_orderRef if self.m_orderRef is not None else self.EMPTY_STR
+            l_thisRule80A = self.m_rule80A if self.m_rule80A is not None else self.EMPTY_STR
+            l_thisSettlingFirm = self.m_settlingFirm if self.m_settlingFirm is not None else self.EMPTY_STR
+            l_thisDeltaNeutralOrderType = self.m_deltaNeutralOrderType if self.m_deltaNeutralOrderType is not None else self.EMPTY_STR
+            l_otherAction = l_theOther.m_action if l_theOther.m_action is not None else self.EMPTY_STR
+            l_otherOrderType = l_theOther.m_orderType if l_theOther.m_orderType is not None else self.EMPTY_STR
+            l_otherTif = l_theOther.m_tif if l_theOther.m_tif is not None else self.EMPTY_STR
+            l_otherOcaGroup = l_theOther.m_ocaGroup if l_theOther.m_ocaGroup is not None else self.EMPTY_STR
+            l_otherAccount = l_theOther.m_account if l_theOther.m_account is not None else self.EMPTY_STR
+            l_otherOpenClose = l_theOther.m_openClose if l_theOther.m_openClose is not None else self.EMPTY_STR
+            l_otherOrderRef = l_theOther.m_orderRef if l_theOther.m_orderRef is not None else self.EMPTY_STR
+            l_otherOrderGoodAfterTime = l_theOther.m_goodAfterTime if l_theOther.m_goodAfterTime is not None else self.EMPTY_STR
+            l_otherOrderGoodTillDate = l_theOther.m_goodTillDate if l_theOther.m_goodTillDate is not None else self.EMPTY_STR
+            l_otherRule80A = l_theOther.m_rule80A if l_theOther.m_rule80A is not None else self.EMPTY_STR
+            l_otherSettlingFirm = l_theOther.m_settlingFirm if l_theOther.m_settlingFirm is not None else self.EMPTY_STR
+            l_otherDeltaNeutralOrderType = l_theOther.m_deltaNeutralOrderType if l_theOther.m_deltaNeutralOrderType is not None else self.EMPTY_STR
             return l_thisAction == l_otherAction and l_thisOrderType == l_otherOrderType and l_thisTif == l_otherTif and l_thisOcaGroup == l_otherOcaGroup and l_thisAccount == l_otherAccount and l_thisOpenClose == l_otherOpenClose and l_thisOrderRef == l_otherOrderRef and l_otherOrderGoodAfterTime == l_otherOrderGoodAfterTime and l_otherOrderGoodTillDate == l_otherOrderGoodTillDate and l_thisRule80A == l_otherRule80A and l_thisSettlingFirm == l_otherSettlingFirm and l_thisDeltaNeutralOrderType == l_otherDeltaNeutralOrderType
 
 

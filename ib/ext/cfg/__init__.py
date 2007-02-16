@@ -24,6 +24,7 @@ modifierDecoratorMap = {
 outputSubs = [
     (r'if self == p_other:', r'if self is p_other:'),
     (r'if \(self == p_other\):', r'if self is p_other:'),
+    (r'(\w+)(\.compareToIgnoreCase\((.*?)\))', r'cmp(\1.lower(), \3.lower())'),
     ]
 
 
@@ -43,6 +44,6 @@ variableNameMapping = {
 
 renameMethodMap = {
     'equals':'__eq__',
-    'clone':'__copy__',
+##    'clone':'__copy__',
     'is':'is_',
 }

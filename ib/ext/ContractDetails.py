@@ -16,7 +16,7 @@ class ContractDetails(object):
     """ generated source for ContractDetails
 
     """
-    m_summary = Contract()
+    m_summary = None
     m_marketName = ""
     m_tradingClass = ""
     m_conid = 0
@@ -33,13 +33,13 @@ class ContractDetails(object):
         self.m_minTick = 0
 
     @__init__.register(object, Contract, str, str, int, float, str, str, str)
-    def __init___0(self, p_summary, 
-                         p_marketName, 
-                         p_tradingClass, 
-                         p_conid, 
-                         p_minTick, 
-                         p_multiplier, 
-                         p_orderTypes, 
+    def __init___0(self, p_summary,
+                         p_marketName,
+                         p_tradingClass,
+                         p_conid,
+                         p_minTick,
+                         p_multiplier,
+                         p_orderTypes,
                          p_validExchanges):
         self.m_summary = p_summary
         self.m_marketName = p_marketName

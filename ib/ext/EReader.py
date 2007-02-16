@@ -9,8 +9,7 @@
 ## This file copyright Troy Melhase <troy@gci.net>.
 ##
 
-from ib.aux import Thread, Boolean
-from ib.aux import DataInputStream
+from ib.aux import Boolean, DataInputStream, Integer, StringBuffer, Thread
 from ib.aux.overloading import overloaded
 
 from ib.ext.Contract import Contract
@@ -55,12 +54,12 @@ class EReader(Thread):
 
     @overloaded
     def __init__(self, parent, dis):
-        super(EReader, self).__init__("EReader", self.parent, dis)
+        self.__init__("EReader", parent, dis)
 
     @__init__.register(object, str, object, DataInputStream)
     def __init___0(self, name, parent, dis):
         self.setName(name)
-        self.m_parent = self.parent
+        self.m_parent = parent
         self.m_dis = dis
 
     def run(self):
@@ -95,7 +94,7 @@ class EReader(Thread):
                     sizeTickType = 3
                 elif tickType == 4:
                     sizeTickType = 5
-                if sizeTickType != -1:
+                if (sizeTickType != -1):
                     self.eWrapper().tickSize(tickerId, sizeTickType, size)
         elif msgId == self.TICK_SIZE:
             version = self.readInt()
@@ -295,7 +294,6 @@ class EReader(Thread):
             version = self.readInt()
             tickerId = self.readInt()
             numberOfElements = self.readInt()
-            
             ## for-while
             ctr = 0
             while ctr < numberOfElements:
@@ -440,7 +438,6 @@ class EReader(Thread):
                 endDateStr = self.readStr()
                 completedIndicator += "-" + startDateStr + "-" + endDateStr
             itemCount = self.readInt()
-            
             ## for-while
             ctr = 0
             while ctr < itemCount:
@@ -475,11 +472,11 @@ class EReader(Thread):
                 break
             buf.append(c)
         strval = str(buf)
-        return None if len((strval) == 0) else strval
+        return None if strval == 0 else strval
 
     def readBoolFromInt(self):
         strval = self.readStr()
-        return False if strval is None else Integer.parseInt(strval) != 0
+        return False if strval is None else (Integer.parseInt(strval) != 0)
 
     def readInt(self):
         strval = self.readStr()

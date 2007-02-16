@@ -1,5 +1,6 @@
 modulePreamble = [
     'from ib.ext.AnyWrapper import AnyWrapper',
+    'from ib.ext.ComboLeg import ComboLeg',
     'from ib.ext.EClientErrors import EClientErrors',
     'from ib.ext.EReader import EReader',
     '',
@@ -7,9 +8,8 @@ modulePreamble = [
     'from ib.aux import synchronized, Socket, DataInputStream, DataOutputStream',
     'from ib.aux import Double, Integer',
     '',
-    'from threading import Lock',
-    '',
-    'mlock = Lock()',
+    'from threading import RLock',
+    'mlock = RLock()',
     ]
 
 
@@ -19,7 +19,18 @@ outputSubs = [
     (r'    m_socket = Socket\(\)', r'    m_socket = None'),
     (r'    m_dos = DataOutputStream\(\)', r'    m_dos = None'),
     (r'(, "" \+ e)', r', str(e)'),
+
+    (r'print "Server Version:" \+ self\.m_serverVersion',
+     r'print "Server Version:", self.m_serverVersion',),
+
+    (r'print "TWS Time at connection:" \+ self\.m_TwsTime',
+     r'print "TWS Time at connection:", self.m_TwsTime',),
     ]
 
 def methodPreambleSorter(a, b):
     return cmp(a, b)
+
+
+
+
+

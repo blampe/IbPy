@@ -28,12 +28,12 @@ class ExecutionFilter(object):
         self.m_clientId = 0
 
     @__init__.register(object, int, str, str, str, str, str, str)
-    def __init___0(self, p_clientId, 
-                         p_acctCode, 
-                         p_time, 
-                         p_symbol, 
-                         p_secType, 
-                         p_exchange, 
+    def __init___0(self, p_clientId,
+                         p_acctCode,
+                         p_time,
+                         p_symbol,
+                         p_secType,
+                         p_exchange,
                          p_side):
         self.m_clientId = p_clientId
         self.m_acctCode = p_acctCode

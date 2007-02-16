@@ -10,14 +10,10 @@ generated file here.
 
 Status
 ------
-AnyWrapper.py	-	importable, usable
-ComboLeg.py	-	importable, appears usable
-Contract.py	-	importable, appears usable
-		-	needs __copy__ method fixed
-
+AnyWrapper.py		importable, appears usable
+ComboLeg.py		importable, appears usable
+Contract.py		importable, appears usable
 ContractDetails.py	importable, appears usable
-			needs fix for Contract class variable instance
-
 EClientErrors.py	importable, appears usable
 EClientSocket.py	importable, NOT usable
 

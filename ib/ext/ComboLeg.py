@@ -32,10 +32,10 @@ class ComboLeg(object):
         self.m_openClose = 0
 
     @__init__.register(object, int, int, str, str, int)
-    def __init___0(self, p_ConId, 
-                         p_Ratio, 
-                         p_Action, 
-                         p_exchange, 
+    def __init___0(self, p_ConId,
+                         p_Ratio,
+                         p_Action,
+                         p_exchange,
                          p_openClose):
         self.m_conId = p_ConId
         self.m_ratio = p_Ratio
@@ -50,8 +50,8 @@ class ComboLeg(object):
             if p_other is None:
                 return False
         l_theOther = p_other
-        l_thisAction = self.m_action if self.m_action != None else ""
-        l_thisExchange = self.m_exchange if self.m_exchange != None else ""
-        return (l_thisAction.compareToIgnoreCase(l_theOther.m_action) == 0) and (l_thisExchange.compareToIgnoreCase(l_theOther.m_exchange) == 0) and (self.m_conId == l_theOther.m_conId) and (self.m_ratio == l_theOther.m_ratio) and (self.m_openClose == l_theOther.m_openClose)
+        l_thisAction = self.m_action if self.m_action is not None else ""
+        l_thisExchange = self.m_exchange if self.m_exchange is not None else ""
+        return (cmp(l_thisAction.lower(), l_theOther.m_action.lower()) == 0) and (cmp(l_thisExchange.lower(), l_theOther.m_exchange.lower()) == 0) and (self.m_conId == l_theOther.m_conId) and (self.m_ratio == l_theOther.m_ratio) and (self.m_openClose == l_theOther.m_openClose)
 
 
