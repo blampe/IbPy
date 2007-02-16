@@ -67,9 +67,9 @@ class EClientSocket(object):
     CANCEL_SCANNER_SUBSCRIPTION = 23
     REQ_SCANNER_PARAMETERS = 24
     CANCEL_HISTORICAL_DATA = 25
-    m_anyWrapper = AnyWrapper()
-    m_socket = Socket()
-    m_dos = DataOutputStream()
+    m_anyWrapper = None
+    m_socket = None
+    m_dos = None
     m_connected = bool()
     m_reader = None
     m_serverVersion = 1
@@ -165,7 +165,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(tickerId)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_CANSCANNER, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_CANSCANNER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -181,7 +181,7 @@ class EClientSocket(object):
             self.send(self.REQ_SCANNER_PARAMETERS)
             self.send(VERSION)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQSCANNERPARAMETERS, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQSCANNERPARAMETERS, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -221,7 +221,7 @@ class EClientSocket(object):
             if self.m_serverVersion >= 27:
                 self.send(subscription.stockTypeFilter())
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_REQSCANNER, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_REQSCANNER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -266,7 +266,7 @@ class EClientSocket(object):
             if self.m_serverVersion >= 31:
                 self.send(genericTickList)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_REQMKT, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_REQMKT, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -283,7 +283,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(tickerId)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_CANSCANNER, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_CANSCANNER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -343,7 +343,7 @@ class EClientSocket(object):
                         self.send(comboLeg.m_exchange)
                         i += 1
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_REQHISTDATA, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_REQHISTDATA, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -371,7 +371,7 @@ class EClientSocket(object):
             if self.m_serverVersion >= 31:
                 self.send(contract.m_includeExpired)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQCONTRACT, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQCONTRACT, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -400,7 +400,7 @@ class EClientSocket(object):
             if self.m_serverVersion >= 19:
                 self.send(numRows)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_REQMKTDEPTH, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_REQMKTDEPTH, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -414,7 +414,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(tickerId)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_CANMKT, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_CANMKT, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -431,7 +431,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(tickerId)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_CANMKTDEPTH, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_CANMKTDEPTH, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -466,7 +466,7 @@ class EClientSocket(object):
             self.send(account)
             self.send(override)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_REQMKT, "" + e)
+            self.error(tickerId, EClientErrors.FAIL_SEND_REQMKT, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -586,7 +586,7 @@ class EClientSocket(object):
             if self.m_serverVersion >= 30:
                 self.sendMax(order.m_trailStopPrice)
         except (Exception, ), e:
-            self.error(id, EClientErrors.FAIL_SEND_ORDER, "" + e)
+            self.error(id, EClientErrors.FAIL_SEND_ORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -602,7 +602,7 @@ class EClientSocket(object):
             if self.m_serverVersion >= 9:
                 self.send(acctCode)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_ACCT, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_ACCT, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -623,7 +623,7 @@ class EClientSocket(object):
                 self.send(filter.m_exchange)
                 self.send(filter.m_side)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_EXEC, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_EXEC, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -637,7 +637,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(id)
         except (Exception, ), e:
-            self.error(id, EClientErrors.FAIL_SEND_CORDER, "" + e)
+            self.error(id, EClientErrors.FAIL_SEND_CORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -650,7 +650,7 @@ class EClientSocket(object):
             self.send(self.REQ_OPEN_ORDERS)
             self.send(VERSION)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -664,7 +664,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(numIds)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CORDER, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -678,7 +678,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(allMsgs)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CORDER, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -691,7 +691,7 @@ class EClientSocket(object):
             self.send(self.CANCEL_NEWS_BULLETINS)
             self.send(VERSION)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CORDER, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -705,7 +705,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(logLevel)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_SERVER_LOG_LEVEL, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_SERVER_LOG_LEVEL, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -719,7 +719,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(bAutoBind)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -732,7 +732,7 @@ class EClientSocket(object):
             self.send(self.REQ_ALL_OPEN_ORDERS)
             self.send(VERSION)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -745,7 +745,7 @@ class EClientSocket(object):
             self.send(self.REQ_MANAGED_ACCTS)
             self.send(VERSION)
         except (Exception, ), e:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, "" + e)
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_OORDER, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -762,7 +762,7 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(faDataType)
         except (Exception, ), e:
-            self.error(faDataType, EClientErrors.FAIL_SEND_FA_REQUEST, "" + e)
+            self.error(faDataType, EClientErrors.FAIL_SEND_FA_REQUEST, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -780,7 +780,7 @@ class EClientSocket(object):
             self.send(faDataType)
             self.send(xml)
         except (Exception, ), e:
-            self.error(faDataType, EClientErrors.FAIL_SEND_FA_REPLACE, "" + e)
+            self.error(faDataType, EClientErrors.FAIL_SEND_FA_REPLACE, str(e))
             self.close()
 
     @overloaded

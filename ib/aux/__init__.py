@@ -15,44 +15,70 @@ def synchronized(lock):
         return newFunction
     return wrap
 
-    myLock = Lock()
-
-# Example usage:
-if 0:
-    from threading import Lock
-    myLock = Lock()
-
-    @synchronized(myLock)
-    def critical1(*args):
-        # Interesting stuff goes here.
-        pass
-
-    @synchronized(myLock)
-    def critical2(*args):
-        # Other interesting stuff goes here.
-        pass
-
 
 # various helpers
 
 class Integer(int):
     MAX_VALUE = sys.maxint
 
+    @staticmethod
+    def parseInt(value):
+        return int(value)
+
+    @staticmethod
+    def parseLong(value):
+        return long(value)
+
 class Double(float):
     MAX_VALUE = sys.maxint
+
+    @staticmethod
+    def parseDouble(value):
+        return float(value)
 
 class Cloneable(object):
     pass
 
+
+class StringBuffer(object):
+    def append(self, value):
+        pass
+
+class Boolean(object):
+    def valueOf(value):
+        pass
+
+    def booleanValue(self):
+        pass
+
 class Socket(object):
-    pass
+    def __init__(self, host, port):
+        pass
+
+    def getInputStream(self):
+        pass
+
+    def getOutputStream(self):
+        pass
+
 
 class DataOutputStream(object):
-    pass
+    def __init__(self, stream):
+        pass
+
+    def write(self, value):
+        pass
 
 
 class DataInputStream(object):
-    pass
+    def __init__(self, stream):
+        pass
+
+    def readByte(self):
+        pass
+
 
 class Thread(object):
-    pass
+    def isInterrupted(self):
+        pass
+

@@ -9,9 +9,13 @@
 ## This file copyright Troy Melhase <troy@gci.net>.
 ##
 
-from ib.aux import Thread
+from ib.aux import Thread, Boolean
 from ib.aux import DataInputStream
 from ib.aux.overloading import overloaded
+
+from ib.ext.Contract import Contract
+from ib.ext.ContractDetails import ContractDetails
+from ib.ext.Order import Order
 
 class EReader(Thread):
     """ generated source for EReader
@@ -40,8 +44,8 @@ class EReader(Thread):
     TICK_OPTION_COMPUTATION = 21
     TICK_GENERIC = 45
     TICK_STRING = 46
-    m_parent = object()
-    m_dis = DataInputStream()
+    m_parent = None
+    m_dis = None
 
     def parent(self):
         return self.m_parent
