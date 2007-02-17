@@ -9,7 +9,7 @@
 ## This file copyright Troy Melhase <troy@gci.net>.
 ##
 
-from ib.aux import Integer, Double
+from ib.aux import Double, Integer
 
 class Order(object):
     """ generated source for Order

@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+""" ib.ext.cfg.EClientSocket -> config module for EClientSocket.java.
+
+"""
 modulePreamble = [
     'from ib.ext.AnyWrapper import AnyWrapper',
     'from ib.ext.ComboLeg import ComboLeg',

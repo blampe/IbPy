@@ -1,7 +1,13 @@
-indent = 4
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+""" ib.ext.cfg -> configuration package and modules for generated code.
 
-typeTypeMap = {
-    }
+This file sets the defaults for source transformation.  The other
+modules correspond (1-1) to input java files.  The individual modules
+allow for per-file transformation settings.
+
+"""
+indent = 4
 
 
 modulePreamble = [
@@ -28,14 +34,10 @@ outputSubs = [
     ]
 
 
-
-moduleEpilogue = [
-    ]
-
-
 renameAnyMap = {
     'exec':'exec_',
     }
+
 
 variableNameMapping = {
     'exec':'exec_',
@@ -44,6 +46,5 @@ variableNameMapping = {
 
 renameMethodMap = {
     'equals':'__eq__',
-##    'clone':'__copy__',
     'is':'is_',
 }

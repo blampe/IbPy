@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+""" ib.ext.cfg.EReader -> config module for EReader.java.
+
+"""
 modulePreamble = [
     'from ib.aux import Boolean, Double, DataInputStream, Integer, StringBuffer, Thread',
     'from ib.aux.overloading import overloaded',

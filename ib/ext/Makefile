@@ -1,7 +1,8 @@
 srcdir := ./src/IBJts/java/com/ib/client/
 modules := $(addsuffix .py, $(notdir $(basename $(wildcard $(srcdir)*.java))))
 
-.PHONY: all cfg clean src
+
+.PHONY: all cfg clean clean-modules src
 
 
 all: src cfg $(modules)
@@ -21,9 +22,10 @@ clean:
 src:
 	cd src && $(MAKE)
 
+
 $(modules):
-	j2py -i $(addprefix $(srcdir), $(addsuffix .java, $(basename $@))) \
-             -o $@ -c ib.ext.cfg -c ib.ext.cfg.$(basename $@) -s
+	j2py -i $(addprefix $(srcdir), $(addsuffix .java, $(basename $@))) -o $@ -c ib.ext.cfg -c ib.ext.cfg.$(basename $@) -s
+
 
 clean-modules:
 	rm -rf $(modules)
