@@ -5,5 +5,5 @@
 """
 tws_api_version = "9.00"
 version = "0.7.%s" % (tws_api_version, )
-revision = "r175M"
+revision = "r176"
 
