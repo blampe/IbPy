@@ -40,7 +40,7 @@ doclines = __doc__.split('\n')
 
 setup(
     name = 'IbPy',
-    version = '0.6',
+    version = "0",
     description = doclines[0],
     author = 'Troy Melhase',
     author_email = 'troy@gci.net',
