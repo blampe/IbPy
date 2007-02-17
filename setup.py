@@ -25,14 +25,8 @@ Topic :: Software Development :: Libraries :: Python Modules
 
 import sys
 from distutils.core import setup
+## add python < 2.5 check
 
-
-if sys.version_info < (2, 3):
-    _setup = setup
-    def setup(**kwargs):
-        if kwargs.has_key('classifiers'):
-            del kwargs['classifiers']
-        _setup(**kwargs)
 
 
 doclines = __doc__.split('\n')
@@ -46,7 +40,7 @@ setup(
     author_email = 'troy@gci.net',
     url = 'http://ibpy.sf.net/',
     license = 'BSD License',
-    packages = ['ib', 'ib/client', 'ib/demos', 'ib/lib', 'ib/tests', 'ib/types'],
+    packages = ['ib', 'ib/aux', 'ib/ext', 'ib/opt', ],
     classifiers = filter(None, classifiers.split('\n')),
     long_description = '\n'.join(doclines[2:]),
     platforms = ['any'],
