@@ -94,58 +94,58 @@ class ReferenceApp:
         self.port = port
         self.clientId = clientId
         self.wrapper = ReferenceWrapper()
-        self.reader = EClientSocket(self.wrapper)
+        self.connection = EClientSocket(self.wrapper)
 
     def eConnect(self):
-        self.reader.eConnect(self.host, self.port, self.clientId)
+        self.connection.eConnect(self.host, self.port, self.clientId)
 
     def reqAccountUpdates(self):
-        self.reader.reqAccountUpdates(1, '')
+        self.connection.reqAccountUpdates(1, '')
 
     def reqOpenOrders(self):
-        self.reader.reqOpenOrders()
+        self.connection.reqOpenOrders()
 
     def reqExecutions(self):
         filt = ExecutionFilter()
-        self.reader.reqExecutions(filt)
+        self.connection.reqExecutions(filt)
 
     def reqIds(self):
-        self.reader.reqIds(10)
+        self.connection.reqIds(10)
 
     def reqNewsBulletins(self):
-        self.reader.reqNewsBulletins(1)
+        self.connection.reqNewsBulletins(1)
 
     def cancelNewsBulletins(self):
-        self.reader.cancelNewsBulletins()
+        self.connection.cancelNewsBulletins()
 
     def setServerLogLevel(self):
-        self.reader.setServerLogLevel(3)
+        self.connection.setServerLogLevel(3)
 
     def reqAutoOpenOrders(self):
-        self.reader.reqAutoOpenOrders(1)
+        self.connection.reqAutoOpenOrders(1)
 
     def reqAllOpenOrders(self):
-        self.reader.reqAllOpenOrders()
+        self.connection.reqAllOpenOrders()
 
     def reqManagedAccts(self):
-        self.reader.reqManagedAccts()
+        self.connection.reqManagedAccts()
 
     def requestFA(self):
-        self.reader.requestFA(1)
+        self.connection.requestFA(1)
 
     def reqMktData(self):
         contract = Contract() #
         contract.m_symbol = 'QQQQ'
         contract.m_secType = 'STK'
         contract.m_exchange = 'SMART'
-        self.reader.reqMktData(1, contract, '')
+        self.connection.reqMktData(1, contract, '')
 
     def reqHistoricalData(self):
         contract = Contract()
         contract.m_symbol = 'QQQQ'
         contract.m_secType = 'STK'
         contract.m_exchange = 'SMART'
-        self.reader.reqHistoricalData(1,
+        self.connection.reqHistoricalData(1,
                                       contract,
                                       "20070118 05:00:00 GMT",
                                       "300 S",
@@ -156,7 +156,7 @@ class ReferenceApp:
 
     def eDisconnect(self):
         time.sleep(5)
-        self.reader.eDisconnect()
+        self.connection.eDisconnect()
 
 
 if __name__ == '__main__':

@@ -3,7 +3,8 @@
 """ ib -> root package for ibpy.
 
 """
-tws_api_version = "9.00"
-version = "0.7.%s" % (tws_api_version, )
-revision = "r176"
+tws_api_version = "0"
+version = "0"
+revision = "r0"
 
+from ib.opt import ib_connection
