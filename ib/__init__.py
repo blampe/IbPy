@@ -3,7 +3,7 @@
 """ ib -> root package for ibpy.
 
 """
-tws_api_version = "0"
+api = "0"
 version = "0"
 revision = "r0"
 
