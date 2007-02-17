@@ -6,7 +6,6 @@
 import socket
 import struct
 import sys
-import threading
 
 
 def synchronized(lock):
@@ -176,22 +175,80 @@ class StringBuffer(list):
         return join('', [chr(v) for v in self])
 
 
-class Thread(threading.Thread):
-    """ partial implementationof the java Thread type
+if 'qt' in sys.modules:
+    from qt import QThread
+
+    class ThreadType(QThread):
+        """ partial implementation of java Thread type, based on Qt3 QThread
+
+        """
+        def __init__(self, name):
+            QThread.__init__(self)
+
+        def interrupt(self):
+            return self.terminate()
+
+        def isInterrupted(self):
+            return self.finished()
+
+        def setDaemon(self, value):
+            pass
+
+        def setName(self, value):
+            pass
+
+
+
+elif 'PyQt4' in sys.modules:
+    from PyQt4.QtCore import QThread
+
+    class ThreadType(QThread):
+        """ partial implementation of java Thread type, based on Qt4 QThread
+
+        """
+        def __init__(self, name):
+            QThread.__init__(self)
+
+        def interrupt(self):
+            return self.exit()
+
+        def isInterrupted(self):
+            return self.isFinished()
+
+        def setDaemon(self, value):
+            pass
+
+        def setName(self, value):
+            self.setObjectName(value)
+
+
+else:
+    import threading
+
+    class ThreadType(threading.Thread):
+        """ partial implementation of java Thread type, based on Python Thread
+
+        """
+        def __init__(self, name):
+            threading.Thread.__init__(self, name=name)
+            self.setDaemon(True)
+
+        def interrupt(self):
+            """ no-op; python threads are not directly interruptible
+
+            """
+            return False
+
+        def isInterrupted(self):
+            """ returns False, which signals the reader to keep reading
+
+            """
+            return False
+
+
+class Thread(ThreadType):
+    """ Thread parent type, based on available framework
 
     """
     def __init__(self, name, parent, dis):
-        threading.Thread.__init__(self, name=name)
-        self.setDaemon(True)
-
-    def isInterrupted(self):
-        """ returns False, which signals the reader to keep reading
-
-        """
-        return False
-
-    def interrupt(self):
-        """ no-op; python threads are not directly interruptible
-
-        """
-        return False
+        ThreadType.__init__(self, name=name)
