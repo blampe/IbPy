@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+""" just enough auxiliary bits to make the translated code work
 
+"""
 import socket
+import struct
 import sys
 import threading
-from struct import pack, unpack
-eof = pack('!i', 0)[3]
 
 
 def synchronized(lock):
@@ -13,11 +14,11 @@ def synchronized(lock):
 
     from http://wiki.python.org/moin/PythonDecoratorLibrary
     """
-    def wrapper(f):
-        def inner(*args, **kw):
+    def wrapper(func):
+        def inner(*args, **kwds):
             lock.acquire()
             try:
-                return f(*args, **kw)
+                return func(*args, **kwds)
             finally:
                 lock.release()
         return inner
@@ -25,99 +26,172 @@ def synchronized(lock):
 
 
 class Boolean(object):
+    """ partial implementation of java Boolean type
+
+    """
     def __init__(self, value):
         self.value = value
 
-    @classmethod
-    def valueOf(cls, value):
-        return cls(str(value).lower() == 'true')
-
     def booleanValue(self):
+        """ the value of this instance (a bool)
+
+        @return True or False
+        """
         return self.value
 
+    @classmethod
+    def valueOf(cls, text):
+        """ creates an instance of this class with a bool value
 
-class Integer(int):
-    MAX_VALUE = sys.maxint
-
-    @staticmethod
-    def parseInt(value):
-        return int(value)
-
-    @staticmethod
-    def parseLong(value):
-        return long(value)
-
-
-class Double(float):
-    MAX_VALUE = sys.maxint
-
-    @staticmethod
-    def parseDouble(value):
-        return float(value)
+        @param cls this class
+        @param text string
+        @return instance of cls
+        """
+        value = str(text).lower() == 'true'
+        return cls(value)
 
 
 class Cloneable(object):
-    pass
+    """ stub for the Cloneable java interface
 
-
-class StringBuffer(object):
-    def __init__(self):
-        self.seq = []
-
-    def append(self, value):
-        self.seq.append(value)
-
-    def __str__(self):
-        s = str.join('', [chr(v) for v in self.seq])
-        return s
-
-
-class Socket(object):
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((host, port))
-
-    def getInputStream(self):
-        return self.socket
-
-    def getOutputStream(self):
-        return self.socket
-
-
-
-
-
-class DataOutputStream(object):
-    def __init__(self, stream):
-        self.stream = stream
-
-    def write(self, data):
-        send = self.stream.send
-        for k in str(data):
-            send(pack('!i', ord(k))[3])
-        send(eof)
+    some of the translated code implements the java Cloneable
+    interface, but its methods are never used.  we provide this class
+    for subtyping, and will implement methods as needed later.
+    """
 
 
 class DataInputStream(object):
-    def __init__(self, stream):
-        self.stream = stream
+    """ partial implementation of the java DataInputStream type
 
-    def readByte(self):
-        bite = self.stream.recv(1)
-        bite = unpack('!b', bite)[0]
-        return bite
+    """
+    def __init__(self, stream):
+        self.recv = stream.recv
+
+    def readByte(self, unpack=struct.unpack):
+        """ reads a byte from the contained stream
+
+        keyword arguments are bound to module globals for faster
+        access.
+
+        @return string read from stream
+        """
+        return unpack('!b', self.recv(1))[0]
+
+
+class DataOutputStream(object):
+    """ partial implementation of the java DataOutputStream type
+
+    """
+    def __init__(self, stream):
+        self.send = stream.send
+
+    def write(self, data, pack=struct.pack, eol=struct.pack('!b', 0)):
+        """ writes data to the contained stream
+
+        keyword arguments are bound to module globals for faster
+        access.
+
+        @param data string to send, or 0
+        @return None
+        """
+        send = self.send
+        if data == 0:
+            send(eol)
+        else:
+            for char in data:
+                send(pack('!c', char))
+
+
+class Double(float):
+    """ partial implementation of java Double type
+
+    """
+    MAX_VALUE = sys.maxint
+
+    @staticmethod
+    def parseDouble(text):
+        """ returns python float from string
+
+        """
+        return float(text)
+
+
+class Integer(int):
+    """ partial implementation of java Integer type
+
+    """
+    MAX_VALUE = sys.maxint
+
+    @staticmethod
+    def parseInt(text):
+        """ returns python int from string
+
+        """
+        return int(text)
+
+    @staticmethod
+    def parseLong(text):
+        """ returns python long from string
+
+        """
+        return long(text)
+
+
+class Socket(socket.socket):
+    """ partial implementation of the java Socket type.
+
+    """
+    def __init__(self, host, port):
+        socket.socket.__init__(self, socket.AF_INET, socket.SOCK_STREAM)
+        self.connect((host, port))
+
+    def getInputStream(self):
+        """ returns this instance, which has a send method
+
+        """
+        return self
+
+    def getOutputStream(self):
+        """ returns this instance, which has a recv method
+
+        """
+        return self
+
+
+class StringBuffer(list):
+    """ partial implementation of the java StringBuffer type
+
+    translated code uses instances of this type to build up strings.
+    the list base type provides the append method.
+
+    """
+    def __str__(self, join=str.join, chr=chr):
+        """ the string value of this instance
+
+        keyword arguments are bound to module globals for faster
+        access.
+
+        @return string from characters contained in this instance
+        """
+        return join('', [chr(v) for v in self])
 
 
 class Thread(threading.Thread):
-    def __init__(self, name, arg1, arg2):
+    """ partial implementationof the java Thread type
+
+    """
+    def __init__(self, name, parent, dis):
         threading.Thread.__init__(self, name=name)
-        self.setName(name)
-        self.m_parent = arg1
-        self.m_dis = arg2
         self.setDaemon(True)
 
     def isInterrupted(self):
+        """ returns False, which signals the reader to keep reading
+
+        """
         return False
 
+    def interrupt(self):
+        """ no-op; python threads are not directly interruptible
+
+        """
+        return False

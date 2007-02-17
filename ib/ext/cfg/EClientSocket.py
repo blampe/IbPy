@@ -27,10 +27,5 @@ outputSubs = [
      r'print "TWS Time at connection:", self.m_TwsTime',),
     ]
 
-def methodPreambleSorter(a, b):
-    return cmp(a, b)
 
-
-
-
-
+methodPreambleSorter = cmp

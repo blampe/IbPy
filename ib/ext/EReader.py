@@ -9,7 +9,7 @@
 ## This file copyright Troy Melhase <troy@gci.net>.
 ##
 
-from ib.aux import Boolean, DataInputStream, Integer, StringBuffer, Thread
+from ib.aux import Boolean, Double, DataInputStream, Integer, StringBuffer, Thread
 from ib.aux.overloading import overloaded
 
 from ib.ext.Contract import Contract
@@ -58,6 +58,7 @@ class EReader(Thread):
 
     @__init__.register(object, str, object, DataInputStream)
     def __init___0(self, name, parent, dis):
+        Thread.__init__(self, name, parent, dis)
         self.setName(name)
         self.m_parent = parent
         self.m_dis = dis
