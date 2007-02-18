@@ -8,6 +8,7 @@
 ##	make dist
 ##
 
+
 ibpy_ver     := 0.7.0
 ibpy_rev     := $(shell svnversion|cut -f 2 -d \:|cut -f 1 -d M)
 twsapi_ver   := $(shell cat ib/ext/src/IBJts/API_VersionNum.txt |cut -f 2 -d \=)
@@ -16,7 +17,7 @@ release_dir  := release-$(release_num)
 release_date := $(shell date +"%d %b %Y")
 release_root := IbPy-$(release_num)
 release_file := $(release_root).tar.gz
-svn_root     := http://ibpy.melhase.net/repos/branches/ast
+svn_root     := http://ibpy.googlecode.com/svn/branches/ast
 
 
 .PHONY: all clean
@@ -51,5 +52,7 @@ $(release_dir):
 	cd $(release_dir)/ && sed -i s/\:release_file\:/$(release_file)/ README
 	cd $(release_dir)/ && sed -i s/\:release_root\:/$(release_root)/ README
 	echo [I] building source distribution
-	cd $(release_dir) && python setup.py sdist > /dev/null
-	echo [I] source distribution file: $(release_dir)/dist/$(release_file)
+	cd $(release_dir) && python setup.py sdist --formats=gztar,zip > /dev/null
+	echo [I] source distribution files: 
+	ls $(release_dir)/dist
+
