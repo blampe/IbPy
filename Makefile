@@ -1,11 +1,11 @@
-## This is the IbPy distribution Makefile.  To build a source
-## distribution, run:
+##
+## This is the IbPy distribution Makefile.  Use this file to build a
+## source distribution only after the source has been edited, remade,
+## and checked into the repository.
+##
+## To build a source distribution, run:
 ##
 ##	make dist
-##
-## To specifiy an explict release, run:
-##
-##	make dist ibpy_ver=0.1.2
 ##
 
 ibpy_ver     := 0.7.0
@@ -20,10 +20,12 @@ svn_root     := http://ibpy.melhase.net/repos/branches/ast
 
 
 .PHONY: all clean
-not.SILENT: clean $(release_dir)
 
 
-all:
+.SILENT: clean $(release_dir)
+
+
+all: dist
 
 
 clean:
@@ -41,17 +43,13 @@ $(release_dir):
 	echo [I] fixing version strings
 	cd $(release_dir)/ib && sed -i s/api\ \=\ \"0\"/api\ \=\ \"$(twsapi_ver)\"/ __init__.py
 	cd $(release_dir)/ib && sed -i s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ __init__.py
-
 	cd $(release_dir)/ib && sed -i s/revision\ \=\ \"r0\"/revision\ \=\ \"r$(ibpy_rev)\"/ __init__.py
-
 	cd $(release_dir)/ && sed -i s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ setup.py
-
 	cd $(release_dir)/ && sed -i s/\:release_num\:/$(release_num)/ README
 	cd $(release_dir)/ && sed -i s/\:release_date\:/"$(release_date)"/ README
 	cd $(release_dir)/ && sed -i s/\:twsapi_ver\:/$(twsapi_ver)/ README
-
-
+	cd $(release_dir)/ && sed -i s/\:release_file\:/$(release_file)/ README
+	cd $(release_dir)/ && sed -i s/\:release_root\:/$(release_root)/ README
 	echo [I] building source distribution
 	cd $(release_dir) && python setup.py sdist > /dev/null
-	echo [I] source distribution file: `ls $(release_dir)/dist/*.gz`
-
+	echo [I] source distribution file: $(release_dir)/dist/$(release_file)
