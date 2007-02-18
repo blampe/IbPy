@@ -1,20 +1,21 @@
 IbPy - Interactive Brokers Python API
 =====================================
-IbPy 0.6 Released dd mm yyyy
+IbPy [release_num] Released [release_date]
 
 
 What is IbPy?
 ------------------------------------------------------------------------------
 IbPy is a third-party implementation of the API used for accessing the
-Interactive Brokers on-line trading system.  IbPy implements functionality
-that the Python programmer can use to connect to IB, request stock ticker data,
-submit orders for stocks and futures, and more.
+Interactive Brokers on-line trading system.  IbPy implements
+functionality that the Python programmer can use to connect to IB,
+request stock ticker data, submit orders for stocks and futures, and
+more.
 
 
 What's new in this release?
 ------------------------------------------------------------------------------
-The focus of this release is compatibility with recent versions of the TWS
-application.  TWS Build 861.5 is the most recent release tested.
+The focus of this release is compatibility with recent versions of the
+TWS application.  TWS API version [twsapi_ver] is supported.
 
 
 Where can I get IbPy?
@@ -30,11 +31,12 @@ Project page:
 
 How do I use IbPy?
 ------------------------------------------------------------------------------
-In order to use IbPy, the TWS application provided by IB must be installed and
-running.  See the note "What is TWS?" for more information.
+In order to use IbPy, the TWS application provided by IB must be
+installed and running.  See the note "What is TWS?" for more
+information.
 
-IbPy is used in the same manner as all socket clients supplied by Interactive
-Brokers.  The typical sequence of operations is:
+IbPy is used in the same manner as all socket clients supplied by
+Interactive Brokers.  The typical sequence of operations is:
 
 - Start the browser-based or stand-alone TWS application
 - In TWS, enable socket clients via the Configure -> API menu
@@ -43,22 +45,23 @@ Brokers.  The typical sequence of operations is:
 - External application requests ticker updates, sends orders, receives
   account data, portfolio data, etc.
 
-To connect to TWS and interact with the brokers trading system, the Python
-developer defines methods or functions to act as callbacks and associates these
-with an Ib.Socket.SocketConnection object.  Refer to the Demo.py file in the
-distribution for a complete example.
+To connect to TWS and interact with the brokers trading system, the
+Python developer defines methods or functions to act as callbacks and
+associates these with an Ib.Socket.SocketConnection object.  Refer to
+the Demo.py file in the distribution for a complete example.
 
-In lieu of IbPy documentation, developers are referred to the IbPy source code
-and the documentation supplied by Interactive Brokers.
+In lieu of IbPy documentation, developers are referred to the IbPy
+source code and the documentation supplied by Interactive Brokers.
 
 
 What are the requirements?
 ------------------------------------------------------------------------------
-IbPy requires Python 2.3 or newer.  Previous versions may or may not work.
+IbPy requires Python 2.5 or newer.  Previous versions may or may not
+work.
 
-TWS requires a web browser capable of executing Sun(R) Java(tm) applets.
-TWS can also be started directly with Sun(R) Java(tm) and the stand-alone
-package supplied by Interactive Brokers.
+TWS requires a web browser capable of executing Sun(R) Java(tm)
+applets.  TWS can also be started directly with Sun(R) Java(tm) and
+the stand-alone package supplied by Interactive Brokers.
 
 
 What is Interactive Brokers?
@@ -66,40 +69,43 @@ What is Interactive Brokers?
 From the "About The Interactive Brokers Group" page
 (http://interactivebrokers.com/html/companyInfo/about.html):
 
-The Interactive Brokers Group is a group of electronic brokerage and market 
-making firms at the forefront of the electronic brokerage industry. We have 
-revolutionized the securities and derivatives markets by providing investors 
-with high-speed, direct access to stock, options and futures products 
-worldwide. We specialize in providing investors with technology that offers 
-efficient, fast access to the world's markets at the lowest possible cost.
+The Interactive Brokers Group is a group of electronic brokerage and
+market making firms at the forefront of the electronic brokerage
+industry. We have revolutionized the securities and derivatives
+markets by providing investors with high-speed, direct access to
+stock, options and futures products worldwide. We specialize in
+providing investors with technology that offers efficient, fast access
+to the world's markets at the lowest possible cost.
 
 
 What is Python?
 ------------------------------------------------------------------------------
 From the "What is Python?" page (http://python.org/doc/Summary.html):
 
-Python is an interpreted, interactive, object-oriented programming language. 
-It is often compared to Tcl, Perl, Scheme or Java.
+Python is an interpreted, interactive, object-oriented programming
+language.  It is often compared to Tcl, Perl, Scheme or Java.
 
-Python combines remarkable power with very clear syntax. It has modules, 
-classes, exceptions, very high level dynamic data types, and dynamic typing.  
-There are interfaces to many system calls and libraries, as well as to various
-windowing systems (X11, Motif, Tk, Mac, MFC). New built-in modules are easily 
-written in C or C++. Python is also usable as an extension language for 
-applications that need a programmable interface.
+Python combines remarkable power with very clear syntax. It has
+modules, classes, exceptions, very high level dynamic data types, and
+dynamic typing.  There are interfaces to many system calls and
+libraries, as well as to various windowing systems (X11, Motif, Tk,
+Mac, MFC). New built-in modules are easily written in C or C++. Python
+is also usable as an extension language for applications that need a
+programmable interface.
 
-The Python implementation is portable: it runs on many brands of UNIX, on 
-Windows, DOS, OS/2, Mac, Amiga... If your favorite system isn't listed here, 
-it may still be supported, if there's a C compiler for it. Ask around on 
-comp.lang.python -- or just try compiling Python yourself.
+The Python implementation is portable: it runs on many brands of UNIX,
+on Windows, DOS, OS/2, Mac, Amiga... If your favorite system isn't
+listed here, it may still be supported, if there's a C compiler for
+it. Ask around on comp.lang.python -- or just try compiling Python
+yourself.
 
-The Python implementation is copyrighted but freely usable and distributable, 
+The Python implementation is copyrighted but freely usable and distributable,
 even for commercial use.
 
 
 What is TWS?
 ------------------------------------------------------------------------------
-From the page "Trader Execution and Clearing System Features" 
+From the page "Trader Execution and Clearing System Features"
 (http://interactivebrokers.com/html/companyInfo/market_ib.html):
 
 - IB's Trader Workstation can be run directly from your browser, or
@@ -120,14 +126,14 @@ From the page "Trader Execution and Clearing System Features"
 
 What Else?
 ------------------------------------------------------------------------------
-IbPy is not a product of Interactive Brokers, nor am I affiliated with IB.  I
-am a satisfied IB customer, of course.
+IbPy is not a product of Interactive Brokers, nor am I affiliated with
+IB.  I am a satisfied IB customer, of course.
 
-IbPy is installed with distutils.  Refer to the Python distutils documentation
-for more information.  The digest version is::
+IbPy is installed with distutils.  Refer to the Python distutils
+documentation for more information.  The digest version is::
 
-    $ tar xzf IbPy-0.6.tar.gz
-    $ cd IbPy-0.6
+    $ tar xzf [release_file]
+    $ cd [release_root]
     $ python setup.py install
 
 The TWS demo system is available here:
@@ -140,8 +146,9 @@ The stand-alone TWS and other API software is available from IB:
 
 IbPy is licensed under the BSD License.
 
-I'm very interested in your experience with IbPy.  Please drop me an note with
-any feedback you have.
+I'm very interested in your experience with IbPy.  Please drop me an
+note with any feedback you have.
+
 
 Troy Melhase
 mailto:troy@gci.net
