@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """IbPy - Interactive Brokers Python API
 
 IbPy is a third-party implementation of the API used for accessing the

@@ -1,6 +1,6 @@
 IbPy - Interactive Brokers Python API
 =====================================
-IbPy 0.7.0-9.00 Released :release_date:
+IbPy :release_num: Released :release_date:
 
 
 What is IbPy?
@@ -20,13 +20,13 @@ TWS application.  TWS API version :twsapi_ver: is supported.
 
 Where can I get IbPy?
 ------------------------------------------------------------------------------
-IbPy is available for download from SourceForge.net.
+IbPy is available for download from Google Code:
 
-    http://sourceforge.net/project/showfiles.php?group_id=53862
+    http://code.google.com/p/ibpy/downloads/list
 
 Project page:
 
-    http://ibpy.sourceforge.net/
+    http://code.google.com/p/ibpy/
 
 
 How do I use IbPy?

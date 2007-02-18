@@ -53,6 +53,6 @@ $(release_dir):
 	cd $(release_dir)/ && sed -i s/\:release_root\:/$(release_root)/ README
 	echo [I] building source distribution
 	cd $(release_dir) && python setup.py sdist --formats=gztar,zip > /dev/null
-	echo [I] source distribution files: 
+	echo [I] source distribution files:
 	ls $(release_dir)/dist
 
