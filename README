@@ -1,6 +1,6 @@
 IbPy - Interactive Brokers Python API
 =====================================
-IbPy [release_num] Released [release_date]
+IbPy 0.7.0-9.00 Released :release_date:
 
 
 What is IbPy?
@@ -15,7 +15,7 @@ more.
 What's new in this release?
 ------------------------------------------------------------------------------
 The focus of this release is compatibility with recent versions of the
-TWS application.  TWS API version [twsapi_ver] is supported.
+TWS application.  TWS API version :twsapi_ver: is supported.
 
 
 Where can I get IbPy?
@@ -132,8 +132,8 @@ IB.  I am a satisfied IB customer, of course.
 IbPy is installed with distutils.  Refer to the Python distutils
 documentation for more information.  The digest version is::
 
-    $ tar xzf [release_file]
-    $ cd [release_root]
+    $ tar xzf :release_file:
+    $ cd :release_root:
     $ python setup.py install
 
 The TWS demo system is available here:

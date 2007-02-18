@@ -13,14 +13,14 @@ ibpy_rev     := $(shell svnversion|cut -f 2 -d \:|cut -f 1 -d M)
 twsapi_ver   := $(shell cat ib/ext/src/IBJts/API_VersionNum.txt |cut -f 2 -d \=)
 release_num  := $(ibpy_ver)-$(twsapi_ver)
 release_dir  := release-$(release_num)
-release_date := $(shell date)
+release_date := $(shell date +"%d %b %Y")
 release_root := IbPy-$(release_num)
 release_file := $(release_root).tar.gz
 svn_root     := http://ibpy.melhase.net/repos/branches/ast
 
 
 .PHONY: all clean
-.SILENT: clean $(release_dir)
+not.SILENT: clean $(release_dir)
 
 
 all:
@@ -46,9 +46,9 @@ $(release_dir):
 
 	cd $(release_dir)/ && sed -i s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ setup.py
 
-	cd $(release_dir)/ && sed -i s/\[release_num\]/$(release_num)/ README
-	cd $(release_dir)/ && sed -i s/\[release_date\]/$(release_date)/ README
-	cd $(release_dir)/ && sed -i s/\[twsapi_ver\]/$(twsapi_ver)/ README
+	cd $(release_dir)/ && sed -i s/\:release_num\:/$(release_num)/ README
+	cd $(release_dir)/ && sed -i s/\:release_date\:/"$(release_date)"/ README
+	cd $(release_dir)/ && sed -i s/\:twsapi_ver\:/$(twsapi_ver)/ README
 
 
 	echo [I] building source distribution
