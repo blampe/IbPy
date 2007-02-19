@@ -3,7 +3,35 @@
 """ example_opt -> an exmple of using the (optional) ib.opt package
 instead of the regular API.
 
+
 """
+from ib import ib_connection
+from ib.ext.Contract import Contract
+
+
+def my_account_handler(msg):
+    print msg
+
+def my_tick_handler(msg):
+    print msg
+
+c = ib_connection()
+c.register(my_account_handler, 'UpdateAccountValue')
+c.register(my_tick_handler, 'TickSize', 'TickPrice')
+
+c.connect()
+
+c.reqAccountUpdates(1, '')
+
+contract = Contract() #
+contract.m_symbol = 'QQQQ'
+contract.m_secType = 'STK'
+contract.m_exchange = 'SMART'
+c.reqMktData(1, contract, '')
+
+
+import time
+time.sleep(10)
 
 if __name__ == '__main__':
     pass
