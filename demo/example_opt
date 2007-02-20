@@ -18,7 +18,7 @@ def my_tick_handler(msg):
 c = ib_connection()
 c.register(my_account_handler, 'UpdateAccountValue')
 c.register(my_tick_handler, 'TickSize', 'TickPrice')
-
+c.enableLogging()
 c.connect()
 
 c.reqAccountUpdates(1, '')

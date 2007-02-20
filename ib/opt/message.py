@@ -48,9 +48,26 @@ class Message(object):
 
     def __str__(self):
         name = self.__class__.__name__
-        values = [(slot, getattr(self, slot)) for slot in self.__slots__]
-        values = str.join(', ', ['%s=%s' % (n, v) for n, v in values])
-        return '<%s message%s>' % (name, ' ' + values if values else '')
+        items = str.join(', ', ['%s=%s' % item for item in self.items()])
+        return '<%s message%s>' % (name, ' ' + items if items else '')
+
+    def items(self):
+        """ list of message's (slot, slot value) pairs, as 2-tuples
+
+        """
+        return zip(self.keys(), self.values())
+
+    def values(self):
+        """ list of message's slot values
+
+        """
+        return [getattr(self, key) for key in self.keys()]
+
+    def keys(self):
+        """ list of message's slots
+
+        """
+        return self.__slots__
 
 
 class Error(Message):
