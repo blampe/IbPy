@@ -45,7 +45,9 @@ $(release_dir):
 	cd $(release_dir)/ib && sed -i s/api\ \=\ \"0\"/api\ \=\ \"$(twsapi_ver)\"/ __init__.py
 	cd $(release_dir)/ib && sed -i s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ __init__.py
 	cd $(release_dir)/ib && sed -i s/revision\ \=\ \"r0\"/revision\ \=\ \"r$(ibpy_rev)\"/ __init__.py
+	cd $(release_dir) && mv setup.py.in setup.py
 	cd $(release_dir)/ && sed -i s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ setup.py
+	cd $(release_dir) && mv README.in README
 	cd $(release_dir)/ && sed -i s/\:release_num\:/$(release_num)/ README
 	cd $(release_dir)/ && sed -i s/\:release_date\:/"$(release_date)"/ README
 	cd $(release_dir)/ && sed -i s/\:twsapi_ver\:/$(twsapi_ver)/ README
