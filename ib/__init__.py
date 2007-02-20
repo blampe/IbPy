@@ -7,4 +7,4 @@ api = "0"
 version = "0"
 revision = "r0"
 
-from ib.opt import ib_connection
+from ib.opt import ibConnection

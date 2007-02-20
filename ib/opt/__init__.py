@@ -4,13 +4,13 @@
 
 Use:
 
-    from ib import ib_connection
+    from ib import ibConnection
     from ib.opt import message
 
     def my_callback(msg):
         ...
 
-    con = ib_connection()
+    con = ibConnection()
     con.register(my_callback, message.TickSize, message.TickPrice)
     con.connect()
     con.reqAccountUpdates(...)
@@ -70,9 +70,9 @@ class Connection(object):
         """
         if enable:
             self.logger = logger()
-            self.receiver.register_all(self.logMessage)
+            self.receiver.registerAll(self.logMessage)
         else:
-            self.receiver.unregister_all(self.logMessage)
+            self.receiver.unregisterAll(self.logMessage)
 
     def logMessage(self, message):
         """ format and send a message values to the logger
@@ -101,4 +101,4 @@ class Connection(object):
 ## Alternatively, the Connection type can be sub-classed an its create
 ## classmethod reused
 ##
-ib_connection = Connection.create
+ibConnection = Connection.create

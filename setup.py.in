@@ -7,8 +7,6 @@ Interactive Brokers on-line trading system.  IbPy implements functionality
 that the Python programmer can use to connect to IB, request stock ticker
 data, submit orders for stocks and options, and more.
 """
-
-import sys
 from distutils.core import setup
 
 
@@ -42,5 +40,5 @@ setup(
     classifiers = filter(None, classifiers.split("\n")),
     long_description = "\n".join(doclines[2:]),
     platforms = ["any"],
-    download_url = "http://code.google.com/p/ibpy/downloads/list",
+    download_url = "http://ibpy.googlecode.com/files/:release_file:",
 )

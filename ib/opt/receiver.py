@@ -75,7 +75,7 @@ class Receiver(object):
                 listeners.append(listener)
 
 
-    def register_all(self, listener):
+    def registerAll(self, listener):
         """ associate listener with all messages created by this Receiver
 
         @param listener callable to receive messages
@@ -99,7 +99,7 @@ class Receiver(object):
                 if listener in listeners:
                     listeners.remove(listener)
 
-    def unregister_all(self, listener):
+    def unregisterAll(self, listener):
         """ disassociate listener with all messages created by this Receiver
 
         @param listener callable to no longer receive messages
