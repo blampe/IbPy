@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Package root.
+# IbPy package root.
+#
 ##
 
-
-##
-# values substituted during release build.
-
+# these values substituted during release build.
 api = "0"
 version = "0"
 revision = "r0"

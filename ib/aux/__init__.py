@@ -3,6 +3,12 @@
 
 ##
 # Just enough auxiliary bits to make the translated code work.
+#
+# This package provides the support necessary to use the translated
+# code.  The configuration modules used in translation take care of
+# many semantic differences between Java and Python, while this
+# package provides the rest.
+#
 ##
 
 import socket
@@ -11,9 +17,12 @@ import sys
 
 
 def synchronized(lock):
-    """ synchronization decorator
+    """ Synchronization decorator.
 
     from http://wiki.python.org/moin/PythonDecoratorLibrary
+
+    @param lock Lock or RLock instance
+    @return decorator that provides automatic locking
     """
     def wrapper(func):
         def inner(*args, **kwds):
@@ -27,14 +36,18 @@ def synchronized(lock):
 
 
 class Boolean(object):
-    """ partial implementation of java Boolean type
+    """ Partial implementation of Java Boolean type.
 
     """
     def __init__(self, value):
+        """ Constructor.
+
+        @param value bool instance, True or False
+        """
         self.value = value
 
     def booleanValue(self):
-        """ the value of this instance (a bool)
+        """ The value of this instance (a bool).
 
         @return True or False
         """
@@ -42,7 +55,7 @@ class Boolean(object):
 
     @classmethod
     def valueOf(cls, text):
-        """ creates an instance of this class with a bool value
+        """ Creates an instance of this class with a bool value.
 
         @param cls this class
         @param text string
@@ -53,26 +66,27 @@ class Boolean(object):
 
 
 class Cloneable(object):
-    """ stub for the Cloneable java interface
+    """ Stub for the Cloneable Java interface.
 
-    some of the translated code implements the java Cloneable
-    interface, but its methods are never used.  we provide this class
+    Some of the translated code implements the Java Cloneable
+    interface, but its methods are never used.  We provide this class
     for subtyping, and will implement methods as needed later.
     """
 
 
 class DataInputStream(object):
-    """ partial implementation of the java DataInputStream type
+    """ Partial implementation of the Java DataInputStream type.
 
     """
     def __init__(self, stream):
+        """ Constructor.
+
+        @param stream any object with recv method
+        """
         self.recv = stream.recv
 
     def readByte(self, unpack=struct.unpack):
-        """ reads a byte from the contained stream
-
-        keyword arguments are bound to module globals for faster
-        access.
+        """ Reads a byte from the contained stream.
 
         @return string read from stream
         """
@@ -80,17 +94,18 @@ class DataInputStream(object):
 
 
 class DataOutputStream(object):
-    """ partial implementation of the java DataOutputStream type
+    """ Partial implementation of the Java DataOutputStream type
 
     """
     def __init__(self, stream):
+        """ Constructor.
+
+        @param stream any object with send method
+        """
         self.send = stream.send
 
     def write(self, data, pack=struct.pack, eol=struct.pack('!b', 0)):
-        """ writes data to the contained stream
-
-        keyword arguments are bound to module globals for faster
-        access.
+        """ Writes data to the contained stream.
 
         @param data string to send, or 0
         @return None
@@ -104,7 +119,7 @@ class DataOutputStream(object):
 
 
 class Double(float):
-    """ partial implementation of java Double type
+    """ Partial implementation of Java Double type.
 
     """
     ##
@@ -113,14 +128,16 @@ class Double(float):
 
     @staticmethod
     def parseDouble(text):
-        """ returns python float from string
+        """ Float double (float) from string.
 
+        @param text value to parse
+        @return float instance
         """
         return float(text)
 
 
 class Integer(int):
-    """ partial implementation of java Integer type
+    """ Partial implementation of Java Integer type.
 
     """
     ##
@@ -130,52 +147,57 @@ class Integer(int):
 
     @staticmethod
     def parseInt(text):
-        """ returns python int from string
+        """ Int from string.
 
+        @param text value to parse
+        @return int instance
         """
         return int(text)
 
     @staticmethod
     def parseLong(text):
-        """ returns python long from string
+        """ Long from string.
 
+        @param text value to parse
+        @return long instance
         """
         return long(text)
 
 
 class Socket(socket.socket):
-    """ partial implementation of the java Socket type.
+    """ Partial implementation of the Java Socket type.
 
     """
     def __init__(self, host, port):
+        """ Constructor; attempts connection immediately.
+
+        @param host hostname as string
+        @param port port number as integer
+        """
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_STREAM)
         self.connect((host, port))
 
     def getInputStream(self):
-        """ returns this instance, which has a send method
+        """ Returns this instance, which has a send method.
 
         """
         return self
 
     def getOutputStream(self):
-        """ returns this instance, which has a recv method
+        """ Returns this instance, which has a recv method.
 
         """
         return self
 
 
 class StringBuffer(list):
-    """ partial implementation of the java StringBuffer type
+    """ Partial implementation of the Java StringBuffer type
 
-    translated code uses instances of this type to build up strings.
-    the list base type provides the append method.
-
+    Translated code uses instances of this type to build up strings.
+    The list base type provides the append method.
     """
     def __str__(self, join=str.join, chr=chr):
         """ the string value of this instance
-
-        keyword arguments are bound to module globals for faster
-        access.
 
         @return string from characters contained in this instance
         """
@@ -186,23 +208,42 @@ if 'qt' in sys.modules:
     from qt import QThread
 
     class ThreadType(QThread):
-        """ partial implementation of java Thread type, based on Qt3 QThread
+        """ Partial implementation of Java Thread type, based on Qt3 QThread.
 
         """
         def __init__(self, name):
+            """ Constructor.
+
+            @param name ignored
+            """
             QThread.__init__(self)
 
         def interrupt(self):
+            """ Stop this thread (by call to terminate).
+
+            """
             return self.terminate()
 
         def isInterrupted(self):
+            """ Check state of thread.
+
+            @return True if thread is finished
+            """
             return self.finished()
 
         def setDaemon(self, value):
-            pass
+            """ No-op.
+
+            @param value ignored
+            @return None
+            """
 
         def setName(self, value):
-            pass
+            """ No-op.
+
+            @param value ignored
+            @return None
+            """
 
 
 
@@ -210,22 +251,42 @@ elif 'PyQt4' in sys.modules:
     from PyQt4.QtCore import QThread
 
     class ThreadType(QThread):
-        """ partial implementation of java Thread type, based on Qt4 QThread
+        """ Partial implementation of Java Thread type, based on Qt4 QThread.
 
         """
         def __init__(self, name):
+            """ Constructor.
+
+            @param name ignored
+            """
             QThread.__init__(self)
 
         def interrupt(self):
+            """ stop this thread (by call to exit)
+
+            """
             return self.exit()
 
         def isInterrupted(self):
+            """ check state of thread
+
+            @return True if thread is finished
+            """
             return self.isFinished()
 
         def setDaemon(self, value):
-            pass
+            """ No-op.
+
+            @param value ignored
+            @return None
+            """
 
         def setName(self, value):
+            """ sets the name of this QObject
+
+            @param value name of object as string
+            @return None
+            """
             self.setObjectName(value)
 
 
@@ -233,22 +294,27 @@ else:
     import threading
 
     class ThreadType(threading.Thread):
-        """ partial implementation of java Thread type, based on Python Thread
+        """ Partial implementation of Java Thread type, based on Python Thread.
 
         """
         def __init__(self, name):
+            """ Constructor.
+
+            @param name name of this thread
+            """
             threading.Thread.__init__(self, name=name)
             self.setDaemon(True)
 
         def interrupt(self):
-            """ no-op; python threads are not directly interruptible
+            """ No-op; Python threads are not directly interruptible.
 
             """
             return False
 
         def isInterrupted(self):
-            """ returns False, which signals the reader to keep reading
+            """ Check state of thread (always False).
 
+            @return False
             """
             return False
 
@@ -258,4 +324,10 @@ class Thread(ThreadType):
 
     """
     def __init__(self, name, parent, dis):
+        """ Constructor.
+
+        @param name name of this thread
+        @param parent ignored
+        @param dis ignored
+        """
         ThreadType.__init__(self, name=name)
