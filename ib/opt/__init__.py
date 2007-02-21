@@ -1,31 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" ib.opt -> a sugary sweet layer of icing on top of the TWS API.
 
-Use:
+##
+# Sugary sweet layer of icing on top of the TWS API.
+#
+# Use:
+#    {{{
+#    from ib.opt import ibConnection, message
+#
+#    def my_callback(msg):
+#        ...
+#
+#    con = ibConnection()
+#    con.register(my_callback, message.TickSize, message.TickPrice)
+#    con.connect()
+#    con.reqAccountUpdates(...)
+#    ...
+#    con.unregister(my_callback, message.TickSize)
+#    }}}
+#
+# Enable and disable logging:
+#
+#    {{{
+#    con.enableLogging()
+#    ...
+#    con.enableLogging(False)
+#    }}}
+#
+##
 
-    from ib import ibConnection
-    from ib.opt import message
-
-    def my_callback(msg):
-        ...
-
-    con = ibConnection()
-    con.register(my_callback, message.TickSize, message.TickPrice)
-    con.connect()
-    con.reqAccountUpdates(...)
-    ...
-    con.unregister(my_callback, message.TickSize)
-
-
-Enable and disable logging:
-
-    con.enableLogging()
-    ...
-    con.enableLogging(False)
-
-
-"""
 from ib.opt.logger import logger
 from ib.opt.receiver import Receiver
 from ib.opt.sender import Sender
@@ -95,10 +98,8 @@ class Connection(object):
         """
         return cls(host=host, port=port, clientId=clientId)
 
-
 ##
-## This is the preferred client interface to this module.
-## Alternatively, the Connection type can be sub-classed an its create
-## classmethod reused
-##
+# This is the preferred client interface to this module.
+# Alternatively, the Connection type can be sub-classed an its create
+# classmethod reused
 ibConnection = Connection.create

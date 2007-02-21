@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 ##
-#
-# Source file: "Execution.java"
-# Target file: "Execution.py"
+# Automated source translation for Execution.
+##
+
+# Source file: Execution.java
+# Target file: Execution.py
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
-#
-##
 
 from ib.aux.overloading import overloaded
 

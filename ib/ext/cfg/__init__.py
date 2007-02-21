@@ -12,14 +12,14 @@ indent = 4
 
 modulePreamble = [
     '##',
-    '#',
-    lambda module:'# Source file: "%s"' % module.infile,
-    lambda module:'# Target file: "%s"' % module.outfile,
+    lambda m:'# Translation source for %s.' % m.outfile[:-3],
+    '##',
+    '',
+    lambda m:'# Source file: %s' % m.infile,
+    lambda m:'# Target file: %s' % m.outfile,
     '#',
     '# Original file copyright original author(s).',
     '# This file copyright Troy Melhase, troy@gci.net.',
-    '#',
-    '##',
     '',
 ]
 

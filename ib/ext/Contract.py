@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 ##
-#
-# Source file: "Contract.java"
-# Target file: "Contract.py"
+# Automated source translation for Contract.
+##
+
+# Source file: Contract.java
+# Target file: Contract.py
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
-#
-##
 
 from ib.aux.overloading import overloaded
 from ib.aux import Cloneable

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" ib.opt.sender -> defines Sender class to handle outbound requests.
 
-"""
+##
+# Defines Sender class to handle outbound requests.
+##
+
 from ib.aux.overloading import overloaded
 from ib.ext.EClientSocket import EClientSocket
 

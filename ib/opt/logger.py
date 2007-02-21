@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" ib.opt.logger -> defines logging formats and logger instance
 
-"""
+##
+# Defines logging formats and logger instance
+##
+
 import logging
 import os
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" just enough auxiliary bits to make the translated code work
 
-"""
+##
+# Just enough auxiliary bits to make the translated code work.
+##
+
 import socket
 import struct
 import sys
@@ -105,6 +107,8 @@ class Double(float):
     """ partial implementation of java Double type
 
     """
+    ##
+    # sentinel value used by the socket writer
     MAX_VALUE = sys.maxint
 
     @staticmethod
@@ -119,6 +123,9 @@ class Integer(int):
     """ partial implementation of java Integer type
 
     """
+    ##
+    # sentinel value used by the socket writer
+
     MAX_VALUE = sys.maxint
 
     @staticmethod

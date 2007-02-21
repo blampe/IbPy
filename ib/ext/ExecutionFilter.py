@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 ##
-#
-# Source file: "ExecutionFilter.java"
-# Target file: "ExecutionFilter.py"
+# Automated source translation for ExecutionFilter.
+##
+
+# Source file: ExecutionFilter.java
+# Target file: ExecutionFilter.py
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
-#
-##
 
 from ib.aux.overloading import overloaded
 

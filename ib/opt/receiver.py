@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" ib.opt.receiver -> defines Receiver class to handle inbound data.
 
-"""
+##
+# Defines Receiver class to handle inbound data.
+##
+
 from ib.aux.overloading import overloaded
 from ib.opt.message import registry, wrapperMethods
 

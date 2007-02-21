@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" ib.opt.message -> defines message types for the Receiver class.
 
-This module inspects the EWrapper class to build a set of Message
-types.  In creating the types, it also builds a registry of them that
-the Receiver class uses to determine message types to instantiate and
-deliver.
-"""
+##
+# Defines message types for the Receiver class.
+#
+# This module inspects the EWrapper class to build a set of Message
+# types.  In creating the types, it also builds a registry of them that
+# the Receiver class uses to determine message types to instantiate and
+# deliver.
+##
+
 from functools import partial
 from inspect import getargspec
 from types import MethodType
@@ -15,9 +18,8 @@ from ib.ext.EWrapper import EWrapper
 
 
 ##
-## maps wrapper method names to the message class that can be
-## instantiated for delivery by the named method.
-##
+# maps wrapper method names to the message class that can be
+# instantiated for delivery by the named method.
 registry = {}
 
 
@@ -118,14 +120,11 @@ def buildMessageTypes(wrapper, mapping, *bases):
         mapping[typename] = type(typename, bases, typens)
 
 
-##
-## create message types in the module namespace from the EWrapper
-## abstract class
-##
+# create message types in the module namespace from the EWrapper
+# abstract class
 buildMessageTypes(EWrapper, globals(), Message)
 
 
-##
-## define a method so other modules can use the same mappings
-## we have.
+# define a method so other modules can use the same mappings
+# we have.
 wrapperMethods = partial(selectWrapperMethods, EWrapper)

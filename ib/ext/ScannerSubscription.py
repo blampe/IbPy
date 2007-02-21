@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 ##
-#
-# Source file: "ScannerSubscription.java"
-# Target file: "ScannerSubscription.py"
+# Automated source translation for ScannerSubscription.
+##
+
+# Source file: ScannerSubscription.java
+# Target file: ScannerSubscription.py
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
-#
-##
 
 from ib.aux import Double, Integer
 from ib.aux.overloading import overloaded
