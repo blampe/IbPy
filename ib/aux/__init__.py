@@ -132,7 +132,7 @@ class Double(float):
         @param text value to parse
         @return float instance
         """
-        return float(text)
+        return float(text or 0)
 
 
 class Integer(int):
@@ -151,7 +151,7 @@ class Integer(int):
         @param text value to parse
         @return int instance
         """
-        return int(text)
+        return int(text or 0)
 
     @staticmethod
     def parseLong(text):
@@ -160,7 +160,7 @@ class Integer(int):
         @param text value to parse
         @return long instance
         """
-        return long(text)
+        return long(text or 0)
 
 
 class Socket(socket.socket):
