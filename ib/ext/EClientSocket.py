@@ -7,7 +7,7 @@
 # Target file: "EClientSocket.py"
 #
 # Original file copyright original author(s).
-# This file copyright Troy Melhase <troy@gci.net>.
+# This file copyright Troy Melhase, troy@gci.net.
 #
 ##
 
