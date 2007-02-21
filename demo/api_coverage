@@ -1,0 +1,173 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+##
+# This script attempts to determine how much of the TWS API is
+# available from IbPy.
+#
+# It's not meant as an example of correct use of the package, nor is
+# it an example of correct use of a programming language.
+##
+
+from pprint import pprint
+from time import sleep
+
+from ib.ext.Contract import Contract
+from ib.ext.ExecutionFilter import ExecutionFilter
+from ib.ext.Order import Order
+from ib.ext.ScannerSubscription import ScannerSubscription
+from ib.opt import ibConnection, message
+
+
+seen_messages = dict.fromkeys(message.registry.values(), 0)
+unknown_messages = {}
+seen_methods = {}
+qqqq_id = 0
+
+
+def qqqq_contract():
+    qqqq = Contract()
+    qqqq.m_symbol = 'QQQQ'
+    qqqq.m_secType = 'STK'
+    qqqq.m_exchange = 'SMART'
+    return qqqq
+
+
+def qqqq_order_id():
+    return 3001
+
+def qqqq_order():
+    order = Order()
+    order.m_minQty = 100
+    return order
+
+def exec_filter():
+    contract = qqqq_contract()
+    filt = ExecutionFilter()
+    filt.m_clientId = 0
+    filt.m_symbol = contract.m_symbol
+    filt.m_secType = contract.m_secType
+    filt.m_exchange = contract.m_exchange
+    return filt
+
+
+def watcher(msg):
+    cls = msg.__class__
+    try:
+        seen_messages[cls] += 1
+    except (KeyError, ):
+        unknown_messages[cls] = 1 + unknown_messages.setdefault(cls, 0)
+    if cls.__name__ == 'Error':
+        args = msg.errorCode, msg.errorMsg
+        print "## error:  code=%-4s message=%s" % args
+
+
+def run_0(connection):
+    connection.setServerLogLevel(3)
+    connection.reqAccountUpdates(1, '')
+    connection.reqManagedAccts()
+    connection.requestFA(connection.GROUPS)
+    connection.reqIds(10)
+    connection.replaceFA(connection.GROUPS, '')
+
+
+def run_1(connection):
+    subscript = ScannerSubscription()
+    subscript.numberOfRows(3)
+    subscript.locationCode('STK.NASDAQ')
+    connection.reqScannerSubscription(qqqq_id, subscript)
+    connection.reqScannerParameters()
+    sleep(3)
+    connection.cancelScannerSubscription(qqqq_id)
+
+
+def run_2(connection):
+    connection.reqMktData(qqqq_id, qqqq_contract(), '')
+    sleep(2)
+    connection.cancelMktData(qqqq_id)
+
+
+def run_3(connection):
+    contract = qqqq_contract()
+    connection.reqMktDepth(qqqq_id, qqqq_contract(), 10)
+    sleep(2)
+    connection.cancelMktDepth(qqqq_id)
+
+
+def run_4(connection):
+    connection.reqAllOpenOrders()
+    connection.reqAutoOpenOrders(True)
+    connection.reqOpenOrders()
+    connection.reqExecutions(exec_filter())
+
+
+def run_5(connection):
+    connection.reqNewsBulletins(True)
+    sleep(3)
+    connection.cancelNewsBulletins()
+
+
+def run_6(connection):
+    return # not complete
+    connection.placeOrder(id=qqqq_order_id(),
+                          contract=qqqq_contract(),
+                          order=qqqq_order())
+    connection.exerciseOptions()
+    connection.reqContractDetails()
+
+
+def run_7(connection):
+    connection.reqHistoricalData(
+        qqqq_id,
+        qqqq_contract(),
+        '20070201 12:00:00', # yyyymmdd HH:mm:ss, #end
+        '5 D',               # duration, 5 days
+        '30 mins',           # bar size
+        'TRADES',            # what to show
+        0,                   # use regular trading hours, 0 means all data
+        2,                   # date format, 2 means seconds since 1/1/1970
+    )
+    sleep(3)
+    connection.cancelHistoricalData(qqqq_id)
+
+
+def run_last(connection):
+    sleep(0.5)
+    connection.eDisconnect()
+
+
+if __name__ == '__main__':
+    con = ibConnection()
+    con.registerAll(watcher)
+    con.connect()
+
+    calls = [v for k, v in globals().items() if k.startswith('run_')]
+    for call in sorted(calls):
+        call(con)
+    sleep(5)
+
+    type_count = len(seen_messages)
+    seen = [(k, v) for k, v in seen_messages.items() if v]
+    unseen = [(k, v) for k, v in seen_messages.items() if not v]
+
+    print
+    if seen:
+        print '## Seen Message Types (count):'
+        for cls, count in sorted(seen):
+            print '##    %s (%s)' % (cls.__name__, count, )
+    else:
+        print '## Total failure; no messages received.'
+
+    print
+    if unseen:
+        print '## Unseen Message Types:'
+        for cls, zero in sorted(unseen):
+            print '##    %s' % cls.__name__
+    else:
+        print '## All Message types received.'
+
+    print
+    print '## Summary:'
+    args = (type_count, len(seen), len(unseen),
+            100*len(seen)/float(type_count))
+    print '##    total:%s  seen:%s  unseen:%s  coverage:%2.2f%%' % args

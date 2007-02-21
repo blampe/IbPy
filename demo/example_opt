@@ -1,38 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" example_opt -> an exmple of using the (optional) ib.opt package
-instead of the regular API.
 
+##
+# This script is an exmple of using the (optional) ib.opt package
+# instead of the regular API.
+##
 
-"""
-from ib import ibConnection
+from time import sleep
 from ib.ext.Contract import Contract
+from ib.opt import ibConnection, message
 
 
 def my_account_handler(msg):
     print msg
 
+
 def my_tick_handler(msg):
     print msg
 
-c = ibConnection()
-c.register(my_account_handler, 'UpdateAccountValue')
-c.register(my_tick_handler, 'TickSize', 'TickPrice')
-c.enableLogging()
-c.connect()
-
-c.reqAccountUpdates(1, '')
-
-contract = Contract() #
-contract.m_symbol = 'QQQQ'
-contract.m_secType = 'STK'
-contract.m_exchange = 'SMART'
-c.reqMktData(1, contract, '')
-
-
-import time
-time.sleep(10)
 
 if __name__ == '__main__':
-    pass
+    con = ibConnection()
+    con.register(my_account_handler, 'UpdateAccountValue')
+    con.register(my_tick_handler, message.TickSize, message.TickPrice)
+    con.connect()
+    con.reqAccountUpdates(1, '')
 
+    qqqq = Contract()
+    qqqq.m_symbol = 'QQQQ'
+    qqqq.m_secType = 'STK'
+    qqqq.m_exchange = 'SMART'
+    con.reqMktData(1, qqqq, '')
+
+    sleep(10)
