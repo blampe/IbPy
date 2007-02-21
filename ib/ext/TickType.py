@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 ##
-## Source file: "TickType.java"
-## Target file: "TickType.py"
-##
-## Original file copyright original author(s).
-## This file copyright Troy Melhase <troy@gci.net>.
+#
+# Source file: "TickType.java"
+# Target file: "TickType.py"
+#
+# Original file copyright original author(s).
+# This file copyright Troy Melhase <troy@gci.net>.
+#
 ##
 
 

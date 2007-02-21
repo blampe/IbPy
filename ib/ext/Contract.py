@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 ##
-## Source file: "Contract.java"
-## Target file: "Contract.py"
-##
-## Original file copyright original author(s).
-## This file copyright Troy Melhase <troy@gci.net>.
+#
+# Source file: "Contract.java"
+# Target file: "Contract.py"
+#
+# Original file copyright original author(s).
+# This file copyright Troy Melhase <troy@gci.net>.
+#
 ##
 
 from ib.aux.overloading import overloaded

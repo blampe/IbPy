@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 ##
-## Source file: "Order.java"
-## Target file: "Order.py"
-##
-## Original file copyright original author(s).
-## This file copyright Troy Melhase <troy@gci.net>.
+#
+# Source file: "Order.java"
+# Target file: "Order.py"
+#
+# Original file copyright original author(s).
+# This file copyright Troy Melhase <troy@gci.net>.
+#
 ##
 
 from ib.aux import Double, Integer
