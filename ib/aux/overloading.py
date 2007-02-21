@@ -1,5 +1,15 @@
 #!/usr/bin/env python2.5
 
+##
+# Dynamically overloaded functions.
+#
+# This is an implementation of (dynamically, or run-time) overloaded
+# functions; also known as generic functions or multi-methods.
+#
+# This module is from Python SVN,
+# http://svn.python.org/view/sandbox/trunk/overload/overloading.py
+##
+
 """Dynamically overloaded functions.
 
 This is an implementation of (dynamically, or run-time) overloaded

@@ -8,7 +8,6 @@
 # code.  The configuration modules used in translation take care of
 # many semantic differences between Java and Python, while this
 # package provides the rest.
-#
 ##
 
 import socket
@@ -70,7 +69,7 @@ class Cloneable(object):
 
     Some of the translated code implements the Java Cloneable
     interface, but its methods are never used.  We provide this class
-    for subtyping, and will implement methods as needed later.
+    for sub typing, and will implement methods as needed later.
     """
 
 

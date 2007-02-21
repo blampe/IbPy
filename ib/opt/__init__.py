@@ -26,7 +26,6 @@
 #    ...
 #    con.enableLogging(False)
 #    }}}
-#
 ##
 
 from ib.opt.logger import logger
@@ -35,10 +34,16 @@ from ib.opt.sender import Sender
 
 
 class Connection(object):
-    """ Connection -> encapsulates a connection to TWS
+    """ Encapsulates a connection to TWS.
 
     """
     def __init__(self, host, port, clientId):
+        """ Constructor.
+
+        @param host name of host for connection; default is localhost
+        @param port port number for connection; default is 7496
+        @param clientId client identifier to send when connected
+        """
         self.host = host
         self.port = port
         self.clientId = clientId
@@ -48,6 +53,7 @@ class Connection(object):
     def __getattr__(self, name):
         """ x.__getattr__('name') <==> x.name
 
+        @return named attribute from instance receiver or sender
         """
         try:
             return getattr(self.receiver, name)
@@ -59,14 +65,14 @@ class Connection(object):
         raise AttributeError(name)
 
     def connect(self):
-        """ establish a connection to TWS with instance attributes
+        """ Establish a connection to TWS with instance attributes.
 
         @return None
         """
         self.sender.connect(self.host, self.port, self.clientId, self.receiver)
 
     def enableLogging(self, enable=True):
-        """ toggle logging of all messages
+        """ Enable or disable logging of all messages.
 
         @param enable if True (default), enables logging; otherwise disables
         @return None
@@ -78,7 +84,7 @@ class Connection(object):
             self.receiver.unregisterAll(self.logMessage)
 
     def logMessage(self, message):
-        """ format and send a message values to the logger
+        """ Format and send a message values to the logger.
 
         @param message instance of Message
         @return None
@@ -89,12 +95,12 @@ class Connection(object):
 
     @classmethod
     def create(cls, host='localhost', port=7496, clientId=0):
-        """ creates and returns Connection object
+        """ Creates and returns Connection class (or subclass) instance.
 
         @param host name of host for connection; default is localhost
         @param port port number for connection; default is 7496
         @param clientId client identifier to send when connected
-        @return Connection instance
+        @return Connection (or subclass) instance
         """
         return cls(host=host, port=port, clientId=clientId)
 

@@ -5,9 +5,8 @@
 # Defines message types for the Receiver class.
 #
 # This module inspects the EWrapper class to build a set of Message
-# types.  In creating the types, it also builds a registry of them that
-# the Receiver class uses to determine message types to instantiate and
-# deliver.
+# types.  In creating the types, it also builds a registry of them
+# that the Receiver class then uses to determine message types.
 ##
 
 from functools import partial
@@ -18,8 +17,8 @@ from ib.ext.EWrapper import EWrapper
 
 
 ##
-# maps wrapper method names to the message class that can be
-# instantiated for delivery by the named method.
+# Dictionary that associates wrapper method names to the message class
+# that should be instantiated for delivery during that method call.
 registry = {}
 
 
@@ -30,6 +29,12 @@ class MessageType(type):
     to the registry mapping.
     """
     def __init__(cls, name, bases, namespace):
+        """ Constructor.
+
+        @param name name of newly created type
+        @param bases tuple of base classes for new type
+        @param namespace dictionary with namespace of new type
+        """
         try:
             registry[namespace['__assoc__']] = cls
         except (KeyError, ):
@@ -37,43 +42,53 @@ class MessageType(type):
 
 
 class Message(object):
-    """ Message -> base type for message instances
+    """ Base class of all Message types.
 
     """
     __metaclass__ = MessageType
     __slots__ = []
 
     def __init__(self, **kwds):
+        """ Constructor.
+
+        @param **kwds keywords and values for instance
+        """
         for name in self.__slots__:
             setattr(self, name, kwds.pop(name, None))
         assert not kwds
 
     def __str__(self):
+        """ x.__str__() <==> str(x)
+
+        """
         name = self.__class__.__name__
         items = str.join(', ', ['%s=%s' % item for item in self.items()])
         return '<%s message%s>' % (name, ' ' + items if items else '')
 
     def items(self):
-        """ list of message's (slot, slot value) pairs, as 2-tuples
+        """ List of message (slot, slot value) pairs, as 2-tuples.
 
+        @return list of 2-tuples, each slot (name, value)
         """
         return zip(self.keys(), self.values())
 
     def values(self):
-        """ list of message's slot values
+        """ List of instance slot values.
 
+        @return list of each slot value
         """
         return [getattr(self, key) for key in self.keys()]
 
     def keys(self):
-        """ list of message's slots
+        """ List of instance slots.
 
+        @return list of each slot.
         """
         return self.__slots__
 
 
 class Error(Message):
-    """ Error -> specialized message type
+    """ Specialized message type.
 
     The error family of method calls can't be built programmatically,
     so we define one here.
@@ -83,7 +98,7 @@ class Error(Message):
 
 
 def isWrapperMethod(name, value):
-    """ predicate for wrapper methods
+    """ Predicate for wrapper methods.
 
     @param name name of class attribute as string
     @param value value of class attribute; any object
@@ -95,7 +110,7 @@ def isWrapperMethod(name, value):
 
 
 def selectWrapperMethods(cls):
-    """ wrapper methods of a class
+    """ Wrapper methods of a class.
 
     @param cls class object to inspect
     @return list of two-tuples, each (name, method)
@@ -107,12 +122,12 @@ def selectWrapperMethods(cls):
 
 
 def buildMessageTypes(wrapper, mapping, *bases):
-    """ construct message types and add to given mapping
+    """ Construct message types and add to given mapping.
 
     @param wrapper class object to inspect for methods
     @param mapping dictionary for adding new message types
     @param bases sequence of base classes for message types
-    @return None;
+    @return None
     """
     for name, args in selectWrapperMethods(wrapper):
         typename = name[0].upper() + name[1:]
@@ -124,7 +139,7 @@ def buildMessageTypes(wrapper, mapping, *bases):
 # abstract class
 buildMessageTypes(EWrapper, globals(), Message)
 
-
-# define a method so other modules can use the same mappings
-# we have.
+##
+# A (partial) method so other modules can use the same mappings we
+# have.
 wrapperMethods = partial(selectWrapperMethods, EWrapper)
