@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for EClientSocket.
+# Translation source for EClientSocket.
 ##
 
 # Source file: EClientSocket.java

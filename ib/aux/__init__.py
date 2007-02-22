@@ -14,6 +14,9 @@ import socket
 import struct
 import sys
 
+# micro optimizations
+from __builtin__ import long, int, long, str
+
 
 def synchronized(lock):
     """ Synchronization decorator.
@@ -141,7 +144,6 @@ class Integer(int):
     """
     ##
     # sentinel value used by the socket writer
-
     MAX_VALUE = sys.maxint
 
     @staticmethod

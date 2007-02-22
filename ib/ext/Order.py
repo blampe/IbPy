@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for Order.
+# Translation source for Order.
 ##
 
 # Source file: Order.java

@@ -10,6 +10,9 @@ modulePreamble = [
     'from ib.ext.Contract import Contract',
     'from ib.ext.ContractDetails import ContractDetails',
     'from ib.ext.Order import Order',
+    '',
+    '# micro optimizations'
+    'from __builtin__ import float, str, None, True, False',
     ]
 
 

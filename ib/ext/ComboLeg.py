@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for ComboLeg.
+# Translation source for ComboLeg.
 ##
 
 # Source file: ComboLeg.java

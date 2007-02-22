@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for AnyWrapper.
+# Translation source for AnyWrapper.
 ##
 
 # Source file: AnyWrapper.java

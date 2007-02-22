@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for EReader.
+# Translation source for EReader.
 ##
 
 # Source file: EReader.java
@@ -17,6 +17,8 @@ from ib.aux.overloading import overloaded
 from ib.ext.Contract import Contract
 from ib.ext.ContractDetails import ContractDetails
 from ib.ext.Order import Order
+
+# micro optimizationsfrom __builtin__ import float, str, None, True, False
 
 class EReader(Thread):
     """ generated source for EReader

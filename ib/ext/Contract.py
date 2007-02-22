@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for Contract.
+# Translation source for Contract.
 ##
 
 # Source file: Contract.java

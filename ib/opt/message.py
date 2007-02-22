@@ -15,6 +15,8 @@ from types import MethodType
 
 from ib.ext.EWrapper import EWrapper
 
+# micro optimizations
+from __builtin__ import getattr, setattr, zip
 
 ##
 # Dictionary that associates wrapper method names to the message class

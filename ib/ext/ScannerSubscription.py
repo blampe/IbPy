@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for ScannerSubscription.
+# Translation source for ScannerSubscription.
 ##
 
 # Source file: ScannerSubscription.java

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for TickType.
+# Translation source for TickType.
 ##
 
 # Source file: TickType.java

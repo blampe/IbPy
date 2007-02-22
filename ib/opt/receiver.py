@@ -13,6 +13,9 @@
 from ib.aux.overloading import overloaded
 from ib.opt.message import registry, wrapperMethods
 
+# micro optimizations
+from __builtin__ import KeyError, dict
+
 
 def messageMethod(name, argnames):
     """ Creates method for dispatching messages.

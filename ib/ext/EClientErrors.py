@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for EClientErrors.
+# Translation source for EClientErrors.
 ##
 
 # Source file: EClientErrors.java

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Automated source translation for ContractDetails.
+# Translation source for ContractDetails.
 ##
 
 # Source file: ContractDetails.java
