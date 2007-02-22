@@ -11,8 +11,8 @@
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
 
-from ib.aux.overloading import overloaded
-from ib.aux import Cloneable
+from ib.lib.overloading import overloaded
+from ib.lib import Cloneable
 
 class Contract(Cloneable):
     """ generated source for Contract

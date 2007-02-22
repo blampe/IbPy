@@ -4,6 +4,6 @@
 
 """
 modulePreamble = [
-    'from ib.aux.overloading import overloaded',
-    'from ib.aux import Cloneable',
+    'from ib.lib.overloading import overloaded',
+    'from ib.lib import Cloneable',
     ]

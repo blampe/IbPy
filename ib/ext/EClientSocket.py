@@ -16,9 +16,9 @@ from ib.ext.ComboLeg import ComboLeg
 from ib.ext.EClientErrors import EClientErrors
 from ib.ext.EReader import EReader
 
-from ib.aux.overloading import overloaded
-from ib.aux import synchronized, Socket, DataInputStream, DataOutputStream
-from ib.aux import Double, Integer
+from ib.lib.overloading import overloaded
+from ib.lib import synchronized, Socket, DataInputStream, DataOutputStream
+from ib.lib import Double, Integer
 
 from threading import RLock
 mlock = RLock()

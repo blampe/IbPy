@@ -4,8 +4,8 @@
 
 """
 modulePreamble = [
-    'from ib.aux import Boolean, Double, DataInputStream, Integer, StringBuffer, Thread',
-    'from ib.aux.overloading import overloaded',
+    'from ib.lib import Boolean, Double, DataInputStream, Integer, StringBuffer, Thread',
+    'from ib.lib.overloading import overloaded',
     '',
     'from ib.ext.Contract import Contract',
     'from ib.ext.ContractDetails import ContractDetails',

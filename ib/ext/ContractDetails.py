@@ -11,7 +11,7 @@
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
 
-from ib.aux.overloading import overloaded
+from ib.lib.overloading import overloaded
 from ib.ext.Contract import Contract
 
 class ContractDetails(object):

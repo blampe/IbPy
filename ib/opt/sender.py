@@ -5,7 +5,7 @@
 # Defines Sender class to handle outbound requests.
 ##
 
-from ib.aux.overloading import overloaded
+from ib.lib.overloading import overloaded
 from ib.ext.EClientSocket import EClientSocket
 
 

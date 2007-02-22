@@ -10,7 +10,7 @@
 # Refer to the ReceiverType metaclass for details.
 ##
 
-from ib.aux.overloading import overloaded
+from ib.lib.overloading import overloaded
 from ib.opt.message import registry, wrapperMethods
 
 # micro optimizations

@@ -4,8 +4,8 @@
 
 """
 modulePreamble = [
-    'from ib.aux import Double, Integer',
-    'from ib.aux.overloading import overloaded',
+    'from ib.lib import Double, Integer',
+    'from ib.lib.overloading import overloaded',
     ]
 
 

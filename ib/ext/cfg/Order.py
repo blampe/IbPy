@@ -4,5 +4,5 @@
 
 """
 modulePreamble = [
-    'from ib.aux import Double, Integer',
+    'from ib.lib import Double, Integer',
     ]
