@@ -36,7 +36,7 @@ setup(
     author_email = "troy@gci.net",
     url = "http://code.google.com/p/ibpy/",
     license = "BSD License",
-    packages = ["ib", "ib/aux", "ib/ext", "ib/opt", ],
+    packages = ["ib", "ib/lib", "ib/ext", "ib/opt", ],
     classifiers = filter(None, classifiers.split("\n")),
     long_description = "\n".join(doclines[2:]),
     platforms = ["any"],
