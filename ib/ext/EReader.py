@@ -16,6 +16,7 @@ from ib.lib.overloading import overloaded
 
 from ib.ext.Contract import Contract
 from ib.ext.ContractDetails import ContractDetails
+from ib.ext.Execution import Execution
 from ib.ext.Order import Order
 
 # micro optimizationsfrom __builtin__ import float, str, None, True, False
