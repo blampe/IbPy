@@ -33,6 +33,14 @@ class Sender(object):
         self.client = EClientSocket(handler)
         self.client.eConnect(host, port, clientId)
 
+    def disconnect(self):
+        """ Disconnects the client.
+
+        @return None
+        """
+        if self.client:
+            self.client.eDisconnect()
+
     def __getattr__(self, name):
         """ x.__getattr__('name') <==> x.name
 

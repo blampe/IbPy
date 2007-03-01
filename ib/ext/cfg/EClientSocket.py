@@ -4,6 +4,8 @@
 
 """
 modulePreamble = [
+    'import sys',
+    '',
     'from ib.ext.AnyWrapper import AnyWrapper',
     'from ib.ext.ComboLeg import ComboLeg',
     'from ib.ext.EClientErrors import EClientErrors',
@@ -26,10 +28,10 @@ outputSubs = [
     (r'(, "" \+ e)', r', str(e)'),
 
     (r'print "Server Version:" \+ self\.m_serverVersion',
-     r'print "Server Version:", self.m_serverVersion',),
+     r'print >> sys.__stderr__, "Server Version:", self.m_serverVersion',),
 
     (r'print "TWS Time at connection:" \+ self\.m_TwsTime',
-     r'print "TWS Time at connection:", self.m_TwsTime',),
+     r'print >> sys.__stderr__, "TWS Time at connection:", self.m_TwsTime',),
     ]
 
 

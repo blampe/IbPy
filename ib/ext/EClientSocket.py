@@ -10,6 +10,10 @@
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
+#
+# WARNING: all changes made to this file will be lost.
+
+import sys
 
 from ib.ext.AnyWrapper import AnyWrapper
 from ib.ext.ComboLeg import ComboLeg
@@ -129,10 +133,10 @@ class EClientSocket(object):
         self.send(self.CLIENT_VERSION)
         self.m_reader = self.createReader(self, dis)
         self.m_serverVersion = self.m_reader.readInt()
-        print "Server Version:", self.m_serverVersion
+        print >> sys.__stderr__, "Server Version:", self.m_serverVersion
         if self.m_serverVersion >= 20:
             self.m_TwsTime = self.m_reader.readStr()
-            print "TWS Time at connection:", self.m_TwsTime
+            print >> sys.__stderr__, "TWS Time at connection:", self.m_TwsTime
         if self.m_serverVersion < self.SERVER_VERSION:
             self.m_anyWrapper.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return

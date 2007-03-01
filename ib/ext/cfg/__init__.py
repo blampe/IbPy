@@ -20,6 +20,8 @@ modulePreamble = [
     '#',
     '# Original file copyright original author(s).',
     '# This file copyright Troy Melhase, troy@gci.net.',
+    '#',
+    '# WARNING: all changes made to this file will be lost.',
     '',
 ]
 

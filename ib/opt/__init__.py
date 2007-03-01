@@ -71,6 +71,13 @@ class Connection(object):
         """
         self.sender.connect(self.host, self.port, self.clientId, self.receiver)
 
+    def disconnect(self):
+        """ Disconnect from TWS
+
+        @return None
+        """
+        self.sender.disconnect()
+
     def enableLogging(self, enable=True):
         """ Enable or disable logging of all messages.
 
