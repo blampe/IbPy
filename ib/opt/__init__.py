@@ -97,7 +97,7 @@ class Connection(object):
         @return None
         """
         line = str.join(', ', ['%s=%s' % item for item in message.items()])
-        self.logger.debug('%s(%s)', message.__class__.__name__, line)
+        self.logger.debug('%s(%s)', message.typeName, line)
 
 
     @classmethod

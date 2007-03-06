@@ -37,6 +37,7 @@ class MessageType(type):
         @param bases tuple of base classes for new type
         @param namespace dictionary with namespace of new type
         """
+        setattr(cls, 'typeName', name)
         try:
             registry[namespace['__assoc__']] = cls
         except (KeyError, ):
@@ -63,7 +64,7 @@ class Message(object):
         """ x.__str__() <==> str(x)
 
         """
-        name = self.__class__.__name__
+        name = self.typeName
         items = str.join(', ', ['%s=%s' % item for item in self.items()])
         return '<%s message%s>' % (name, ' ' + items if items else '')
 
