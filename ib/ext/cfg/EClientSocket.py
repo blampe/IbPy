@@ -5,6 +5,7 @@
 """
 modulePreamble = [
     'import sys',
+    'from logging import debug',
     '',
     'from ib.ext.AnyWrapper import AnyWrapper',
     'from ib.ext.ComboLeg import ComboLeg',
@@ -28,10 +29,10 @@ outputSubs = [
     (r'(, "" \+ e)', r', str(e)'),
 
     (r'print "Server Version:" \+ self\.m_serverVersion',
-     r'print >> sys.__stderr__, "Server Version:", self.m_serverVersion',),
+     r'debug("Server Version:  %s", self.m_serverVersion)',),
 
     (r'print "TWS Time at connection:" \+ self\.m_TwsTime',
-     r'print >> sys.__stderr__, "TWS Time at connection:", self.m_TwsTime',),
+     r'debug("TWS Time at connection:  %s", self.m_TwsTime)',),
     ]
 
 

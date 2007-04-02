@@ -14,6 +14,7 @@
 # WARNING: all changes made to this file will be lost.
 
 import sys
+from logging import debug
 
 from ib.ext.AnyWrapper import AnyWrapper
 from ib.ext.ComboLeg import ComboLeg
@@ -133,10 +134,10 @@ class EClientSocket(object):
         self.send(self.CLIENT_VERSION)
         self.m_reader = self.createReader(self, dis)
         self.m_serverVersion = self.m_reader.readInt()
-        print >> sys.__stderr__, "Server Version:", self.m_serverVersion
+        debug("Server Version:  %s", self.m_serverVersion)
         if self.m_serverVersion >= 20:
             self.m_TwsTime = self.m_reader.readStr()
-            print >> sys.__stderr__, "TWS Time at connection:", self.m_TwsTime
+            debug("TWS Time at connection:  %s", self.m_TwsTime)
         if self.m_serverVersion < self.SERVER_VERSION:
             self.m_anyWrapper.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return
