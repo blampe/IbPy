@@ -13,7 +13,6 @@
 #
 # WARNING: all changes made to this file will be lost.
 
-import sys
 from logging import debug
 
 from ib.ext.AnyWrapper import AnyWrapper

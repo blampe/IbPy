@@ -4,7 +4,6 @@
 
 """
 modulePreamble = [
-    'import sys',
     'from logging import debug',
     '',
     'from ib.ext.AnyWrapper import AnyWrapper',
