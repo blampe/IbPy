@@ -21,7 +21,8 @@ from ib.ext.ContractDetails import ContractDetails
 from ib.ext.Execution import Execution
 from ib.ext.Order import Order
 
-# micro optimizationsfrom __builtin__ import float, str, None, True, False
+# micro optimizations
+from __builtin__ import float, str, None, True, False
 
 class EReader(Thread):
     """ generated source for EReader

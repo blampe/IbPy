@@ -12,7 +12,7 @@ modulePreamble = [
     'from ib.ext.Execution import Execution',
     'from ib.ext.Order import Order',
     '',
-    '# micro optimizations'
+    '# micro optimizations',
     'from __builtin__ import float, str, None, True, False',
     ]
 
