@@ -20,6 +20,7 @@ from ib.ext.Contract import Contract
 from ib.ext.ContractDetails import ContractDetails
 from ib.ext.Execution import Execution
 from ib.ext.Order import Order
+from ib.ext.TickType import TickType
 
 # micro optimizations
 from __builtin__ import float, str, None, True, False
@@ -119,7 +120,7 @@ class EReader(Thread):
             if impliedVol < 0:
                 impliedVol = Double.MAX_VALUE
             delta = self.readDouble()
-            if Math.abs(delta) > 1:
+            if abs(delta) > 1:
                 delta = Double.MAX_VALUE
             modelPrice = float()
             pvDividend = float()
