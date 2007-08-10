@@ -11,6 +11,7 @@ modulePreamble = [
     'from ib.ext.ContractDetails import ContractDetails',
     'from ib.ext.Execution import Execution',
     'from ib.ext.Order import Order',
+    'from ib.ext.TickType import TickType',
     '',
     '# micro optimizations',
     'from __builtin__ import float, str, None, True, False',
@@ -32,6 +33,7 @@ outputSubs = [
     (r'(\s+)(self\.setName\(name\))',
      r'\1Thread.__init__(self, name, parent, dis)\1\2'),
 
+    (r'Math\.abs', r'abs'),
     ]
 
 
