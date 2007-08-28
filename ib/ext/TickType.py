@@ -56,6 +56,15 @@ class TickType(object):
     AUCTION_PRICE = 35
     AUCTION_IMBALANCE = 36
     MARK_PRICE = 37
+    BID_EFP_COMPUTATION = 38
+    ASK_EFP_COMPUTATION = 39
+    LAST_EFP_COMPUTATION = 40
+    OPEN_EFP_COMPUTATION = 41
+    HIGH_EFP_COMPUTATION = 42
+    LOW_EFP_COMPUTATION = 43
+    CLOSE_EFP_COMPUTATION = 44
+    LAST_TIMESTAMP = 45
+    SHORTABLE = 46
 
     @classmethod
     def getField(cls, tickType):
@@ -135,6 +144,24 @@ class TickType(object):
             return "auctionImbalance"
         elif tickType == cls.MARK_PRICE:
             return "markPrice"
+        elif tickType == cls.BID_EFP_COMPUTATION:
+            return "bidEFP"
+        elif tickType == cls.ASK_EFP_COMPUTATION:
+            return "askEFP"
+        elif tickType == cls.LAST_EFP_COMPUTATION:
+            return "lastEFP"
+        elif tickType == cls.OPEN_EFP_COMPUTATION:
+            return "openEFP"
+        elif tickType == cls.HIGH_EFP_COMPUTATION:
+            return "highEFP"
+        elif tickType == cls.LOW_EFP_COMPUTATION:
+            return "lowEFP"
+        elif tickType == cls.CLOSE_EFP_COMPUTATION:
+            return "closeEFP"
+        elif tickType == cls.LAST_TIMESTAMP:
+            return "lastTimestamp"
+        elif tickType == cls.SHORTABLE:
+            return "shortable"
         else:
             return "unknown"
 

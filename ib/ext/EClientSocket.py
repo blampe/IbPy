@@ -31,7 +31,7 @@ class EClientSocket(object):
     """ generated source for EClientSocket
 
     """
-    CLIENT_VERSION = 30
+    CLIENT_VERSION = 32
     SERVER_VERSION = 1
     EOL = 0
     BAG_SEC_TYPE = "BAG"
@@ -74,6 +74,10 @@ class EClientSocket(object):
     CANCEL_SCANNER_SUBSCRIPTION = 23
     REQ_SCANNER_PARAMETERS = 24
     CANCEL_HISTORICAL_DATA = 25
+    REQ_CURRENT_TIME = 49
+    REQ_REAL_TIME_BARS = 50
+    CANCEL_REAL_TIME_BARS = 51
+    MIN_SERVER_VER_REAL_TIME_BARS = 34
     m_anyWrapper = None
     m_socket = None
     m_dos = None
@@ -123,6 +127,9 @@ class EClientSocket(object):
         if self.isNull(host):
             host = "127.0.0.1"
         return host
+
+    def createReader(self, socket, dis):
+        return EReader(socket, dis)
 
     @eConnect.register(object, Socket, int)
     @synchronized(mlock)
@@ -289,7 +296,23 @@ class EClientSocket(object):
             self.send(VERSION)
             self.send(tickerId)
         except (Exception, ), e:
-            self.error(tickerId, EClientErrors.FAIL_SEND_CANSCANNER, str(e))
+            self.error(tickerId, EClientErrors.FAIL_SEND_CANHISTDATA, str(e))
+            self.close()
+
+    def cancelRealTimeBars(self, tickerId):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_REAL_TIME_BARS:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support realtime bar data query cancellation.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.CANCEL_REAL_TIME_BARS)
+            self.send(VERSION)
+            self.send(tickerId)
+        except (Exception, ), e:
+            self.error(tickerId, EClientErrors.FAIL_SEND_CANRTBARS, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -349,6 +372,40 @@ class EClientSocket(object):
                         i += 1
         except (Exception, ), e:
             self.error(tickerId, EClientErrors.FAIL_SEND_REQHISTDATA, str(e))
+            self.close()
+
+    @synchronized(mlock)
+    def reqRealTimeBars(self, tickerId,
+                              contract,
+                              barSize,
+                              whatToShow,
+                              useRTH):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_REAL_TIME_BARS:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support real time bars.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.REQ_REAL_TIME_BARS)
+            self.send(VERSION)
+            self.send(tickerId)
+            self.send(contract.m_symbol)
+            self.send(contract.m_secType)
+            self.send(contract.m_expiry)
+            self.send(contract.m_strike)
+            self.send(contract.m_right)
+            self.send(contract.m_multiplier)
+            self.send(contract.m_exchange)
+            self.send(contract.m_primaryExch)
+            self.send(contract.m_currency)
+            self.send(contract.m_localSymbol)
+            self.send(barSize)
+            self.send(whatToShow)
+            self.send(useRTH)
+        except (Exception, ), e:
+            self.error(tickerId, EClientErrors.FAIL_SEND_REQRTBARS, str(e))
             self.close()
 
     @synchronized(mlock)
@@ -787,6 +844,22 @@ class EClientSocket(object):
             self.error(faDataType, EClientErrors.FAIL_SEND_FA_REPLACE, str(e))
             self.close()
 
+    @synchronized(mlock)
+    def reqCurrentTime(self):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < 33:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support current time requests.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.REQ_CURRENT_TIME)
+            self.send(VERSION)
+        except (Exception, ), e:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQCURRTIME, str(e))
+            self.close()
+
     @overloaded
     @synchronized(mlock)
     def error(self, err):
@@ -856,8 +929,5 @@ class EClientSocket(object):
     @send.register(object, bool)
     def send_4(self, val):
         self.send(1 if val else 0)
-
-    def createReader(self, socket, dis):
-        return EReader(socket, dis)
 
 

@@ -52,6 +52,9 @@ class EReader(Thread):
     TICK_OPTION_COMPUTATION = 21
     TICK_GENERIC = 45
     TICK_STRING = 46
+    TICK_EFP = 47
+    CURRENT_TIME = 49
+    REAL_TIME_BARS = 50
     m_parent = None
     m_dis = None
 
@@ -78,7 +81,6 @@ class EReader(Thread):
                 pass
         except (Exception, ), ex:
             self.parent().wrapper().error(ex)
-            self.parent().wrapper().connectionClosed()
         self.m_parent.close()
 
     def processMsg(self, msgId):
@@ -142,6 +144,18 @@ class EReader(Thread):
             tickType = self.readInt()
             value = self.readStr()
             self.eWrapper().tickString(tickerId, tickType, value)
+        elif msgId == self.TICK_EFP:
+            version = self.readInt()
+            tickerId = self.readInt()
+            tickType = self.readInt()
+            basisPoints = self.readDouble()
+            formattedBasisPoints = self.readStr()
+            impliedFuturesPrice = self.readDouble()
+            holdDays = self.readInt()
+            futureExpiry = self.readStr()
+            dividendImpact = self.readDouble()
+            dividendsToExpiry = self.readDouble()
+            self.eWrapper().tickEFP(tickerId, tickType, basisPoints, formattedBasisPoints, impliedFuturesPrice, holdDays, futureExpiry, dividendImpact, dividendsToExpiry)
         elif msgId == self.ORDER_STATUS:
             version = self.readInt()
             id = self.readInt()
@@ -161,7 +175,10 @@ class EReader(Thread):
             clientId = 0
             if version >= 5:
                 clientId = self.readInt()
-            self.eWrapper().orderStatus(id, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId)
+            whyHeld = None
+            if version >= 6:
+                whyHeld = self.readStr()
+            self.eWrapper().orderStatus(id, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld)
         elif msgId == self.ACCT_VALUE:
             version = self.readInt()
             key = self.readStr()
@@ -294,6 +311,10 @@ class EReader(Thread):
                 order.m_referencePriceType = self.readInt()
             if version >= 13:
                 order.m_trailStopPrice = self.readDouble()
+            if version >= 14:
+                order.m_basisPoints = self.readDouble()
+                order.m_basisPointsType = self.readInt()
+                contract.m_comboLegsDescrip = self.readStr()
             self.eWrapper().openOrder(order.m_orderId, contract, order)
         elif msgId == self.NEXT_VALID_ID:
             version = self.readInt()
@@ -321,7 +342,10 @@ class EReader(Thread):
                 distance = self.readStr()
                 benchmark = self.readStr()
                 projection = self.readStr()
-                self.eWrapper().scannerData(tickerId, rank, contract, distance, benchmark, projection)
+                legsStr = None
+                if version >= 2:
+                    legsStr = self.readStr()
+                self.eWrapper().scannerData(tickerId, rank, contract, distance, benchmark, projection, legsStr)
                 ctr += 1
         elif msgId == self.CONTRACT_DATA:
             version = self.readInt()
@@ -469,6 +493,22 @@ class EReader(Thread):
             version = self.readInt()
             xml = self.readStr()
             self.eWrapper().scannerParameters(xml)
+        elif msgId == self.CURRENT_TIME:
+            self.readInt()
+            time = self.readLong()
+            self.eWrapper().currentTime(time)
+        elif msgId == self.REAL_TIME_BARS:
+            self.readInt()
+            reqId = self.readInt()
+            time = self.readLong()
+            open = self.readDouble()
+            high = self.readDouble()
+            low = self.readDouble()
+            close = self.readDouble()
+            volume = self.readLong()
+            wap = self.readDouble()
+            count = self.readInt()
+            self.eWrapper().realtimeBar(reqId, time, open, high, low, close, volume, wap, count)
         else:
             self.m_parent.error(EClientErrors.NO_VALID_ID, EClientErrors.UNKNOWN_ID.code(), EClientErrors.UNKNOWN_ID.msg())
             return False

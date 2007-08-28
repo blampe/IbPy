@@ -88,6 +88,8 @@ class Order(object):
     m_referencePriceType = 0
     m_deltaNeutralOrderType = ""
     m_deltaNeutralAuxPrice = float()
+    m_basisPoints = float()
+    m_basisPointsType = 0
 
     def __init__(self):
         self.m_openClose = "O"
@@ -108,6 +110,8 @@ class Order(object):
         self.m_deltaNeutralAuxPrice = Double.MAX_VALUE
         self.m_referencePriceType = Integer.MAX_VALUE
         self.m_trailStopPrice = Double.MAX_VALUE
+        self.m_basisPoints = Double.MAX_VALUE
+        self.m_basisPointsType = Integer.MAX_VALUE
 
     def __eq__(self, p_other):
         if self is p_other:

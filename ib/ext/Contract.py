@@ -29,9 +29,10 @@ class Contract(Cloneable):
     m_exchange = ""
     m_currency = ""
     m_localSymbol = ""
-    m_comboLegs = []
     m_primaryExch = ""
     m_includeExpired = bool()
+    m_comboLegsDescrip = ""
+    m_comboLegs = []
     m_cusip = ""
     m_ratings = ""
     m_descAppend = ""

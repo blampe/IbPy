@@ -34,6 +34,23 @@ class EWrapper(AnyWrapper):
                                     pvDividend):
         raise NotImplementedError()
 
+    def tickGeneric(self, tickerId, tickType, value):
+        raise NotImplementedError()
+
+    def tickString(self, tickerId, tickType, value):
+        raise NotImplementedError()
+
+    def tickEFP(self, tickerId,
+                      tickType,
+                      basisPoints,
+                      formattedBasisPoints,
+                      impliedFuture,
+                      holdDays,
+                      futureExpiry,
+                      dividendImpact,
+                      dividendsToExpiry):
+        raise NotImplementedError()
+
     def orderStatus(self, orderId,
                           status,
                           filled,
@@ -42,7 +59,8 @@ class EWrapper(AnyWrapper):
                           permId,
                           parentId,
                           lastFillPrice,
-                          clientId):
+                          clientId,
+                          whyHeld):
         raise NotImplementedError()
 
     def openOrder(self, orderId, contract, order):
@@ -122,13 +140,22 @@ class EWrapper(AnyWrapper):
                           contractDetails,
                           distance,
                           benchmark,
-                          projection):
+                          projection,
+                          legsStr):
         raise NotImplementedError()
 
-    def tickGeneric(self, tickerId, tickType, value):
+    def realtimeBar(self, reqId,
+                          time,
+                          open,
+                          high,
+                          low,
+                          close,
+                          volume,
+                          wap,
+                          count):
         raise NotImplementedError()
 
-    def tickString(self, tickerId, tickType, value):
+    def currentTime(self, time):
         raise NotImplementedError()
 
 
