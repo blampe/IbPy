@@ -13,6 +13,7 @@
 #
 # WARNING: all changes made to this file will be lost.
 
+from ib.lib import cmattr
 from ib.lib.overloading import overloaded
 
 class AnyWrapperMsgGenerator(object):
@@ -20,23 +21,22 @@ class AnyWrapperMsgGenerator(object):
 
     """
 
-
+    @cmattr
     @overloaded
-    @classmethod
     def error(cls, ex):
-        return "Error - " + ex
+        return "Error - " + ex.message
 
-    @classmethod
+    @cmattr
     @error.register(type, str)
     def error_0(cls, strval):
         return strval
 
-    @classmethod
+    @cmattr
     @error.register(type, int, int, str)
     def error_1(cls, id, errorCode, errorMsg):
-        err = Integer.toString(id)
+        err = str(id)
         err += " | "
-        err += Integer.toString(errorCode)
+        err += str(errorCode)
         err += " | "
         err += errorMsg
         return err

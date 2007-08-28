@@ -18,6 +18,18 @@ import sys
 from __builtin__ import long, int, long, str
 
 
+class cmattr(classmethod):
+    """ Class method with attribute lookup delegation decorator.
+
+    """
+    def __init__(self, func):
+        classmethod.__init__(self, func)
+        self.func = func
+
+    def __getattr__(self, name):
+        return getattr(self.func, name)
+
+
 def synchronized(lock):
     """ Synchronization decorator.
 
