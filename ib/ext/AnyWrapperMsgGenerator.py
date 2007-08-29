@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Translation source for AnyWrapperMsgGenerator.
+# Translated source for AnyWrapperMsgGenerator.
 ##
 
 # Source file: AnyWrapperMsgGenerator.java
@@ -13,7 +13,7 @@
 #
 # WARNING: all changes made to this file will be lost.
 
-from ib.lib import cmattr
+from ib.lib import classmethod_ as classmethod
 from ib.lib.overloading import overloaded
 
 class AnyWrapperMsgGenerator(object):
@@ -21,17 +21,17 @@ class AnyWrapperMsgGenerator(object):
 
     """
 
-    @cmattr
+    @classmethod
     @overloaded
     def error(cls, ex):
         return "Error - " + ex.message
 
-    @cmattr
+    @classmethod
     @error.register(type, str)
     def error_0(cls, strval):
         return strval
 
-    @cmattr
+    @classmethod
     @error.register(type, int, int, str)
     def error_1(cls, id, errorCode, errorMsg):
         err = str(id)

@@ -4,19 +4,12 @@
 
 """
 modulePreamble = [
-    'from ib.lib import cmattr',
+    'from ib.lib import classmethod_ as classmethod',
     'from ib.lib.overloading import overloaded',
     ]
 
 
 outputSubs = [
-    (r'(\s+)@classmethod\n(\s+)@(.+)',
-     r'\1@cmattr\n\2@\3'),
-
     (r'return "Error - " \+ ex',
      r'return "Error - " + ex.message'),
-
-    (r'Integer\.toString',
-     'str'),
-    
     ]

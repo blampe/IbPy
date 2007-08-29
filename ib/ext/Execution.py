@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Translation source for Execution.
+# Translated source for Execution.
 ##
 
 # Source file: Execution.java

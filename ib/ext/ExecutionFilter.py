@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Translation source for ExecutionFilter.
+# Translated source for ExecutionFilter.
 ##
 
 # Source file: ExecutionFilter.java

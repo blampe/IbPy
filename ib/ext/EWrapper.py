@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Translation source for EWrapper.
+# Translated source for EWrapper.
 ##
 
 # Source file: EWrapper.java

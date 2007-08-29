@@ -12,7 +12,7 @@ indent = 4
 
 modulePreamble = [
     '##',
-    lambda m:'# Translation source for %s.' % m.outfile[:-3],
+    lambda m:'# Translated source for %s.' % m.outfile[:-3],
     '##',
     '',
     lambda m:'# Source file: %s' % m.infile,
@@ -35,6 +35,7 @@ outputSubs = [
     (r'if self == p_other:', r'if self is p_other:'),
     (r'if \(self == p_other\):', r'if self is p_other:'),
     (r'(\w+)(\.compareToIgnoreCase\((.*?)\))', r'cmp(\1.lower(), \3.lower())'),
+    (r'Integer\.toString', 'str'),
     ]
 
 

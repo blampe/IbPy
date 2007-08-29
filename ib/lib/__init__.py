@@ -18,8 +18,8 @@ import sys
 from __builtin__ import long, int, long, str
 
 
-class cmattr(classmethod):
-    """ Class method with attribute lookup delegation decorator.
+class classmethod_(classmethod):
+    """ Classmethod that provides attribute delegation.
 
     """
     def __init__(self, func):

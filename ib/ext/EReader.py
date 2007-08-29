@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Translation source for EReader.
+# Translated source for EReader.
 ##
 
 # Source file: EReader.java
