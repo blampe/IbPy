@@ -28,24 +28,36 @@ class ComboLeg(object):
     m_action = ""
     m_exchange = ""
     m_openClose = 0
+    m_shortSaleSlot = 0
+    m_designatedLocation = ""
 
     @overloaded
     def __init__(self):
-        self.m_conId = 0
-        self.m_ratio = 0
-        self.m_openClose = 0
+        super(ComboLeg, self).__init__(0, 0, None, None, 0, 0, None)
 
     @__init__.register(object, int, int, str, str, int)
-    def __init___0(self, p_ConId,
-                         p_Ratio,
-                         p_Action,
+    def __init___0(self, p_conId,
+                         p_ratio,
+                         p_action,
                          p_exchange,
                          p_openClose):
-        self.m_conId = p_ConId
-        self.m_ratio = p_Ratio
-        self.m_action = p_Action
+        super(ComboLeg, self).__init__(p_conId, p_ratio, p_action, p_exchange, p_openClose, 0, None)
+
+    @__init__.register(object, int, int, str, str, int, int, str)
+    def __init___1(self, p_conId,
+                         p_ratio,
+                         p_action,
+                         p_exchange,
+                         p_openClose,
+                         p_shortSaleSlot,
+                         p_designatedLocation):
+        self.m_conId = p_conId
+        self.m_ratio = p_ratio
+        self.m_action = p_action
         self.m_exchange = p_exchange
         self.m_openClose = p_openClose
+        self.m_shortSaleSlot = p_shortSaleSlot
+        self.m_designatedLocation = p_designatedLocation
 
     def __eq__(self, p_other):
         if self is p_other:
@@ -54,8 +66,12 @@ class ComboLeg(object):
             if p_other is None:
                 return False
         l_theOther = p_other
-        l_thisAction = self.m_action if self.m_action is not None else ""
-        l_thisExchange = self.m_exchange if self.m_exchange is not None else ""
-        return (cmp(l_thisAction.lower(), l_theOther.m_action.lower()) == 0) and (cmp(l_thisExchange.lower(), l_theOther.m_exchange.lower()) == 0) and (self.m_conId == l_theOther.m_conId) and (self.m_ratio == l_theOther.m_ratio) and (self.m_openClose == l_theOther.m_openClose)
+        if (self.m_conId != l_theOther.m_conId) or (self.m_ratio != l_theOther.m_ratio) or (self.m_openClose != l_theOther.m_openClose) or (self.m_shortSaleSlot != l_theOther.m_shortSaleSlot):
+            return False
+        return (self.NormalizeString(self.m_action).compareToIgnoreCase(l_theOther.m_action) == 0) and (self.NormalizeString(self.m_exchange).compareToIgnoreCase(l_theOther.m_exchange) == 0) and (self.NormalizeString(self.m_designatedLocation).compareToIgnoreCase(l_theOther.m_designatedLocation) == 0)
+
+    @classmethod
+    def NormalizeString(cls, strval):
+        return strval if strval is not None else ""
 
 

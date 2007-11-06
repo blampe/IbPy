@@ -315,6 +315,10 @@ class EReader(Thread):
                 order.m_basisPoints = self.readDouble()
                 order.m_basisPointsType = self.readInt()
                 contract.m_comboLegsDescrip = self.readStr()
+            if version >= 15:
+                order.m_scaleNumComponents = self.readIntMax()
+                order.m_scaleComponentSize = self.readIntMax()
+                order.m_scalePriceIncrement = self.readDoubleMax()
             self.eWrapper().openOrder(order.m_orderId, contract, order)
         elif msgId == self.NEXT_VALID_ID:
             version = self.readInt()
@@ -532,6 +536,10 @@ class EReader(Thread):
         strval = self.readStr()
         return 0 if strval is None else Integer.parseInt(strval)
 
+    def readIntMax(self):
+        strval = self.readStr()
+        return Integer.MAX_VALUE if strval is None or len((strval) == 0) else Integer.parseInt(strval)
+
     def readLong(self):
         strval = self.readStr()
         return 0l if strval is None else Long.parseLong(strval)
@@ -539,5 +547,9 @@ class EReader(Thread):
     def readDouble(self):
         strval = self.readStr()
         return 0 if strval is None else Double.parseDouble(strval)
+
+    def readDoubleMax(self):
+        strval = self.readStr()
+        return Double.MAX_VALUE if strval is None or len((strval) == 0) else Double.parseDouble(strval)
 
 

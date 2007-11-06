@@ -13,7 +13,7 @@ $(ibsources_jar):
 
 
 IBJts:
-	jar -xf $(ibsources_jar) IBJts/java/com/ IBJts/API_VersionNum.txt
+	jar -xf $(ibsources_jar) IBJts/com/ IBJts/API_VersionNum.txt
 
 clean:
 	@echo

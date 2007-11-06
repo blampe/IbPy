@@ -90,6 +90,9 @@ class Order(object):
     m_deltaNeutralAuxPrice = float()
     m_basisPoints = float()
     m_basisPointsType = 0
+    m_scaleNumComponents = 0
+    m_scaleComponentSize = 0
+    m_scalePriceIncrement = float()
 
     def __init__(self):
         self.m_openClose = "O"
@@ -112,6 +115,9 @@ class Order(object):
         self.m_trailStopPrice = Double.MAX_VALUE
         self.m_basisPoints = Double.MAX_VALUE
         self.m_basisPointsType = Integer.MAX_VALUE
+        self.m_scaleNumComponents = Integer.MAX_VALUE
+        self.m_scaleComponentSize = Integer.MAX_VALUE
+        self.m_scalePriceIncrement = Double.MAX_VALUE
 
     def __eq__(self, p_other):
         if self is p_other:
@@ -122,7 +128,7 @@ class Order(object):
         l_theOther = p_other
         if (self.m_permId == l_theOther.m_permId):
             return True
-        firstSetEquals = (self.m_orderId == l_theOther.m_orderId) and (self.m_clientId == l_theOther.m_clientId) and (self.m_totalQuantity == l_theOther.m_totalQuantity) and (self.m_lmtPrice == l_theOther.m_lmtPrice) and (self.m_auxPrice == l_theOther.m_auxPrice) and (self.m_origin == l_theOther.m_origin) and (self.m_transmit == l_theOther.m_transmit) and (self.m_parentId == l_theOther.m_parentId) and (self.m_blockOrder == l_theOther.m_blockOrder) and (self.m_sweepToFill == l_theOther.m_sweepToFill) and (self.m_displaySize == l_theOther.m_displaySize) and (self.m_triggerMethod == l_theOther.m_triggerMethod) and (self.m_ignoreRth == l_theOther.m_ignoreRth) and (self.m_hidden == l_theOther.m_hidden) and (self.m_discretionaryAmt == l_theOther.m_discretionaryAmt) and (self.m_shortSaleSlot == l_theOther.m_shortSaleSlot) and (self.m_designatedLocation == l_theOther.m_designatedLocation) and (self.m_ocaType == l_theOther.m_ocaType) and (self.m_rthOnly == l_theOther.m_rthOnly) and (self.m_allOrNone == l_theOther.m_allOrNone) and (self.m_minQty == l_theOther.m_minQty) and (self.m_percentOffset == l_theOther.m_percentOffset) and (self.m_eTradeOnly == l_theOther.m_eTradeOnly) and (self.m_firmQuoteOnly == l_theOther.m_firmQuoteOnly) and (self.m_nbboPriceCap == l_theOther.m_nbboPriceCap) and (self.m_auctionStrategy == l_theOther.m_auctionStrategy) and (self.m_startingPrice == l_theOther.m_startingPrice) and (self.m_stockRefPrice == l_theOther.m_stockRefPrice) and (self.m_delta == l_theOther.m_delta) and (self.m_stockRangeLower == l_theOther.m_stockRangeLower) and (self.m_stockRangeUpper == l_theOther.m_stockRangeUpper) and (self.m_volatility == l_theOther.m_volatility) and (self.m_volatilityType == l_theOther.m_volatilityType) and (self.m_deltaNeutralAuxPrice == l_theOther.m_deltaNeutralAuxPrice) and (self.m_continuousUpdate == l_theOther.m_continuousUpdate) and (self.m_referencePriceType == l_theOther.m_referencePriceType) and (self.m_trailStopPrice == l_theOther.m_trailStopPrice)
+        firstSetEquals = (self.m_orderId == l_theOther.m_orderId) and (self.m_clientId == l_theOther.m_clientId) and (self.m_totalQuantity == l_theOther.m_totalQuantity) and (self.m_lmtPrice == l_theOther.m_lmtPrice) and (self.m_auxPrice == l_theOther.m_auxPrice) and (self.m_origin == l_theOther.m_origin) and (self.m_transmit == l_theOther.m_transmit) and (self.m_parentId == l_theOther.m_parentId) and (self.m_blockOrder == l_theOther.m_blockOrder) and (self.m_sweepToFill == l_theOther.m_sweepToFill) and (self.m_displaySize == l_theOther.m_displaySize) and (self.m_triggerMethod == l_theOther.m_triggerMethod) and (self.m_ignoreRth == l_theOther.m_ignoreRth) and (self.m_hidden == l_theOther.m_hidden) and (self.m_discretionaryAmt == l_theOther.m_discretionaryAmt) and (self.m_shortSaleSlot == l_theOther.m_shortSaleSlot) and (self.m_designatedLocation == l_theOther.m_designatedLocation) and (self.m_ocaType == l_theOther.m_ocaType) and (self.m_rthOnly == l_theOther.m_rthOnly) and (self.m_allOrNone == l_theOther.m_allOrNone) and (self.m_minQty == l_theOther.m_minQty) and (self.m_percentOffset == l_theOther.m_percentOffset) and (self.m_eTradeOnly == l_theOther.m_eTradeOnly) and (self.m_firmQuoteOnly == l_theOther.m_firmQuoteOnly) and (self.m_nbboPriceCap == l_theOther.m_nbboPriceCap) and (self.m_auctionStrategy == l_theOther.m_auctionStrategy) and (self.m_startingPrice == l_theOther.m_startingPrice) and (self.m_stockRefPrice == l_theOther.m_stockRefPrice) and (self.m_delta == l_theOther.m_delta) and (self.m_stockRangeLower == l_theOther.m_stockRangeLower) and (self.m_stockRangeUpper == l_theOther.m_stockRangeUpper) and (self.m_volatility == l_theOther.m_volatility) and (self.m_volatilityType == l_theOther.m_volatilityType) and (self.m_deltaNeutralAuxPrice == l_theOther.m_deltaNeutralAuxPrice) and (self.m_continuousUpdate == l_theOther.m_continuousUpdate) and (self.m_referencePriceType == l_theOther.m_referencePriceType) and (self.m_trailStopPrice == l_theOther.m_trailStopPrice) and (self.m_scaleNumComponents == l_theOther.m_scaleNumComponents) and (self.m_scaleComponentSize == l_theOther.m_scaleComponentSize) and (self.m_scalePriceIncrement == l_theOther.m_scalePriceIncrement)
         if not firstSetEquals:
             return False
         else:

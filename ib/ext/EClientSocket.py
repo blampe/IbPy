@@ -31,9 +31,9 @@ class EClientSocket(object):
     """ generated source for EClientSocket
 
     """
-    CLIENT_VERSION = 32
+    CLIENT_VERSION = 33
     SERVER_VERSION = 1
-    EOL = 0
+    EOL = [0]
     BAG_SEC_TYPE = "BAG"
     GROUPS = 1
     PROFILES = 2
@@ -78,6 +78,9 @@ class EClientSocket(object):
     REQ_REAL_TIME_BARS = 50
     CANCEL_REAL_TIME_BARS = 51
     MIN_SERVER_VER_REAL_TIME_BARS = 34
+    MIN_SERVER_VER_SCALE_ORDERS = 35
+    MIN_SERVER_VER_SNAPSHOT_MKT_DATA = 35
+    MIN_SERVER_VER_SSHORT_COMBO_LEGS = 35
     m_anyWrapper = None
     m_socket = None
     m_dos = None
@@ -239,11 +242,14 @@ class EClientSocket(object):
             self.close()
 
     @synchronized(mlock)
-    def reqMktData(self, tickerId, contract, genericTickList):
+    def reqMktData(self, tickerId, contract, genericTickList, snapshot):
         if not self.m_connected:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
             return
-        VERSION = 6
+        if self.m_serverVersion < self.MIN_SERVER_VER_SNAPSHOT_MKT_DATA and snapshot:
+            self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support snapshot market data requests.")
+            return
+        VERSION = 7
         try:
             self.send(self.REQ_MKT_DATA)
             self.send(VERSION)
@@ -278,6 +284,8 @@ class EClientSocket(object):
                         i += 1
             if self.m_serverVersion >= 31:
                 self.send(genericTickList)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_SNAPSHOT_MKT_DATA:
+                self.send(snapshot)
         except (Exception, ), e:
             self.error(tickerId, EClientErrors.FAIL_SEND_REQMKT, str(e))
             self.close()
@@ -536,7 +544,22 @@ class EClientSocket(object):
         if not self.m_connected:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
             return
-        VERSION = 21
+        if self.m_serverVersion < self.MIN_SERVER_VER_SCALE_ORDERS:
+            if (order.m_scaleNumComponents != Integer.MAX_VALUE) or (order.m_scaleComponentSize != Integer.MAX_VALUE) or (order.m_scalePriceIncrement != Double.MAX_VALUE):
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support Scale orders.")
+                return
+        if self.m_serverVersion < self.MIN_SERVER_VER_SSHORT_COMBO_LEGS:
+            if not contract.m_comboLegs.isEmpty():
+                comboLeg = ComboLeg()
+                ## for-while
+                i = 0
+                while i < len(contract.m_comboLegs):
+                    comboLeg = contract.m_comboLegs[i]
+                    if (comboLeg.m_shortSaleSlot != 0) or not self.IsEmpty(comboLeg.m_designatedLocation):
+                        self.error(id, EClientErrors.UPDATE_TWS, "  It does not support SSHORT flag for combo legs.")
+                        return
+                    i += 1
+        VERSION = 22
         try:
             self.send(self.PLACE_ORDER)
             self.send(VERSION)
@@ -591,6 +614,9 @@ class EClientSocket(object):
                         self.send(comboLeg.m_action)
                         self.send(comboLeg.m_exchange)
                         self.send(comboLeg.m_openClose)
+                        if self.m_serverVersion >= self.MIN_SERVER_VER_SSHORT_COMBO_LEGS:
+                            self.send(comboLeg.m_shortSaleSlot)
+                            self.send(comboLeg.m_designatedLocation)
                         i += 1
             if self.m_serverVersion >= 9:
                 self.send(order.m_sharesAllocation)
@@ -646,6 +672,10 @@ class EClientSocket(object):
                 self.sendMax(order.m_referencePriceType)
             if self.m_serverVersion >= 30:
                 self.sendMax(order.m_trailStopPrice)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_SCALE_ORDERS:
+                self.sendMax(order.m_scaleNumComponents)
+                self.sendMax(order.m_scaleComponentSize)
+                self.sendMax(order.m_scalePriceIncrement)
         except (Exception, ), e:
             self.error(id, EClientErrors.FAIL_SEND_ORDER, str(e))
             self.close()
@@ -888,7 +918,7 @@ class EClientSocket(object):
 
     @overloaded
     def send(self, strval):
-        if strval is not None:
+        if not self.IsEmpty(strval):
             self.m_dos.write(strval.getBytes())
         self.sendEOL()
 
@@ -929,5 +959,9 @@ class EClientSocket(object):
     @send.register(object, bool)
     def send_4(self, val):
         self.send(1 if val else 0)
+
+    @classmethod
+    def IsEmpty(cls, strval):
+        return strval is None or len((strval) == 0)
 
 
