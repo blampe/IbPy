@@ -151,7 +151,7 @@ class ReferenceApp:
         contract.m_symbol = 'QQQQ'
         contract.m_secType = 'STK'
         contract.m_exchange = 'SMART'
-        self.reader.reqMktData(1, contract, '')
+        self.reader.reqMktData(1, contract, '', False)
 
     def reqHistoricalData(self):
         contract = com.ib.client.Contract()

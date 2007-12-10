@@ -33,7 +33,7 @@ class EClientSocket(object):
     """
     CLIENT_VERSION = 33
     SERVER_VERSION = 1
-    EOL = [0]
+    EOL = 0
     BAG_SEC_TYPE = "BAG"
     GROUPS = 1
     PROFILES = 2

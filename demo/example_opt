@@ -30,6 +30,6 @@ if __name__ == '__main__':
     qqqq.m_symbol = 'QQQQ'
     qqqq.m_secType = 'STK'
     qqqq.m_exchange = 'SMART'
-    con.reqMktData(1, qqqq, '')
+    con.reqMktData(1, qqqq, '', False)
 
     sleep(10)

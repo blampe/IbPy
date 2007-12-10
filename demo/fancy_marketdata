@@ -49,7 +49,7 @@ if __name__ == '__main__':
     #contractTuple = ('EUR', 'CASH', 'IDEALPRO', 'USD', '', 0.0, '')
     stkContract = makeStkContract(contractTuple)
     print '* * * * REQUESTING MARKET DATA * * * *'
-    con.reqMktData(tickId, stkContract, '')
+    con.reqMktData(tickId, stkContract, '', False)
     sleep(15)
     print '* * * * CANCELING MARKET DATA * * * *'
     con.cancelMktData(tickId)

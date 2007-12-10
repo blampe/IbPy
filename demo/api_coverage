@@ -82,7 +82,7 @@ def run_1(connection):
 
 
 def run_2(connection):
-    connection.reqMktData(qqqq_id, qqqq_contract(), '')
+    connection.reqMktData(qqqq_id, qqqq_contract(), '', False)
     sleep(2)
     connection.cancelMktData(qqqq_id)
 

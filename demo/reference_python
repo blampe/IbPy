@@ -97,7 +97,7 @@ class ReferenceWrapper(EWrapper):
 
 
 class ReferenceApp:
-    def __init__(self, host='localhost', port=7496, clientId=0):
+    def __init__(self, host='localhost', port=7496, clientId=1):
         self.host = host
         self.port = port
         self.clientId = clientId
@@ -146,7 +146,7 @@ class ReferenceApp:
         contract.m_symbol = 'QQQQ'
         contract.m_secType = 'STK'
         contract.m_exchange = 'SMART'
-        self.connection.reqMktData(1, contract, '')
+        self.connection.reqMktData(1, contract, '', False)
 
     def reqHistoricalData(self):
         contract = Contract()

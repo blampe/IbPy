@@ -70,7 +70,7 @@ if __name__ == '__main__':
     con.placeOrder(orderID, optContract, optOrder)
 
 
-    print con.reqMktData(tickID, optContract, '')
+    print con.reqMktData(tickID, optContract, '', False)
 
     sleep(10)
     con.disconnect()
