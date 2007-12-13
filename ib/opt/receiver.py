@@ -9,10 +9,8 @@
 # construct methods on the Receiver class during its definition.
 # Refer to the ReceiverType metaclass for details.
 ##
-import sys
-import traceback
-
 from ib.lib.overloading import overloaded
+from ib.opt.logger import logger
 from ib.opt.message import registry, wrapperMethods
 
 # micro optimizations
@@ -57,7 +55,6 @@ class Receiver(object):
     """
     __metaclass__ = ReceiverType
 
-
     def __init__(self, listeners=None, types=None):
         """ Constructor.
 
@@ -86,16 +83,9 @@ class Receiver(object):
                     listener(message)
                 except (Exception, ):
                     self.unregister(listener, mtype)
-                    excinfo = sys.exc_info()
-                    stdout = sys.stdout
-                    line = '-' * 76
-                    errmsg = ('Exception in IbPy message dispatch.\n'
-                              'Handler %s unregistered for %s.' % (listener, name))
-                    print >> stdout, line
-                    print >> stdout, errmsg
-                    print >> stdout, line
-                    traceback.print_tb(excinfo[2])
-                    print >> stdout
+                    errmsg = ("Exception in message dispatch.  "
+                              "Handler '%s' unregistered for '%s'")
+                    logger().exception(errmsg, self.key(listener), name)
 
     def register(self, listener, *types):
         """ Associate listener with message types created by this Receiver.
@@ -109,7 +99,6 @@ class Receiver(object):
             listeners = self.listeners.setdefault(key, [])
             if listener not in listeners:
                 listeners.append(listener)
-
 
     def registerAll(self, listener):
         """ Associate listener with all messages created by this Receiver.
