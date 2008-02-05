@@ -163,6 +163,7 @@ class EClientSocket(object):
             if self.m_reader is not None:
                 self.m_reader.interrupt()
             if self.m_socket is not None:
+                self.m_socket.shutdown(self.m_socket.SHUT_RDWR)
                 self.m_socket.close()
         except (Exception, ), e:
             pass

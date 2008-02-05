@@ -27,6 +27,9 @@ outputSubs = [
     (r'    m_dos = DataOutputStream\(\)', r'    m_dos = None'),
     (r'(, "" \+ e)', r', str(e)'),
 
+    (r'(\s+)(self.m_socket.close\(\))',
+     r'\1self.m_socket.shutdown(self.m_socket.SHUT_RDWR)\1\2'),
+
     (r'print "Server Version:" \+ self\.m_serverVersion',
      r'debug("Server Version:  %s", self.m_serverVersion)',),
 
