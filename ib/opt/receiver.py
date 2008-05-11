@@ -13,9 +13,6 @@ from ib.lib.overloading import overloaded
 from ib.opt.logger import logger
 from ib.opt.message import registry, wrapperMethods
 
-# micro optimizations
-from __builtin__ import KeyError, dict
-
 
 def messageMethod(name, argnames):
     """ Creates method for dispatching messages.
@@ -56,13 +53,14 @@ class Receiver(object):
     __metaclass__ = ReceiverType
 
     def __init__(self, listeners=None, types=None):
-        """ Constructor.
+        """ Initializer.
 
         @param listeners=None mapping of existing listeners
         @param types=None method name to message type lookup
         """
         self.listeners = listeners if listeners else {}
         self.types = types if types else registry
+        self.logger = logger()
 
     def dispatch(self, name, mapping):
         """ Send message to each listener.
@@ -85,7 +83,7 @@ class Receiver(object):
                     self.unregister(listener, mtype)
                     errmsg = ("Exception in message dispatch.  "
                               "Handler '%s' unregistered for '%s'")
-                    logger().exception(errmsg, self.key(listener), name)
+                    self.logger.exception(errmsg, self.key(listener), name)
 
     def register(self, listener, *types):
         """ Associate listener with message types created by this Receiver.

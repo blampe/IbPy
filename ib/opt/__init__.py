@@ -37,7 +37,7 @@ class Connection(object):
     """ Encapsulates a connection to TWS.
 
     """
-    def __init__(self, host, port, clientId):
+    def __init__(self, host, port, clientId, receiver, sender):
         """ Constructor.
 
         @param host name of host for connection; default is localhost
@@ -47,8 +47,8 @@ class Connection(object):
         self.host = host
         self.port = port
         self.clientId = clientId
-        self.receiver = Receiver()
-        self.sender = Sender()
+        self.receiver = receiver
+        self.sender = sender
 
     def __getattr__(self, name):
         """ x.__getattr__('name') <==> x.name
@@ -99,9 +99,9 @@ class Connection(object):
         line = str.join(', ', ['%s=%s' % item for item in message.items()])
         self.logger.debug('%s(%s)', message.typeName, line)
 
-
     @classmethod
-    def create(cls, host='localhost', port=7496, clientId=0):
+    def create(cls, host='localhost', port=7496, clientId=0, receiver=None,
+               sender=None):
         """ Creates and returns Connection class (or subclass) instance.
 
         @param host name of host for connection; default is localhost
@@ -109,7 +109,9 @@ class Connection(object):
         @param clientId client identifier to send when connected
         @return Connection (or subclass) instance
         """
-        return cls(host=host, port=port, clientId=clientId)
+        receiver = Receiver() if receiver is None else receiver
+        sender = Sender() if sender is None else sender
+        return cls(host, port, clientId, receiver, sender)
 
 ##
 # This is the preferred client interface to this module.

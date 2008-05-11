@@ -5,4 +5,5 @@
 """
 modulePreamble = [
     'from ib.lib import Double, Integer',
+    'from ib.ext.Util import Util'
     ]

@@ -31,8 +31,8 @@ class EClientSocket(object):
     """ generated source for EClientSocket
 
     """
-    CLIENT_VERSION = 33
-    SERVER_VERSION = 1
+    CLIENT_VERSION = 37
+    SERVER_VERSION = 38
     EOL = 0
     BAG_SEC_TYPE = "BAG"
     GROUPS = 1
@@ -81,6 +81,9 @@ class EClientSocket(object):
     MIN_SERVER_VER_SCALE_ORDERS = 35
     MIN_SERVER_VER_SNAPSHOT_MKT_DATA = 35
     MIN_SERVER_VER_SSHORT_COMBO_LEGS = 35
+    MIN_SERVER_VER_WHAT_IF_ORDERS = 36
+    MIN_SERVER_VER_CONTRACT_CONID = 37
+    MIN_SERVER_VER_PTA_ORDERS = 39
     m_anyWrapper = None
     m_socket = None
     m_dos = None
@@ -425,10 +428,12 @@ class EClientSocket(object):
         if self.m_serverVersion < 4:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return
-        VERSION = 3
+        VERSION = 4
         try:
             self.send(self.REQ_CONTRACT_DATA)
             self.send(VERSION)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_CONTRACT_CONID:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_expiry)
@@ -560,7 +565,11 @@ class EClientSocket(object):
                         self.error(id, EClientErrors.UPDATE_TWS, "  It does not support SSHORT flag for combo legs.")
                         return
                     i += 1
-        VERSION = 22
+        if self.m_serverVersion < self.MIN_SERVER_VER_WHAT_IF_ORDERS:
+            if order.m_whatIf:
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support what-if orders.")
+                return
+        VERSION = 25
         try:
             self.send(self.PLACE_ORDER)
             self.send(VERSION)
@@ -597,7 +606,10 @@ class EClientSocket(object):
                 self.send(order.m_sweepToFill)
                 self.send(order.m_displaySize)
                 self.send(order.m_triggerMethod)
-                self.send(order.m_ignoreRth)
+                if self.m_serverVersion < 38:
+                    self.send(False)
+                else:
+                    self.send(order.m_outsideRth)
             if self.m_serverVersion >= 7:
                 self.send(order.m_hidden)
             if self.m_serverVersion >= 8 and self.BAG_SEC_TYPE.lower() == contract.m_secType.lower():
@@ -620,7 +632,7 @@ class EClientSocket(object):
                             self.send(comboLeg.m_designatedLocation)
                         i += 1
             if self.m_serverVersion >= 9:
-                self.send(order.m_sharesAllocation)
+                self.send("")
             if self.m_serverVersion >= 10:
                 self.send(order.m_discretionaryAmt)
             if self.m_serverVersion >= 11:
@@ -637,7 +649,8 @@ class EClientSocket(object):
                 self.send(order.m_designatedLocation)
             if self.m_serverVersion >= 19:
                 self.send(order.m_ocaType)
-                self.send(order.m_rthOnly)
+                if self.m_serverVersion < 38:
+                    self.send(False)
                 self.send(order.m_rule80A)
                 self.send(order.m_settlingFirm)
                 self.send(order.m_allOrNone)
@@ -677,6 +690,11 @@ class EClientSocket(object):
                 self.sendMax(order.m_scaleNumComponents)
                 self.sendMax(order.m_scaleComponentSize)
                 self.sendMax(order.m_scalePriceIncrement)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_PTA_ORDERS:
+                self.send(order.m_clearingAccount)
+                self.send(order.m_clearingIntent)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_WHAT_IF_ORDERS:
+                self.send(order.m_whatIf)
         except (Exception, ), e:
             self.error(id, EClientErrors.FAIL_SEND_ORDER, str(e))
             self.close()

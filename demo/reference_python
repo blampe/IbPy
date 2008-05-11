@@ -96,6 +96,11 @@ class ReferenceWrapper(EWrapper):
         showmessage('scannerData', vars())
 
 
+allMethods = []
+def ref(method):
+    allMethods.append(method.__name__)
+    return method
+
 class ReferenceApp:
     def __init__(self, host='localhost', port=7496, clientId=1):
         self.host = host
@@ -104,43 +109,56 @@ class ReferenceApp:
         self.wrapper = ReferenceWrapper()
         self.connection = EClientSocket(self.wrapper)
 
+    @ref
     def eConnect(self):
         self.connection.eConnect(self.host, self.port, self.clientId)
 
+    @ref
     def reqAccountUpdates(self):
         self.connection.reqAccountUpdates(1, '')
 
+    @ref
     def reqOpenOrders(self):
         self.connection.reqOpenOrders()
 
+    @ref
     def reqExecutions(self):
         filt = ExecutionFilter()
         self.connection.reqExecutions(filt)
 
+    @ref
     def reqIds(self):
         self.connection.reqIds(10)
 
+    @ref
     def reqNewsBulletins(self):
         self.connection.reqNewsBulletins(1)
 
+    @ref
     def cancelNewsBulletins(self):
         self.connection.cancelNewsBulletins()
 
+    @ref
     def setServerLogLevel(self):
         self.connection.setServerLogLevel(3)
 
+    @ref
     def reqAutoOpenOrders(self):
         self.connection.reqAutoOpenOrders(1)
 
+    @ref
     def reqAllOpenOrders(self):
         self.connection.reqAllOpenOrders()
 
+    @ref
     def reqManagedAccts(self):
         self.connection.reqManagedAccts()
 
+    @ref
     def requestFA(self):
         self.connection.requestFA(1)
 
+    @ref
     def reqMktData(self):
         contract = Contract() #
         contract.m_symbol = 'QQQQ'
@@ -148,6 +166,7 @@ class ReferenceApp:
         contract.m_exchange = 'SMART'
         self.connection.reqMktData(1, contract, '', False)
 
+    @ref
     def reqHistoricalData(self):
         contract = Contract()
         contract.m_symbol = 'QQQQ'
@@ -161,7 +180,7 @@ class ReferenceApp:
                                       "MIDPOINT",
                                       1, # rth - regular trading hours
                                       1) # date style - 1 or 2
-
+    @ref
     def eDisconnect(self):
         sleep(5)
         self.connection.eDisconnect()
@@ -169,21 +188,22 @@ class ReferenceApp:
 
 if __name__ == '__main__':
     app = ReferenceApp()
-    args = argv[1:]
+    methods = argv[1:]
 
-    if not args:
-        args = ['eConnect', 'eDisconnect', ]
-    else:
-        if 'eConnect' not in args:
-            args.insert(0, 'eConnect')
-        if 'eDisconnect' not in args:
-            args.append('eDisconnect')
+    if not methods:
+        methods = ['eConnect', 'eDisconnect', ]
+    elif methods == ['all']:
+        methods = allMethods
+    if 'eConnect' not in methods:
+        methods.insert(0, 'eConnect')
+    if 'eDisconnect' not in methods:
+        methods.append('eDisconnect')
 
-    print '### calling functions:', str.join(', ', args)
-    for name in args:
-        call = getattr(app, name, None)
+    print '### calling functions:', str.join(', ', methods)
+    for mname in methods:
+        call = getattr(app, mname, None)
         if call is None:
-            print '### warning: no call %s' % (name, )
+            print '### warning: no call %s' % (mname, )
         else:
             print '## calling', call.im_func.func_name
             call()

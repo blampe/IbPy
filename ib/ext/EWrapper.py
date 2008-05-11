@@ -63,7 +63,7 @@ class EWrapper(AnyWrapper):
                           whyHeld):
         raise NotImplementedError()
 
-    def openOrder(self, orderId, contract, order):
+    def openOrder(self, orderId, contract, order, orderState):
         raise NotImplementedError()
 
     def updateAccountValue(self, key, value, currency, accountName):
@@ -142,6 +142,9 @@ class EWrapper(AnyWrapper):
                           benchmark,
                           projection,
                           legsStr):
+        raise NotImplementedError()
+
+    def scannerDataEnd(self, reqId):
         raise NotImplementedError()
 
     def realtimeBar(self, reqId,

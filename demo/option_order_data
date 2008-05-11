@@ -56,12 +56,12 @@ if __name__ == '__main__':
     con.connect()
 
     tickID = 36
-    orderID = 50002
+    orderID = 50002 + 10
 
     #stkContract = makeStkContract('EUR')
     #con.reqMktData(1, stkContract, '')
 
-    optContract = makeOptContract('QQQQ', '20070921', 'C', 47.0)
+    optContract = makeOptContract('QQQQ', '20080919', 'C', 34.0)
     #con.reqMktData(tickID, optContract, '')
     #sleep(5)
     #con.cancelMktData(tickID)

@@ -10,12 +10,10 @@
 # package provides the rest.
 ##
 
+import copy
 import socket
 import struct
 import sys
-
-# micro optimizations
-from __builtin__ import long, int, long, str
 
 
 class classmethod_(classmethod):
@@ -86,6 +84,8 @@ class Cloneable(object):
     interface, but its methods are never used.  We provide this class
     for sub typing, and will implement methods as needed later.
     """
+    def clone(self):
+        return copy.copy(self)
 
 
 class DataInputStream(object):

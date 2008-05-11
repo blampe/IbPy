@@ -14,6 +14,7 @@
 # WARNING: all changes made to this file will be lost.
 
 from ib.lib import Double, Integer
+from ib.ext.Util import Util
 
 class Order(object):
     """ generated source for Order
@@ -50,24 +51,20 @@ class Order(object):
     m_sweepToFill = bool()
     m_displaySize = 0
     m_triggerMethod = 0
-    m_ignoreRth = bool()
+    m_outsideRth = bool()
     m_hidden = bool()
     m_goodAfterTime = ""
     m_goodTillDate = ""
-    m_rthOnly = bool()
     m_overridePercentageConstraints = bool()
     m_rule80A = ""
     m_allOrNone = bool()
     m_minQty = 0
     m_percentOffset = float()
     m_trailStopPrice = float()
-    m_sharesAllocation = ""
     m_faGroup = ""
     m_faProfile = ""
     m_faMethod = ""
     m_faPercentage = ""
-    m_account = ""
-    m_settlingFirm = ""
     m_openClose = ""
     m_origin = 0
     m_shortSaleSlot = 0
@@ -93,8 +90,14 @@ class Order(object):
     m_scaleNumComponents = 0
     m_scaleComponentSize = 0
     m_scalePriceIncrement = float()
+    m_account = ""
+    m_settlingFirm = ""
+    m_clearingAccount = ""
+    m_clearingIntent = ""
+    m_whatIf = bool()
 
     def __init__(self):
+        self.m_outsideRth = False
         self.m_openClose = "O"
         self.m_origin = self.CUSTOMER
         self.m_transmit = True
@@ -118,42 +121,20 @@ class Order(object):
         self.m_scaleNumComponents = Integer.MAX_VALUE
         self.m_scaleComponentSize = Integer.MAX_VALUE
         self.m_scalePriceIncrement = Double.MAX_VALUE
+        self.m_whatIf = False
 
     def __eq__(self, p_other):
         if self is p_other:
             return True
-        else:
-            if p_other is None:
-                return False
+        if p_other is None:
+            return False
         l_theOther = p_other
         if (self.m_permId == l_theOther.m_permId):
             return True
-        firstSetEquals = (self.m_orderId == l_theOther.m_orderId) and (self.m_clientId == l_theOther.m_clientId) and (self.m_totalQuantity == l_theOther.m_totalQuantity) and (self.m_lmtPrice == l_theOther.m_lmtPrice) and (self.m_auxPrice == l_theOther.m_auxPrice) and (self.m_origin == l_theOther.m_origin) and (self.m_transmit == l_theOther.m_transmit) and (self.m_parentId == l_theOther.m_parentId) and (self.m_blockOrder == l_theOther.m_blockOrder) and (self.m_sweepToFill == l_theOther.m_sweepToFill) and (self.m_displaySize == l_theOther.m_displaySize) and (self.m_triggerMethod == l_theOther.m_triggerMethod) and (self.m_ignoreRth == l_theOther.m_ignoreRth) and (self.m_hidden == l_theOther.m_hidden) and (self.m_discretionaryAmt == l_theOther.m_discretionaryAmt) and (self.m_shortSaleSlot == l_theOther.m_shortSaleSlot) and (self.m_designatedLocation == l_theOther.m_designatedLocation) and (self.m_ocaType == l_theOther.m_ocaType) and (self.m_rthOnly == l_theOther.m_rthOnly) and (self.m_allOrNone == l_theOther.m_allOrNone) and (self.m_minQty == l_theOther.m_minQty) and (self.m_percentOffset == l_theOther.m_percentOffset) and (self.m_eTradeOnly == l_theOther.m_eTradeOnly) and (self.m_firmQuoteOnly == l_theOther.m_firmQuoteOnly) and (self.m_nbboPriceCap == l_theOther.m_nbboPriceCap) and (self.m_auctionStrategy == l_theOther.m_auctionStrategy) and (self.m_startingPrice == l_theOther.m_startingPrice) and (self.m_stockRefPrice == l_theOther.m_stockRefPrice) and (self.m_delta == l_theOther.m_delta) and (self.m_stockRangeLower == l_theOther.m_stockRangeLower) and (self.m_stockRangeUpper == l_theOther.m_stockRangeUpper) and (self.m_volatility == l_theOther.m_volatility) and (self.m_volatilityType == l_theOther.m_volatilityType) and (self.m_deltaNeutralAuxPrice == l_theOther.m_deltaNeutralAuxPrice) and (self.m_continuousUpdate == l_theOther.m_continuousUpdate) and (self.m_referencePriceType == l_theOther.m_referencePriceType) and (self.m_trailStopPrice == l_theOther.m_trailStopPrice) and (self.m_scaleNumComponents == l_theOther.m_scaleNumComponents) and (self.m_scaleComponentSize == l_theOther.m_scaleComponentSize) and (self.m_scalePriceIncrement == l_theOther.m_scalePriceIncrement)
-        if not firstSetEquals:
+        if (self.m_orderId != l_theOther.m_orderId) or (self.m_clientId != l_theOther.m_clientId) or (self.m_totalQuantity != l_theOther.m_totalQuantity) or (self.m_lmtPrice != l_theOther.m_lmtPrice) or (self.m_auxPrice != l_theOther.m_auxPrice) or (self.m_ocaType != l_theOther.m_ocaType) or (self.m_transmit != l_theOther.m_transmit) or (self.m_parentId != l_theOther.m_parentId) or (self.m_blockOrder != l_theOther.m_blockOrder) or (self.m_sweepToFill != l_theOther.m_sweepToFill) or (self.m_displaySize != l_theOther.m_displaySize) or (self.m_triggerMethod != l_theOther.m_triggerMethod) or (self.m_outsideRth != l_theOther.m_outsideRth) or (self.m_hidden != l_theOther.m_hidden) or (self.m_overridePercentageConstraints != l_theOther.m_overridePercentageConstraints) or (self.m_allOrNone != l_theOther.m_allOrNone) or (self.m_minQty != l_theOther.m_minQty) or (self.m_percentOffset != l_theOther.m_percentOffset) or (self.m_trailStopPrice != l_theOther.m_trailStopPrice) or (self.m_origin != l_theOther.m_origin) or (self.m_shortSaleSlot != l_theOther.m_shortSaleSlot) or (self.m_discretionaryAmt != l_theOther.m_discretionaryAmt) or (self.m_eTradeOnly != l_theOther.m_eTradeOnly) or (self.m_firmQuoteOnly != l_theOther.m_firmQuoteOnly) or (self.m_nbboPriceCap != l_theOther.m_nbboPriceCap) or (self.m_auctionStrategy != l_theOther.m_auctionStrategy) or (self.m_startingPrice != l_theOther.m_startingPrice) or (self.m_stockRefPrice != l_theOther.m_stockRefPrice) or (self.m_delta != l_theOther.m_delta) or (self.m_stockRangeLower != l_theOther.m_stockRangeLower) or (self.m_stockRangeUpper != l_theOther.m_stockRangeUpper) or (self.m_volatility != l_theOther.m_volatility) or (self.m_volatilityType != l_theOther.m_volatilityType) or (self.m_continuousUpdate != l_theOther.m_continuousUpdate) or (self.m_referencePriceType != l_theOther.m_referencePriceType) or (self.m_deltaNeutralAuxPrice != l_theOther.m_deltaNeutralAuxPrice) or (self.m_basisPoints != l_theOther.m_basisPoints) or (self.m_basisPointsType != l_theOther.m_basisPointsType) or (self.m_scaleNumComponents != l_theOther.m_scaleNumComponents) or (self.m_scaleComponentSize != l_theOther.m_scaleComponentSize) or (self.m_scalePriceIncrement != l_theOther.m_scalePriceIncrement) or (self.m_whatIf != l_theOther.m_whatIf):
             return False
-        else:
-            l_thisAction = self.m_action if self.m_action is not None else self.EMPTY_STR
-            l_thisOrderType = self.m_orderType if self.m_orderType is not None else self.EMPTY_STR
-            l_thisTif = self.m_tif if self.m_tif is not None else self.EMPTY_STR
-            l_thisOcaGroup = self.m_ocaGroup if self.m_ocaGroup is not None else self.EMPTY_STR
-            l_thisAccount = self.m_account if self.m_account is not None else self.EMPTY_STR
-            l_thisOpenClose = self.m_openClose if self.m_openClose is not None else self.EMPTY_STR
-            l_thisOrderRef = self.m_orderRef if self.m_orderRef is not None else self.EMPTY_STR
-            l_thisRule80A = self.m_rule80A if self.m_rule80A is not None else self.EMPTY_STR
-            l_thisSettlingFirm = self.m_settlingFirm if self.m_settlingFirm is not None else self.EMPTY_STR
-            l_thisDeltaNeutralOrderType = self.m_deltaNeutralOrderType if self.m_deltaNeutralOrderType is not None else self.EMPTY_STR
-            l_otherAction = l_theOther.m_action if l_theOther.m_action is not None else self.EMPTY_STR
-            l_otherOrderType = l_theOther.m_orderType if l_theOther.m_orderType is not None else self.EMPTY_STR
-            l_otherTif = l_theOther.m_tif if l_theOther.m_tif is not None else self.EMPTY_STR
-            l_otherOcaGroup = l_theOther.m_ocaGroup if l_theOther.m_ocaGroup is not None else self.EMPTY_STR
-            l_otherAccount = l_theOther.m_account if l_theOther.m_account is not None else self.EMPTY_STR
-            l_otherOpenClose = l_theOther.m_openClose if l_theOther.m_openClose is not None else self.EMPTY_STR
-            l_otherOrderRef = l_theOther.m_orderRef if l_theOther.m_orderRef is not None else self.EMPTY_STR
-            l_otherOrderGoodAfterTime = l_theOther.m_goodAfterTime if l_theOther.m_goodAfterTime is not None else self.EMPTY_STR
-            l_otherOrderGoodTillDate = l_theOther.m_goodTillDate if l_theOther.m_goodTillDate is not None else self.EMPTY_STR
-            l_otherRule80A = l_theOther.m_rule80A if l_theOther.m_rule80A is not None else self.EMPTY_STR
-            l_otherSettlingFirm = l_theOther.m_settlingFirm if l_theOther.m_settlingFirm is not None else self.EMPTY_STR
-            l_otherDeltaNeutralOrderType = l_theOther.m_deltaNeutralOrderType if l_theOther.m_deltaNeutralOrderType is not None else self.EMPTY_STR
-            return l_thisAction == l_otherAction and l_thisOrderType == l_otherOrderType and l_thisTif == l_otherTif and l_thisOcaGroup == l_otherOcaGroup and l_thisAccount == l_otherAccount and l_thisOpenClose == l_otherOpenClose and l_thisOrderRef == l_otherOrderRef and l_otherOrderGoodAfterTime == l_otherOrderGoodAfterTime and l_otherOrderGoodTillDate == l_otherOrderGoodTillDate and l_thisRule80A == l_otherRule80A and l_thisSettlingFirm == l_otherSettlingFirm and l_thisDeltaNeutralOrderType == l_otherDeltaNeutralOrderType
+        if (Util.StringCompare(self.m_action, l_theOther.m_action) != 0) or (Util.StringCompare(self.m_orderType, l_theOther.m_orderType) != 0) or (Util.StringCompare(self.m_tif, l_theOther.m_tif) != 0) or (Util.StringCompare(self.m_ocaGroup, l_theOther.m_ocaGroup) != 0) or (Util.StringCompare(self.m_orderRef, l_theOther.m_orderRef) != 0) or (Util.StringCompare(self.m_goodAfterTime, l_theOther.m_goodAfterTime) != 0) or (Util.StringCompare(self.m_goodTillDate, l_theOther.m_goodTillDate) != 0) or (Util.StringCompare(self.m_rule80A, l_theOther.m_rule80A) != 0) or (Util.StringCompare(self.m_faGroup, l_theOther.m_faGroup) != 0) or (Util.StringCompare(self.m_faProfile, l_theOther.m_faProfile) != 0) or (Util.StringCompare(self.m_faMethod, l_theOther.m_faMethod) != 0) or (Util.StringCompare(self.m_faPercentage, l_theOther.m_faPercentage) != 0) or (Util.StringCompare(self.m_openClose, l_theOther.m_openClose) != 0) or (Util.StringCompare(self.m_designatedLocation, l_theOther.m_designatedLocation) != 0) or (Util.StringCompare(self.m_deltaNeutralOrderType, l_theOther.m_deltaNeutralOrderType) != 0) or (Util.StringCompare(self.m_account, l_theOther.m_account) != 0) or (Util.StringCompare(self.m_settlingFirm, l_theOther.m_settlingFirm) != 0) or (Util.StringCompare(self.m_clearingAccount, l_theOther.m_clearingAccount) != 0) or (Util.StringCompare(self.m_clearingIntent, l_theOther.m_clearingIntent) != 0):
+            return False
+        return True
 
 

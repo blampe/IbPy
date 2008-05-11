@@ -191,6 +191,8 @@ class EReader(Thread):
         elif msgId == self.PORTFOLIO_VALUE:
             version = self.readInt()
             contract = Contract()
+            if version >= 6:
+                contract.m_conId = self.readInt()
             contract.m_symbol = self.readStr()
             contract.m_secType = self.readStr()
             contract.m_expiry = self.readStr()
@@ -232,6 +234,8 @@ class EReader(Thread):
             order = Order()
             order.m_orderId = self.readInt()
             contract = Contract()
+            if version >= 17:
+                contract.m_conId = self.readInt()
             contract.m_symbol = self.readStr()
             contract.m_secType = self.readStr()
             contract.m_expiry = self.readStr()
@@ -256,13 +260,16 @@ class EReader(Thread):
                 order.m_clientId = self.readInt()
             if version >= 4:
                 order.m_permId = self.readInt()
-                order.m_ignoreRth = (self.readInt() == 1)
+                if version < 18:
+                    self.readBoolFromInt()
+                else:
+                    order.m_outsideRth = self.readBoolFromInt()
                 order.m_hidden = (self.readInt() == 1)
                 order.m_discretionaryAmt = self.readDouble()
             if version >= 5:
                 order.m_goodAfterTime = self.readStr()
             if version >= 6:
-                order.m_sharesAllocation = self.readStr()
+                self.readStr()
             if version >= 7:
                 order.m_faGroup = self.readStr()
                 order.m_faMethod = self.readStr()
@@ -283,7 +290,8 @@ class EReader(Thread):
                 order.m_stockRangeLower = self.readDouble()
                 order.m_stockRangeUpper = self.readDouble()
                 order.m_displaySize = self.readInt()
-                order.m_rthOnly = self.readBoolFromInt()
+                if version < 18:
+                    self.readBoolFromInt()
                 order.m_blockOrder = self.readBoolFromInt()
                 order.m_sweepToFill = self.readBoolFromInt()
                 order.m_allOrNone = self.readBoolFromInt()
@@ -319,7 +327,22 @@ class EReader(Thread):
                 order.m_scaleNumComponents = self.readIntMax()
                 order.m_scaleComponentSize = self.readIntMax()
                 order.m_scalePriceIncrement = self.readDoubleMax()
-            self.eWrapper().openOrder(order.m_orderId, contract, order)
+            if version >= 19:
+                order.m_clearingAccount = self.readStr()
+                order.m_clearingIntent = self.readStr()
+            orderState = OrderState()
+            if version >= 16:
+                order.m_whatIf = self.readBoolFromInt()
+                orderState.m_status = self.readStr()
+                orderState.m_initMargin = self.readStr()
+                orderState.m_maintMargin = self.readStr()
+                orderState.m_equityWithLoan = self.readStr()
+                orderState.m_commission = self.readDoubleMax()
+                orderState.m_minCommission = self.readDoubleMax()
+                orderState.m_maxCommission = self.readDoubleMax()
+                orderState.m_commissionCurrency = self.readStr()
+                orderState.m_warningText = self.readStr()
+            self.eWrapper().openOrder(order.m_orderId, contract, order, orderState)
         elif msgId == self.NEXT_VALID_ID:
             version = self.readInt()
             orderId = self.readInt()
@@ -333,6 +356,8 @@ class EReader(Thread):
             ctr = 0
             while ctr < numberOfElements:
                 rank = self.readInt()
+                if version >= 3:
+                    contract.m_summary.m_conId = self.readInt()
                 contract.m_summary.m_symbol = self.readStr()
                 contract.m_summary.m_secType = self.readStr()
                 contract.m_summary.m_expiry = self.readStr()
@@ -351,6 +376,7 @@ class EReader(Thread):
                     legsStr = self.readStr()
                 self.eWrapper().scannerData(tickerId, rank, contract, distance, benchmark, projection, legsStr)
                 ctr += 1
+            self.eWrapper().scannerDataEnd(tickerId)
         elif msgId == self.CONTRACT_DATA:
             version = self.readInt()
             contract = ContractDetails()
@@ -364,9 +390,9 @@ class EReader(Thread):
             contract.m_summary.m_localSymbol = self.readStr()
             contract.m_marketName = self.readStr()
             contract.m_tradingClass = self.readStr()
-            contract.m_conid = self.readInt()
+            contract.m_summary.m_conId = self.readInt()
             contract.m_minTick = self.readDouble()
-            contract.m_multiplier = self.readStr()
+            contract.m_summary.m_multiplier = self.readStr()
             contract.m_orderTypes = self.readStr()
             contract.m_validExchanges = self.readStr()
             if version >= 2:
@@ -377,35 +403,37 @@ class EReader(Thread):
             contract = ContractDetails()
             contract.m_summary.m_symbol = self.readStr()
             contract.m_summary.m_secType = self.readStr()
-            contract.m_summary.m_cusip = self.readStr()
-            contract.m_summary.m_coupon = self.readDouble()
-            contract.m_summary.m_maturity = self.readStr()
-            contract.m_summary.m_issueDate = self.readStr()
-            contract.m_summary.m_ratings = self.readStr()
-            contract.m_summary.m_bondType = self.readStr()
-            contract.m_summary.m_couponType = self.readStr()
-            contract.m_summary.m_convertible = self.readBoolFromInt()
-            contract.m_summary.m_callable = self.readBoolFromInt()
-            contract.m_summary.m_putable = self.readBoolFromInt()
-            contract.m_summary.m_descAppend = self.readStr()
+            contract.m_cusip = self.readStr()
+            contract.m_coupon = self.readDouble()
+            contract.m_maturity = self.readStr()
+            contract.m_issueDate = self.readStr()
+            contract.m_ratings = self.readStr()
+            contract.m_bondType = self.readStr()
+            contract.m_couponType = self.readStr()
+            contract.m_convertible = self.readBoolFromInt()
+            contract.m_callable = self.readBoolFromInt()
+            contract.m_putable = self.readBoolFromInt()
+            contract.m_descAppend = self.readStr()
             contract.m_summary.m_exchange = self.readStr()
             contract.m_summary.m_currency = self.readStr()
             contract.m_marketName = self.readStr()
             contract.m_tradingClass = self.readStr()
-            contract.m_conid = self.readInt()
+            contract.m_summary.m_conId = self.readInt()
             contract.m_minTick = self.readDouble()
             contract.m_orderTypes = self.readStr()
             contract.m_validExchanges = self.readStr()
             if version >= 2:
-                contract.m_summary.m_nextOptionDate = self.readStr()
-                contract.m_summary.m_nextOptionType = self.readStr()
-                contract.m_summary.m_nextOptionPartial = self.readBoolFromInt()
-                contract.m_summary.m_notes = self.readStr()
+                contract.m_nextOptionDate = self.readStr()
+                contract.m_nextOptionType = self.readStr()
+                contract.m_nextOptionPartial = self.readBoolFromInt()
+                contract.m_notes = self.readStr()
             self.eWrapper().bondContractDetails(contract)
         elif msgId == self.EXECUTION_DATA:
             version = self.readInt()
             orderId = self.readInt()
             contract = Contract()
+            if version >= 5:
+                contract.m_conId = self.readInt()
             contract.m_symbol = self.readStr()
             contract.m_secType = self.readStr()
             contract.m_expiry = self.readStr()

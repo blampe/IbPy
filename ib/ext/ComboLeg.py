@@ -68,10 +68,8 @@ class ComboLeg(object):
         l_theOther = p_other
         if (self.m_conId != l_theOther.m_conId) or (self.m_ratio != l_theOther.m_ratio) or (self.m_openClose != l_theOther.m_openClose) or (self.m_shortSaleSlot != l_theOther.m_shortSaleSlot):
             return False
-        return (self.NormalizeString(self.m_action).compareToIgnoreCase(l_theOther.m_action) == 0) and (self.NormalizeString(self.m_exchange).compareToIgnoreCase(l_theOther.m_exchange) == 0) and (self.NormalizeString(self.m_designatedLocation).compareToIgnoreCase(l_theOther.m_designatedLocation) == 0)
-
-    @classmethod
-    def NormalizeString(cls, strval):
-        return strval if strval is not None else ""
+        if (Util.StringCompareIgnCase(self.m_action, l_theOther.m_action) != 0) or (Util.StringCompareIgnCase(self.m_exchange, l_theOther.m_exchange) != 0) or (Util.StringCompareIgnCase(self.m_designatedLocation, l_theOther.m_designatedLocation) != 0):
+            return False
+        return True
 
 
