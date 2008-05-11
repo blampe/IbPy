@@ -34,6 +34,9 @@ outputSubs = [
      r'\1Thread.__init__(self, name, parent, dis)\1\2'),
 
     (r'Math\.abs', r'abs'),
+
+    (r'len\(\(strval\) == 0\)', r'(len(strval) == 0)'),
+
     ]
 
 

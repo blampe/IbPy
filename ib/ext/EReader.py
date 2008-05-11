@@ -566,7 +566,7 @@ class EReader(Thread):
 
     def readIntMax(self):
         strval = self.readStr()
-        return Integer.MAX_VALUE if strval is None or len((strval) == 0) else Integer.parseInt(strval)
+        return Integer.MAX_VALUE if strval is None or (len(strval) == 0) else Integer.parseInt(strval)
 
     def readLong(self):
         strval = self.readStr()
@@ -578,6 +578,6 @@ class EReader(Thread):
 
     def readDoubleMax(self):
         strval = self.readStr()
-        return Double.MAX_VALUE if strval is None or len((strval) == 0) else Double.parseDouble(strval)
+        return Double.MAX_VALUE if strval is None or (len(strval) == 0) else Double.parseDouble(strval)
 
 
