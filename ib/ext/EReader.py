@@ -22,6 +22,7 @@ from ib.ext.Execution import Execution
 from ib.ext.Order import Order
 from ib.ext.OrderState import OrderState
 from ib.ext.TickType import TickType
+from ib.opt import logger
 
 # micro optimizations
 from __builtin__ import float, str, None, True, False
@@ -81,6 +82,8 @@ class EReader(Thread):
             while not self.isInterrupted() and self.processMsg(self.readInt()):
                 pass
         except (Exception, ), ex:
+            errmsg = ("Exception while processing message.")
+            logger().exception(errmsg)
             self.parent().wrapper().error(ex)
         self.m_parent.close()
 

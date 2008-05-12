@@ -13,6 +13,7 @@ modulePreamble = [
     'from ib.ext.Order import Order',
     'from ib.ext.OrderState import OrderState',
     'from ib.ext.TickType import TickType',
+    'from ib.opt import logger',
     '',
     '# micro optimizations',
     'from __builtin__ import float, str, None, True, False',
@@ -37,6 +38,9 @@ outputSubs = [
     (r'Math\.abs', r'abs'),
 
     (r'len\(\(strval\) == 0\)', r'(len(strval) == 0)'),
+
+    (r'(\s+)(self.parent\(\)\.wrapper\(\)\.error\(ex\))',
+     r'\1errmsg = ("Exception while processing message.")\1logger().exception(errmsg)\1\2'),
 
     ]
 
