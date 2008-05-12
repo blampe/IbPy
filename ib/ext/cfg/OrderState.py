@@ -4,6 +4,6 @@
 
 """
 modulePreamble = [
-    'from ib.lib.overloading import overloaded'
-    'from ib.ext.Util import Util'
+    'from ib.lib.overloading import overloaded',
+    'from ib.ext.Util import Util',
     ]

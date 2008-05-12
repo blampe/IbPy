@@ -13,6 +13,8 @@
 #
 # WARNING: all changes made to this file will be lost.
 
+from ib.lib.overloading import overloaded
+from ib.ext.Util import Util
 
 class OrderState(object):
     """ generated source for OrderState
