@@ -10,7 +10,7 @@
 ##
 
 from pprint import pprint
-from time import sleep
+from time import sleep, strftime
 
 from ib.ext.Contract import Contract
 from ib.ext.ExecutionFilter import ExecutionFilter
@@ -22,7 +22,10 @@ from ib.opt import ibConnection, message
 seen_messages = dict.fromkeys(message.registry.values(), 0)
 unknown_messages = {}
 seen_methods = {}
-qqqq_id = 0
+
+
+def qqqq_id():
+    return 0
 
 
 def qqqq_contract():
@@ -33,13 +36,23 @@ def qqqq_contract():
     return qqqq
 
 
-def qqqq_order_id():
-    return 3001
+order_ids = [0]
 
-def qqqq_order():
+
+def qqqq_order_id():
+    return order_ids[-1]
+
+
+def qqqq_order(limit_price=None):
     order = Order()
     order.m_minQty = 100
+    if limit_price is not None:
+        order.m_lmtPrice = limit_price
+        order.m_orderType = 'MKT'
+        order.m_totalQuantity = 100
+        order.m_action = 'BUY'
     return order
+
 
 def exec_filter():
     contract = qqqq_contract()
@@ -51,6 +64,9 @@ def exec_filter():
     return filt
 
 
+ignore_errors = [2104, 2106, ]
+
+
 def watcher(msg):
     cls = msg.__class__
     try:
@@ -59,39 +75,53 @@ def watcher(msg):
         unknown_messages[cls] = 1 + unknown_messages.setdefault(cls, 0)
     if cls.__name__ == 'Error':
         args = msg.errorCode, msg.errorMsg
-        print "## error:  code=%-4s message=%s" % args
+        if msg.errorCode not in ignore_errors:
+            print 'Error:  code=%-4s message=%s' % args
 
 
 def run_0(connection):
     connection.setServerLogLevel(3)
+    connection.reqCurrentTime()
     connection.reqAccountUpdates(1, '')
-    connection.reqManagedAccts()
-    connection.requestFA(connection.GROUPS)
+    ##connection.reqManagedAccts()
+    ##connection.requestFA(connection.GROUPS)
+    ##connection.replaceFA(connection.GROUPS, '')
+    def track_order_ids(msg):
+        order_ids.append(msg.orderId)
+    connection.register(track_order_ids, 'NextValidId')
     connection.reqIds(10)
-    connection.replaceFA(connection.GROUPS, '')
 
 
 def run_1(connection):
     subscript = ScannerSubscription()
     subscript.numberOfRows(3)
     subscript.locationCode('STK.NASDAQ')
-    connection.reqScannerSubscription(qqqq_id, subscript)
+    connection.reqScannerSubscription(qqqq_id(), subscript)
     connection.reqScannerParameters()
     sleep(3)
-    connection.cancelScannerSubscription(qqqq_id)
+    connection.cancelScannerSubscription(qqqq_id())
+
+
+tick_msgs = []
 
 
 def run_2(connection):
-    connection.reqMktData(qqqq_id, qqqq_contract(), '', False)
+    def cb(msg):
+        tick_msgs.append(msg)
+    connection.register(cb, 'TickSize', 'TickPrice')
+    connection.reqMktData(qqqq_id(),
+                          qqqq_contract(),
+                          '100,101,104,106,162,165,221,225,236',
+                          False)
     sleep(2)
-    connection.cancelMktData(qqqq_id)
+    connection.cancelMktData(qqqq_id())
 
 
 def run_3(connection):
     contract = qqqq_contract()
-    connection.reqMktDepth(qqqq_id, qqqq_contract(), 10)
+    connection.reqMktDepth(qqqq_id(), qqqq_contract(), 10)
     sleep(2)
-    connection.cancelMktDepth(qqqq_id)
+    connection.cancelMktDepth(qqqq_id())
 
 
 def run_4(connection):
@@ -108,27 +138,54 @@ def run_5(connection):
 
 
 def run_6(connection):
-    return # not complete
+    try:
+        askprice = [m.price for m in tick_msgs
+                    if getattr(m, 'price', None) and m.field==2][0]
+    except (IndexError, ):
+        askprice = 100.0
+        print '!!', askprice
+    order = qqqq_order(askprice)
     connection.placeOrder(id=qqqq_order_id(),
                           contract=qqqq_contract(),
-                          order=qqqq_order())
-    connection.exerciseOptions()
-    connection.reqContractDetails()
+                          order=order)
+    #connection.exerciseOptions()
+    contract = qqqq_contract()
+    connection.reqContractDetails(contract)
 
 
 def run_7(connection):
+    endtime = strftime('%Y%m%d %H:%M:%S')
     connection.reqHistoricalData(
-        qqqq_id,
-        qqqq_contract(),
-        '20070201 12:00:00', # yyyymmdd HH:mm:ss, #end
-        '5 D',               # duration, 5 days
-        '30 mins',           # bar size
-        'TRADES',            # what to show
-        0,                   # use regular trading hours, 0 means all data
-        2,                   # date format, 2 means seconds since 1/1/1970
-    )
+            tickerId=qqqq_id(),
+            contract=qqqq_contract(),
+            endDateTime=endtime,
+            durationStr='2 D',
+            barSizeSetting='30 mins',
+            whatToShow='TRADES',
+            useRTH=0,
+            formatDate=1)
     sleep(3)
-    connection.cancelHistoricalData(qqqq_id)
+    connection.cancelHistoricalData(qqqq_id())
+
+
+def ___run_8(connection):
+    ## prompt for shutdown?
+    def cb(*a, **b):
+        print '!!', a, b
+
+    connection.register(cb, 'ExecDetails')
+    filtr = exec_filter()
+    connection.reqExecutions(filtr)
+    snooze = 20
+    print 'Waiting %s seconds for %s exec details' % (snooze, filtr.m_symbol)
+    sleep(snooze)
+
+
+def __run_9(connection):
+    connection.reqRealTimeBars(qqqq_id(), qqqq_contract(),
+                               5, 'TRADES', 0)
+    snooze = 3
+    sleep(snooze)
 
 
 def run_last(connection):
@@ -136,15 +193,23 @@ def run_last(connection):
     connection.eDisconnect()
 
 
-if __name__ == '__main__':
+unseen_hints = {
+    'OpenOrder':'only works with existing order(s) before connecting',
+    'RealtimeBar':'only works during trading hours',
+    'ReceiveFA':'does not work with demo account',
+    'UpdateNewsBulletin':'news bulletins may not be available'
+    }
+
+
+def main():
     con = ibConnection()
     con.registerAll(watcher)
     con.connect()
+    sleep(5)
 
     calls = [v for k, v in globals().items() if k.startswith('run_')]
     for call in sorted(calls):
         call(con)
-    sleep(5)
 
     type_count = len(seen_messages)
     seen = [(k, v) for k, v in seen_messages.items() if v]
@@ -152,22 +217,28 @@ if __name__ == '__main__':
 
     print
     if seen:
-        print '## Seen Message Types (count):'
+        print 'Seen Message Types (count):'
         for cls, count in sorted(seen):
-            print '##    %s (%s)' % (cls.__name__, count, )
+            print '   %s (%s)' % (cls.__name__, count, )
     else:
-        print '## Total failure; no messages received.'
+        print 'Total failure; no messages received.'
 
     print
     if unseen:
-        print '## Unseen Message Types:'
+        print 'Unseen Message Types (help):'
         for cls, zero in sorted(unseen):
-            print '##    %s' % cls.__name__
+            name = cls.__name__
+            help = unseen_hints.get(name, '')
+            print '   %s%s' % (name, ' (%s)' % help if help else '', )
     else:
-        print '## All Message types received.'
+        print 'All Message types received.'
 
     print
-    print '## Summary:'
+    print 'Summary:'
     args = (type_count, len(seen), len(unseen),
             100*len(seen)/float(type_count))
-    print '##    total:%s  seen:%s  unseen:%s  coverage:%2.2f%%' % args
+    print '   total:%s  seen:%s  unseen:%s  coverage:%2.2f%%' % args
+
+if __name__ == '__main__':
+    main()
+

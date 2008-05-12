@@ -8,7 +8,7 @@
 ##
 
 from sys import argv
-from time import sleep
+from time import sleep, strftime
 
 from ib.ext.Contract import Contract
 from ib.ext.EWrapper import EWrapper
@@ -86,7 +86,7 @@ class ReferenceWrapper(EWrapper):
     def receiveFA(self, faDataType, xml):
         showmessage('receiveFA', vars())
 
-    def historicalData(self, reqId, date, open, high, low, close, volume, WAP, hasGaps):
+    def historicalData(self, reqId, date, open, high, low, close, volume, count, WAP, hasGaps):
         showmessage('historicalData', vars())
 
     def scannerParameters(self, xml):
@@ -101,8 +101,9 @@ def ref(method):
     allMethods.append(method.__name__)
     return method
 
+
 class ReferenceApp:
-    def __init__(self, host='localhost', port=7496, clientId=1):
+    def __init__(self, host='localhost', port=7496, clientId=0):
         self.host = host
         self.port = port
         self.clientId = clientId
@@ -172,14 +173,17 @@ class ReferenceApp:
         contract.m_symbol = 'QQQQ'
         contract.m_secType = 'STK'
         contract.m_exchange = 'SMART'
-        self.connection.reqHistoricalData(1,
-                                      contract,
-                                      "20070118 05:00:00 GMT",
-                                      "300 S",
-                                      1, # 1-11
-                                      "MIDPOINT",
-                                      1, # rth - regular trading hours
-                                      1) # date style - 1 or 2
+        endtime = strftime('%Y%m%d %H:%M:%S')
+        self.connection.reqHistoricalData(
+            tickerId=1,
+            contract=contract,
+            endDateTime=endtime,
+            durationStr='1 D',
+            barSizeSetting='1 min',
+            whatToShow='TRADES',
+            useRTH=0,
+            formatDate=1)
+
     @ref
     def eDisconnect(self):
         sleep(5)
