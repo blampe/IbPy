@@ -4,13 +4,14 @@
 
 """
 modulePreamble = [
-    'from ib.lib import Boolean, Double, DataInputStream, Integer, StringBuffer, Thread',
+    'from ib.lib import Boolean, Double, DataInputStream, Integer, Long, StringBuffer, Thread',
     'from ib.lib.overloading import overloaded',
     '',
     'from ib.ext.Contract import Contract',
     'from ib.ext.ContractDetails import ContractDetails',
     'from ib.ext.Execution import Execution',
     'from ib.ext.Order import Order',
+    'from ib.ext.OrderState import OrderState',
     'from ib.ext.TickType import TickType',
     '',
     '# micro optimizations',

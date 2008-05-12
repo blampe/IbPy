@@ -177,6 +177,12 @@ class Integer(int):
         return long(text or 0)
 
 
+##
+# The generated code uses Longs just like Integers, so we use an alias
+# instead of a subclass (for now).
+Long = Integer
+
+
 class Socket(socket.socket):
     """ Partial implementation of the Java Socket type.
 
