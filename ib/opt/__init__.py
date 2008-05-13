@@ -28,7 +28,7 @@
 #    }}}
 ##
 
-from ib.opt.logger import logger
+from ib.lib.logger import logger
 from ib.opt.receiver import Receiver
 from ib.opt.sender import Sender
 

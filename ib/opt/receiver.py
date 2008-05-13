@@ -10,7 +10,7 @@
 # Refer to the ReceiverType metaclass for details.
 ##
 from ib.lib.overloading import overloaded
-from ib.opt.logger import logger
+from ib.lib.logger import logger
 from ib.opt.message import registry, wrapperMethods
 
 
