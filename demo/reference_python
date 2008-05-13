@@ -35,6 +35,9 @@ class ReferenceWrapper(EWrapper):
     def tickSize(self, tickerId, field, size):
         showmessage('tickSize', vars())
 
+    def tickString(self, tickerId, tickType, value):
+        showmessage('tickString', vars())
+
     def tickOptionComputation(self, tickerId, field, impliedVolatility, delta):
         showmessage('tickOptionComputation', vars())
 
