@@ -29,16 +29,16 @@ doclines = __doc__.split('\n')
 
 
 setup(
-    name = "IbPy",
-    version = "0",
+    name = 'IbPy',
+    version = "0", # make value
     description = doclines[0],
-    author = "Troy Melhase",
-    author_email = "troy@gci.net",
-    url = "http://code.google.com/p/ibpy/",
-    license = "BSD License",
-    packages = ["ib", "ib/lib", "ib/ext", "ib/opt", ],
-    classifiers = filter(None, classifiers.split("\n")),
-    long_description = "\n".join(doclines[2:]),
-    platforms = ["any"],
-    download_url = "http://ibpy.googlecode.com/files/:release_file:",
+    author = 'Troy Melhase',
+    author_email = 'troy@gci.net',
+    url = 'http://code.google.com/p/ibpy/',
+    license = 'BSD License',
+    packages = ['ib', 'ib/lib', 'ib/ext', 'ib/opt', 'ib/sym'],
+    classifiers = filter(None, classifiers.split('\n')),
+    long_description = '\n'.join(doclines[2:]),
+    platforms = ['any'],
+    download_url = 'http://ibpy.googlecode.com/files/:release_file:',
 )
