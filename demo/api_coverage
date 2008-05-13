@@ -80,7 +80,7 @@ def watcher(msg):
 
 
 def run_0(connection):
-    connection.setServerLogLevel(3)
+    connection.setServerLogLevel(5)
     connection.reqCurrentTime()
     connection.reqAccountUpdates(1, '')
     ##connection.reqManagedAccts()
@@ -98,7 +98,7 @@ def run_1(connection):
     subscript.locationCode('STK.NASDAQ')
     connection.reqScannerSubscription(qqqq_id(), subscript)
     connection.reqScannerParameters()
-    sleep(3)
+    sleep(1)
     connection.cancelScannerSubscription(qqqq_id())
 
 
@@ -113,14 +113,14 @@ def run_2(connection):
                           qqqq_contract(),
                           '100,101,104,106,162,165,221,225,236',
                           False)
-    sleep(2)
+    sleep(1)
     connection.cancelMktData(qqqq_id())
 
 
 def run_3(connection):
     contract = qqqq_contract()
     connection.reqMktDepth(qqqq_id(), qqqq_contract(), 10)
-    sleep(2)
+    sleep(1)
     connection.cancelMktDepth(qqqq_id())
 
 
@@ -133,7 +133,7 @@ def run_4(connection):
 
 def run_5(connection):
     connection.reqNewsBulletins(True)
-    sleep(3)
+    sleep(1)
     connection.cancelNewsBulletins()
 
 
@@ -143,7 +143,6 @@ def run_6(connection):
                     if getattr(m, 'price', None) and m.field==2][0]
     except (IndexError, ):
         askprice = 100.0
-        print '!!', askprice
     order = qqqq_order(askprice)
     connection.placeOrder(id=qqqq_order_id(),
                           contract=qqqq_contract(),
@@ -164,7 +163,7 @@ def run_7(connection):
             whatToShow='TRADES',
             useRTH=0,
             formatDate=1)
-    sleep(3)
+    sleep(1)
     connection.cancelHistoricalData(qqqq_id())
 
 
@@ -184,12 +183,12 @@ def ___run_8(connection):
 def __run_9(connection):
     connection.reqRealTimeBars(qqqq_id(), qqqq_contract(),
                                5, 'TRADES', 0)
-    snooze = 3
+    snooze = 1
     sleep(snooze)
 
 
 def run_last(connection):
-    sleep(0.5)
+    sleep(1)
     connection.eDisconnect()
 
 
@@ -197,7 +196,8 @@ unseen_hints = {
     'OpenOrder':'only works with existing order(s) before connecting',
     'RealtimeBar':'only works during trading hours',
     'ReceiveFA':'does not work with demo account',
-    'UpdateNewsBulletin':'news bulletins may not be available'
+    'UpdateNewsBulletin':'news bulletins may not be available',
+    'ConnectionClosed':'may work if TWS is closed during script',
     }
 
 
