@@ -9,9 +9,10 @@
 # it an example of correct use of a programming language.
 ##
 
-from pprint import pprint
+from functools import partial
 from time import sleep, strftime
 
+from ib.ext.ComboLeg import ComboLeg
 from ib.ext.Contract import Contract
 from ib.ext.ExecutionFilter import ExecutionFilter
 from ib.ext.Order import Order
@@ -19,9 +20,10 @@ from ib.ext.ScannerSubscription import ScannerSubscription
 from ib.opt import ibConnection, message
 
 
-seen_messages = dict.fromkeys(message.registry.values(), 0)
-unknown_messages = {}
-seen_methods = {}
+rec_msgs = {}
+unrec_msgs = {}
+order_ids = [0]
+host, port, client_id = 'localhost', 7496, 0
 
 
 def qqqq_id():
@@ -34,9 +36,6 @@ def qqqq_contract():
     qqqq.m_secType = 'STK'
     qqqq.m_exchange = 'SMART'
     return qqqq
-
-
-order_ids = [0]
 
 
 def qqqq_order_id():
@@ -57,48 +56,47 @@ def qqqq_order(limit_price=None):
 def exec_filter():
     contract = qqqq_contract()
     filt = ExecutionFilter()
-    filt.m_clientId = 0
+    filt.m_clientId = client_id
     filt.m_symbol = contract.m_symbol
     filt.m_secType = contract.m_secType
     filt.m_exchange = contract.m_exchange
     return filt
 
 
-ignore_errors = [2104, 2106, ]
-
-
-def watcher(msg):
-    cls = msg.__class__
-    try:
-        seen_messages[cls] += 1
-    except (KeyError, ):
-        unknown_messages[cls] = 1 + unknown_messages.setdefault(cls, 0)
-    if cls.__name__ == 'Error':
-        args = msg.errorCode, msg.errorMsg
-        if msg.errorCode not in ignore_errors:
-            print 'Error:  code=%-4s message=%s' % args
+def watcher():
+    rec_msgs.update(dict([(c, []) for c in message.registry.values()]))
+    def inner(msg):
+        cls = msg.__class__
+        try:
+            rec_msgs[cls].append(msg)
+        except (KeyError, ):
+            unrec_msgs.setdefault(cls, []).append(msg)
+    return inner
 
 
 def run_0(connection):
     connection.setServerLogLevel(5)
     connection.reqCurrentTime()
-    connection.reqAccountUpdates(1, '')
-    ##connection.reqManagedAccts()
-    ##connection.requestFA(connection.GROUPS)
-    ##connection.replaceFA(connection.GROUPS, '')
+    connection.reqAccountUpdates(1, 'DF16165')
+    connection.reqManagedAccts()
+    connection.requestFA(connection.GROUPS)
+    connection.replaceFA(connection.GROUPS, '')
     def track_order_ids(msg):
         order_ids.append(msg.orderId)
     connection.register(track_order_ids, 'NextValidId')
     connection.reqIds(10)
 
 
+short_sleep = partial(sleep, 1)
+
+
 def run_1(connection):
     subscript = ScannerSubscription()
     subscript.numberOfRows(3)
-    subscript.locationCode('STK.NASDAQ')
+    subscript.locationCode('STK.NYSE')
     connection.reqScannerSubscription(qqqq_id(), subscript)
     connection.reqScannerParameters()
-    sleep(1)
+    short_sleep()
     connection.cancelScannerSubscription(qqqq_id())
 
 
@@ -113,14 +111,14 @@ def run_2(connection):
                           qqqq_contract(),
                           '100,101,104,106,162,165,221,225,236',
                           False)
-    sleep(1)
+    short_sleep()
     connection.cancelMktData(qqqq_id())
 
 
 def run_3(connection):
     contract = qqqq_contract()
     connection.reqMktDepth(qqqq_id(), qqqq_contract(), 10)
-    sleep(1)
+    short_sleep()
     connection.cancelMktDepth(qqqq_id())
 
 
@@ -133,7 +131,7 @@ def run_4(connection):
 
 def run_5(connection):
     connection.reqNewsBulletins(True)
-    sleep(1)
+    short_sleep()
     connection.cancelNewsBulletins()
 
 
@@ -163,32 +161,65 @@ def run_7(connection):
             whatToShow='TRADES',
             useRTH=0,
             formatDate=1)
-    sleep(1)
+    short_sleep()
     connection.cancelHistoricalData(qqqq_id())
 
 
-def ___run_8(connection):
-    ## prompt for shutdown?
+def __run_8(connection):
+    c = Contract()
+    c.m_exchange = 'IDEALPRO'
+    c.m_symbol = 'MO'
+    c.m_localSymbol = 'MO1C'
+    c.m_secType = 'BAG'
+    c.m_expiry = '200806'
+    leg1 = ComboLeg()
+    leg1.m_conId = 123
+    leg1.m_ratio = 1
+    leg1.m_exchange = 'ONE'
+    leg1.m_action = 'SELL'
+    leg2 = ComboLeg()
+    leg2.m_conId = 125
+    leg2.m_ratio = 100
+    leg2.m_exchange = 'NYSE'
+    leg2.m_action = 'BUY'
+    c.m_comboLegs = [leg1, leg2]
+    connection.reqMktData(1,
+                          c,
+                          '100,101,104,106,162,165,221,225,236',
+                          False)
+
+
+##
+# Generates tick option computation messages
+def run_8(connection):
     def cb(*a, **b):
         print '!!', a, b
 
     connection.register(cb, 'ExecDetails')
     filtr = exec_filter()
     connection.reqExecutions(filtr)
-    snooze = 20
-    print 'Waiting %s seconds for %s exec details' % (snooze, filtr.m_symbol)
+
+    c = Contract()
+    c.m_symbol = 'GOOG'
+    c.m_secType = 'OPT'
+    c.m_exchange = 'SMART'
+    c.m_right = 'CALL'
+    c.m_strike = 360.0
+    c.m_expiry = '200806'
+    connection.reqMktData(2, c, '', False)
+    snooze = 10
+    #print 'Waiting %s seconds for %s exec details' % (snooze, filtr.m_symbol)
     sleep(snooze)
 
 
-def __run_9(connection):
+def run_9(connection):
     connection.reqRealTimeBars(qqqq_id(), qqqq_contract(),
                                5, 'TRADES', 0)
-    snooze = 1
-    sleep(snooze)
+    short_sleep()
 
 
 def run_last(connection):
-    sleep(1)
+    short_sleep()
     connection.eDisconnect()
 
 
@@ -202,24 +233,32 @@ unseen_hints = {
 
 
 def main():
-    con = ibConnection()
-    con.registerAll(watcher)
+    con = ibConnection(host, port, client_id)
+    con.registerAll(watcher())
     con.connect()
-    sleep(5)
+    short_sleep()
 
     calls = [v for k, v in globals().items() if k.startswith('run_')]
     for call in sorted(calls):
         call(con)
 
-    type_count = len(seen_messages)
-    seen = [(k, v) for k, v in seen_messages.items() if v]
-    unseen = [(k, v) for k, v in seen_messages.items() if not v]
+    type_count = len(rec_msgs)
+    seen_items = rec_msgs.items()
+    seen = [(k, v) for k, v in seen_items if v]
+    unseen = [(k, v) for k, v in seen_items if not v]
+    errors = [v for k, v in seen_items if k.typeName=='Error']
 
     print
+    if errors:
+        errors = errors[0]
+        print 'Errors (%s):' % len(errors)
+        for err in errors:
+            print '%8s: %s' % (err.errorCode, err.errorMsg)
+        print
     if seen:
         print 'Seen Message Types (count):'
-        for cls, count in sorted(seen):
-            print '   %s (%s)' % (cls.__name__, count, )
+        for cls, seq in sorted(seen):
+            print '    %s (%s)' % (cls.__name__, len(seq), )
     else:
         print 'Total failure; no messages received.'
 
@@ -229,7 +268,7 @@ def main():
         for cls, zero in sorted(unseen):
             name = cls.__name__
             help = unseen_hints.get(name, '')
-            print '   %s%s' % (name, ' (%s)' % help if help else '', )
+            print '    %s%s' % (name, ' (%s)' % help if help else '', )
     else:
         print 'All Message types received.'
 
@@ -239,6 +278,6 @@ def main():
             100*len(seen)/float(type_count))
     print '   total:%s  seen:%s  unseen:%s  coverage:%2.2f%%' % args
 
+
 if __name__ == '__main__':
     main()
-

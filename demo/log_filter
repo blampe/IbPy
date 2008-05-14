@@ -7,10 +7,10 @@ import sys
 
 usage = 'usage: %prog filename [options]'
 version = '%prog 0.1'
-
 log_format_default = '%(asctime)s ' + logging.BASIC_FORMAT
 log_level_names = logging._levelNames
 log_level_default = log_level_names[logging.CRITICAL]
+
 
 log_level_map = {
     'SYS' : logging.critical,
@@ -25,9 +25,6 @@ log_pat = (r'(?P<lang>\w+)\s+(?P<time>.*?)\s+(?P<servermsg>.*?\:\s+)'
             '\[(?P<clientid>.*?)\:(?P<clientver>.*?)\:(?P<serverver>.*?)'
             '\:(?P<clienttype>.*?)\:(?P<request>.*?)\:(?P<response>.*?)'
             '\:(?P<version>.*?)\:(?P<loglevel>.*?)\]\s+(?P<msg>.*)')
-
-
-
 
 
 def log_filter(fd):
@@ -67,10 +64,7 @@ def main(args=None):
         return
 
     fn = args[0]
-    if fn == '-':
-        fh = sys.stdin
-    else:
-        fh = open(fn)
+    fh = sys.stdin if fn == '-' else open(fn)
 
     def badlevel():
         print >> sys.stderr, 'Unknown log level %s' % opts.loglevel
@@ -96,6 +90,7 @@ def main(args=None):
         call = log_level_map.get(data.get('loglevel', None), None)
         if call:
             call(opts.msgformat, data)
+
 
 if __name__ == '__main__':
     try:
