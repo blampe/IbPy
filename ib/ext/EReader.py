@@ -11,7 +11,7 @@
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
 #
-# WARNING: all changes made to this file will be lost.
+# WARNING: all changes to this file will be lost.
 
 from ib.lib import Boolean, Double, DataInputStream, Integer, Long, StringBuffer, Thread
 from ib.lib.overloading import overloaded
@@ -22,7 +22,7 @@ from ib.ext.Execution import Execution
 from ib.ext.Order import Order
 from ib.ext.OrderState import OrderState
 from ib.ext.TickType import TickType
-from ib.lib import logger
+from ib.lib.logger import logger
 
 # micro optimizations
 from __builtin__ import float, str, None, True, False

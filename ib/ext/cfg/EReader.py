@@ -13,7 +13,7 @@ modulePreamble = [
     'from ib.ext.Order import Order',
     'from ib.ext.OrderState import OrderState',
     'from ib.ext.TickType import TickType',
-    'from ib.lib import logger',
+    'from ib.lib.logger import logger',
     '',
     '# micro optimizations',
     'from __builtin__ import float, str, None, True, False',

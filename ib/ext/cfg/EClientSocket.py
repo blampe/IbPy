@@ -15,6 +15,7 @@ modulePreamble = [
     'from ib.lib import synchronized, Socket, DataInputStream, DataOutputStream',
     'from ib.lib import Double, Integer',
     '',
+    'from socket import SHUT_RDWR',
     'from threading import RLock',
     'mlock = RLock()',
     ]
@@ -28,7 +29,7 @@ outputSubs = [
     (r'(, "" \+ e)', r', str(e)'),
 
     (r'(\s+)(self.m_socket.close\(\))',
-     r'\1self.m_socket.shutdown(self.m_socket.SHUT_RDWR)\1\2'),
+     r'\1self.m_socket.shutdown(SHUT_RDWR)\1\2'),
 
     (r'print "Server Version:" \+ self\.m_serverVersion',
      r'debug("Server Version:  %s", self.m_serverVersion)',),

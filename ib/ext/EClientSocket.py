@@ -11,7 +11,7 @@
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
 #
-# WARNING: all changes made to this file will be lost.
+# WARNING: all changes to this file will be lost.
 
 from logging import debug
 
@@ -24,6 +24,7 @@ from ib.lib.overloading import overloaded
 from ib.lib import synchronized, Socket, DataInputStream, DataOutputStream
 from ib.lib import Double, Integer
 
+from socket import SHUT_RDWR
 from threading import RLock
 mlock = RLock()
 
@@ -166,7 +167,7 @@ class EClientSocket(object):
             if self.m_reader is not None:
                 self.m_reader.interrupt()
             if self.m_socket is not None:
-                self.m_socket.shutdown(self.m_socket.SHUT_RDWR)
+                self.m_socket.shutdown(SHUT_RDWR)
                 self.m_socket.close()
         except (Exception, ), e:
             pass
