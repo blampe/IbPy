@@ -4,10 +4,12 @@
 ##
 # Defines Receiver class to handle inbound data.
 #
-# The Receiver class is built programatically.  Message types are
-# defined in the ib.opt.message module, and those types are used to
-# construct methods on the Receiver class during its definition.
-# Refer to the ReceiverType metaclass for details.
+# The Receiver class is built programatically at runtime.  Message
+# types are defined in the ib.opt.message module, and those types are
+# used to construct methods on the Receiver class during its
+# definition.  Refer to the ReceiverType metaclass and the
+# ib.opt.message module more information.
+#
 ##
 from ib.lib.overloading import overloaded
 from ib.lib.logger import logger
@@ -31,6 +33,8 @@ def messageMethod(name, argnames):
 class ReceiverType(type):
     """ Metaclass to add EWrapper methods to Receiver class.
 
+    When the Receiver class is defined, this class adds all of the
+    wrapper methods to it.
     """
     def __new__(cls, name, bases, namespace):
         """ Creates a new type.
@@ -40,15 +44,16 @@ class ReceiverType(type):
         @param namespace dictionary with namespace for new type
         @return generated type
         """
-        for mname, margs in wrapperMethods():
-            namespace[mname] = messageMethod(mname, margs)
+        for methodname, methodargs in wrapperMethods():
+            namespace[methodname] = messageMethod(methodname, methodargs)
         return type(name, bases, namespace)
 
 
 class Receiver(object):
     """ Receiver -> dispatches messages to interested callables
 
-    Instances implement the EWrapper interface but do not subclass it.
+    Instances implement the EWrapper interface by way of the
+    metaclass.
     """
     __metaclass__ = ReceiverType
 
@@ -70,17 +75,17 @@ class Receiver(object):
         @return None
         """
         try:
-            mtype = self.types[name]
-            listeners = self.listeners[self.key(mtype)]
+            messagetype = self.types[name]
+            listeners = self.listeners[self.key(messagetype)]
         except (KeyError, ):
             pass
         else:
-            message = mtype(**mapping)
+            message = messagetype(**mapping)
             for listener in listeners:
                 try:
                     listener(message)
                 except (Exception, ):
-                    self.unregister(listener, mtype)
+                    self.unregister(listener, messagetype)
                     errmsg = ("Exception in message dispatch.  "
                               "Handler '%s' unregistered for '%s'")
                     self.logger.exception(errmsg, self.key(listener), name)
@@ -90,45 +95,51 @@ class Receiver(object):
 
         @param listener callable to receive messages
         @param *types zero or more message types to associate with listener
-        @return None
+        @return True if associated with one or more handler; otherwise False
         """
-        for mtype in types:
-            key = self.key(mtype)
+        count = 0
+        for messagetype in types:
+            key = self.key(messagetype)
             listeners = self.listeners.setdefault(key, [])
             if listener not in listeners:
                 listeners.append(listener)
+                count += 1
+        return count > 0
 
     def registerAll(self, listener):
         """ Associate listener with all messages created by this Receiver.
 
         @param listener callable to receive messages
-        @return None
+        @return True if associated with one or more handler; otherwise False
         """
-        self.register(listener, *self.types.values())
+        return self.register(listener, *self.types.values())
 
     def unregister(self, listener, *types):
         """ Disassociate listener with message types created by this Receiver.
 
         @param listener callable to no longer receive messages
         @param *types zero or more message types to disassociate with listener
-        @return None
+        @return True if disassociated with one or more handler; otherwise False
         """
-        for mtype in types:
+        count = 0
+        for messagetype in types:
             try:
-                listeners = self.listeners[self.key(mtype)]
+                listeners = self.listeners[self.key(messagetype)]
             except (KeyError, ):
                 pass
             else:
                 if listener in listeners:
                     listeners.remove(listener)
+                    count += 1
+        return count > 0
 
     def unregisterAll(self, listener):
         """ Disassociate listener with all messages created by this Receiver.
 
         @param listener callable to no longer receive messages
-        @return None
+        @return True if disassociated with one or more handler; otherwise False
         """
-        self.unregister(listener, *self.types.values())
+        return self.unregister(listener, *self.types.values())
 
     @staticmethod
     def key(obj):

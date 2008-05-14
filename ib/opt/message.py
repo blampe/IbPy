@@ -114,12 +114,15 @@ def selectWrapperMethods(cls):
     """ Wrapper methods of a class.
 
     @param cls class object to inspect
-    @return list of two-tuples, each (name, method)
+    @return list of two-tuples, each (name, argnames)
     """
-    items = [(name, getattr(cls, name)) for name in dir(cls)]
-    items =  [(name, value) for name, value in items
-                if isWrapperMethod(name, value)]
-    return [(name, getargspec(value)[0][1:]) for name, value in items]
+    clsitems = [(name, getattr(cls, name)) for name in dir(cls)]
+    clsitems = [(name, method) for name, method in clsitems
+                if isWrapperMethod(name, method)]
+    def argns(meth):
+        args, varargs, varkw, defaults = getargspec(meth)
+        return args[1:] # without leading 'self'
+    return [(name, argns(method)) for name, method in clsitems]
 
 
 def buildMessageTypes(wrapper, mapping, *bases):

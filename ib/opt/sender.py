@@ -3,9 +3,11 @@
 
 ##
 # Defines Sender class to handle outbound requests.
+#
+# Sender instances defer failed attribute lookup to their
+# EClientSocket member objects.
+#
 ##
-
-from ib.lib.overloading import overloaded
 from ib.ext.EClientSocket import EClientSocket
 
 
@@ -14,36 +16,36 @@ class Sender(object):
         lookup to it.
 
     """
-    def __init__(self):
-        """ Constructor.
+    client = None
 
-        """
-        self.client = None
-
-    def connect(self, host, port, clientId, handler):
-        """ Creates an EClientSocket and connects it.
-
+    def connect(self, host, port, clientId, handler, clientType=EClientSocket):
+        """ Creates a TWS client socket and connects it.
 
         @param host name of host for connection; default is localhost
         @param port port number for connection; default is 7496
         @param clientId client identifier to send when connected
         @param handler object to receive reader messages
-        @return None
+        @keyparam clientType=EClientSocket callable producing socket client
+        @return True if connected, False otherwise
         """
-        self.client = EClientSocket(handler)
-        self.client.eConnect(host, port, clientId)
+        self.client = client = clientType(handler)
+        client.eConnect(host, port, clientId)
+        return client.isConnected()
 
     def disconnect(self):
         """ Disconnects the client.
 
-        @return None
+        @return True if disconnected, False otherwise
         """
-        if self.client:
-            self.client.eDisconnect()
+        client = self.client
+        if client and client.m_socket.isConnected():
+            client.eDisconnect()
+            return not client.m_socket.isConnected()
+        return False
 
     def __getattr__(self, name):
         """ x.__getattr__('name') <==> x.name
 
-        @return named attribute from instance client object
+        @return named attribute from EClientSocket object
         """
         return getattr(self.client, name)
