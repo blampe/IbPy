@@ -7,9 +7,10 @@
 #
 # It's not meant as an example of correct use of the package, nor is
 # it an example of correct use of a programming language.
+#
 ##
-
 from functools import partial
+from optparse import OptionParser
 from time import sleep, strftime
 
 from ib.ext.ComboLeg import ComboLeg
@@ -23,7 +24,29 @@ from ib.opt import ibConnection, message
 rec_msgs = {}
 unrec_msgs = {}
 order_ids = [0]
-host, port, client_id = 'localhost', 7496, 0
+short_sleep = partial(sleep, 1)
+long_sleep = partial(sleep, 10)
+tick_msgs = []
+gen_tick_keys = '100,101,104,106,162,165,221,225,236'
+unseen_hints = {
+    'OpenOrder':'only works with existing order(s) before connecting',
+    'RealtimeBar':'only works during trading hours',
+    'ReceiveFA':'does not work with edemo account',
+    'UpdateNewsBulletin':'news bulletins may not be available',
+    'ConnectionClosed':'may work if TWS is closed during script',
+    }
+
+
+def next_order_id():
+    return order_ids[-1]
+
+
+def save_order_id(msg):
+    order_ids.append(msg.orderId)
+
+
+def save_tick(msg):
+    tick_msgs.append(msg)
 
 
 def qqqq_id():
@@ -38,22 +61,17 @@ def qqqq_contract():
     return qqqq
 
 
-def qqqq_order_id():
-    return order_ids[-1]
-
-
-def qqqq_order(limit_price=None):
+def qqqq_order(limit_price):
     order = Order()
     order.m_minQty = 100
-    if limit_price is not None:
-        order.m_lmtPrice = limit_price
-        order.m_orderType = 'MKT'
-        order.m_totalQuantity = 100
-        order.m_action = 'BUY'
+    order.m_lmtPrice = limit_price
+    order.m_orderType = 'MKT'
+    order.m_totalQuantity = 100
+    order.m_action = 'BUY'
     return order
 
 
-def exec_filter():
+def exec_filter(client_id):
     contract = qqqq_contract()
     filt = ExecutionFilter()
     filt.m_clientId = client_id
@@ -63,34 +81,28 @@ def exec_filter():
     return filt
 
 
-def watcher():
+def make_msg_counter():
     rec_msgs.update(dict([(c, []) for c in message.registry.values()]))
-    def inner(msg):
+    def counter(msg):
         cls = msg.__class__
         try:
             rec_msgs[cls].append(msg)
         except (KeyError, ):
             unrec_msgs.setdefault(cls, []).append(msg)
-    return inner
+    return counter
 
 
-def run_0(connection):
+def test_000(connection, options):
     connection.setServerLogLevel(5)
     connection.reqCurrentTime()
     connection.reqAccountUpdates(1, 'DF16165')
     connection.reqManagedAccts()
     connection.requestFA(connection.GROUPS)
     connection.replaceFA(connection.GROUPS, '')
-    def track_order_ids(msg):
-        order_ids.append(msg.orderId)
-    connection.register(track_order_ids, 'NextValidId')
     connection.reqIds(10)
 
 
-short_sleep = partial(sleep, 1)
-
-
-def run_1(connection):
+def test_001(connection, options):
     subscript = ScannerSubscription()
     subscript.numberOfRows(3)
     subscript.locationCode('STK.NYSE')
@@ -100,57 +112,49 @@ def run_1(connection):
     connection.cancelScannerSubscription(qqqq_id())
 
 
-tick_msgs = []
-
-
-def run_2(connection):
-    def cb(msg):
-        tick_msgs.append(msg)
-    connection.register(cb, 'TickSize', 'TickPrice')
-    connection.reqMktData(qqqq_id(),
-                          qqqq_contract(),
-                          '100,101,104,106,162,165,221,225,236',
-                          False)
+def test_002(connection, options):
+    connection.reqMktData(qqqq_id(), qqqq_contract(), gen_tick_keys, False)
     short_sleep()
     connection.cancelMktData(qqqq_id())
 
 
-def run_3(connection):
+def test_003(connection, options):
     contract = qqqq_contract()
     connection.reqMktDepth(qqqq_id(), qqqq_contract(), 10)
     short_sleep()
     connection.cancelMktDepth(qqqq_id())
 
 
-def run_4(connection):
+def test_004(connection, options):
     connection.reqAllOpenOrders()
     connection.reqAutoOpenOrders(True)
     connection.reqOpenOrders()
-    connection.reqExecutions(exec_filter())
+    connection.reqExecutions(exec_filter(options.clientid))
 
 
-def run_5(connection):
+def test_005(connection, options):
     connection.reqNewsBulletins(True)
     short_sleep()
     connection.cancelNewsBulletins()
 
 
-def run_6(connection):
+def test_006(connection, options):
     try:
         askprice = [m.price for m in tick_msgs
                     if getattr(m, 'price', None) and m.field==2][0]
     except (IndexError, ):
         askprice = 100.0
     order = qqqq_order(askprice)
-    connection.placeOrder(id=qqqq_order_id(),
-                          contract=qqqq_contract(),
-                          order=order)
+    if options.demo:
+        connection.placeOrder(id=next_order_id(),
+                              contract=qqqq_contract(),
+                              order=order)
     #connection.exerciseOptions()
     contract = qqqq_contract()
     connection.reqContractDetails(contract)
 
 
-def run_7(connection):
+def test_007(connection, options):
     endtime = strftime('%Y%m%d %H:%M:%S')
     connection.reqHistoricalData(
             tickerId=qqqq_id(),
@@ -165,7 +169,7 @@ def run_7(connection):
     connection.cancelHistoricalData(qqqq_id())
 
 
-def __run_8(connection):
+def test_008a(connection, options):
     c = Contract()
     c.m_exchange = 'IDEALPRO'
     c.m_symbol = 'MO'
@@ -183,22 +187,15 @@ def __run_8(connection):
     leg2.m_exchange = 'NYSE'
     leg2.m_action = 'BUY'
     c.m_comboLegs = [leg1, leg2]
-    connection.reqMktData(1,
-                          c,
-                          '100,101,104,106,162,165,221,225,236',
-                          False)
+    connection.reqMktData(1, c, gen_tick_keys, False)
 
 
-##
-# Generates tick option computation messages
-def run_8(connection):
+def test_008b(connection, options):
     def cb(*a, **b):
         print '!!', a, b
-
     connection.register(cb, 'ExecDetails')
-    filtr = exec_filter()
+    filtr = exec_filter(options.clientid)
     connection.reqExecutions(filtr)
-
     c = Contract()
     c.m_symbol = 'GOOG'
     c.m_secType = 'OPT'
@@ -207,40 +204,30 @@ def run_8(connection):
     c.m_strike = 360.0
     c.m_expiry = '200806'
     connection.reqMktData(2, c, '', False)
-    snooze = 10
-    #print 'Waiting %s seconds for %s exec details' % (snooze, filtr.m_symbol)
-    sleep(snooze)
+    long_sleep()
 
 
-def run_9(connection):
-    connection.reqRealTimeBars(qqqq_id(), qqqq_contract(),
-                               5, 'TRADES', 0)
+def test_009(connection, options):
+    connection.reqRealTimeBars(qqqq_id(), qqqq_contract(), 5, 'TRADES', 0)
     short_sleep()
 
 
-def run_last(connection):
+def test_999(connection, options):
     short_sleep()
     connection.eDisconnect()
 
 
-unseen_hints = {
-    'OpenOrder':'only works with existing order(s) before connecting',
-    'RealtimeBar':'only works during trading hours',
-    'ReceiveFA':'does not work with demo account',
-    'UpdateNewsBulletin':'news bulletins may not be available',
-    'ConnectionClosed':'may work if TWS is closed during script',
-    }
-
-
-def main():
-    con = ibConnection(host, port, client_id)
-    con.registerAll(watcher())
+def main(options):
+    con = ibConnection(options.host, options.port, options.clientid)
+    con.registerAll(make_msg_counter())
+    con.register(save_order_id, 'NextValidId')
+    con.register(save_tick, 'TickSize', 'TickPrice')
     con.connect()
     short_sleep()
 
-    calls = [v for k, v in globals().items() if k.startswith('run_')]
+    calls = [v for k, v in globals().items() if k.startswith('test_')]
     for call in sorted(calls):
-        call(con)
+        call(con, options)
 
     type_count = len(rec_msgs)
     seen_items = rec_msgs.items()
@@ -248,36 +235,48 @@ def main():
     unseen = [(k, v) for k, v in seen_items if not v]
     errors = [v for k, v in seen_items if k.typeName=='Error']
 
-    print
-    if errors:
+    if errors and options.errors:
         errors = errors[0]
-        print 'Errors (%s):' % len(errors)
+        print '\nErrors (%s):' % len(errors)
         for err in errors:
             print '%8s: %s' % (err.errorCode, err.errorMsg)
-        print
     if seen:
-        print 'Seen Message Types (count):'
+        print '\nSeen Message Types (count):'
         for cls, seq in sorted(seen):
             print '    %s (%s)' % (cls.__name__, len(seq), )
     else:
-        print 'Total failure; no messages received.'
+        print '\nTotal failure; no messages received.'
 
-    print
     if unseen:
-        print 'Unseen Message Types (help):'
+        print '\nUnseen Message Types (help):'
         for cls, zero in sorted(unseen):
             name = cls.__name__
             help = unseen_hints.get(name, '')
             print '    %s%s' % (name, ' (%s)' % help if help else '', )
     else:
-        print 'All Message types received.'
+        print '\nAll Message types received.'
 
-    print
-    print 'Summary:'
-    args = (type_count, len(seen), len(unseen),
-            100*len(seen)/float(type_count))
+    print '\nSummary:'
+    args = (type_count, len(seen), len(unseen), 100*len(seen)/float(type_count))
     print '   total:%s  seen:%s  unseen:%s  coverage:%2.2f%%' % args
 
 
+def get_options():
+    version = '%prog 0.1'
+    parser = OptionParser(version=version)
+    parser.add_option('-e', '--errors', dest='errors',
+                      help='Report errors in summary.', action="store_true")
+    parser.add_option('', '--host', dest='host',
+                      help='Name or address of host for remote connection', default='localhost')
+    parser.add_option('-p', '--port', dest='port',
+                      help='Port number for remote connection', default=7496, type='int')
+    parser.add_option('-c', '--client', dest='clientid',
+                      help='Client id for remote connection', default=0, type='int')
+    parser.add_option('-d', '--demo', dest='demo',
+                      help='Server using demo account, safe for placing orders.', action='store_true')
+    opts, args = parser.parse_args()
+    return opts
+
+
 if __name__ == '__main__':
-    main()
+    main(get_options())

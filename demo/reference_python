@@ -41,10 +41,10 @@ class ReferenceWrapper(EWrapper):
     def tickOptionComputation(self, tickerId, field, impliedVolatility, delta):
         showmessage('tickOptionComputation', vars())
 
-    def orderStatus(self, orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId):
+    def orderStatus(self, orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeId):
         showmessage('orderStatus', vars())
 
-    def openOrder(self, orderId, contract, order):
+    def openOrder(self, orderId, contract, order, state):
         showmessage('openOrder', vars())
 
     def connectionClosed(self):
