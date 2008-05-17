@@ -11,7 +11,8 @@
 ##
 from functools import partial
 from optparse import OptionParser
-from time import sleep, strftime
+from random import randint
+from time import sleep, strftime, time
 
 from ib.ext.ComboLeg import ComboLeg
 from ib.ext.Contract import Contract
@@ -23,6 +24,7 @@ from ib.opt import ibConnection, message
 
 rec_msgs = {}
 unrec_msgs = {}
+error_msgs = {}
 order_ids = [0]
 short_sleep = partial(sleep, 1)
 long_sleep = partial(sleep, 10)
@@ -35,6 +37,11 @@ unseen_hints = {
     'UpdateNewsBulletin':'news bulletins may not be available',
     'ConnectionClosed':'may work if TWS is closed during script',
     }
+msg_formatters = {
+    'default':lambda msg:'    %s' % (msg, ), # (dict(msg.items()), ),
+    'Error':lambda msg:'%8s: %s %s' % (msg.errorCode, msg.errorMsg,
+                                       ('(in %s)' % error_msgs.get(msg)) if error_msgs.get(msg) else '')
+}
 
 
 def next_order_id():
@@ -49,19 +56,23 @@ def save_tick(msg):
     tick_msgs.append(msg)
 
 
-def qqqq_id():
-    return 0
+def gen_tick_id():
+    i = randint(100,10000)
+    while True:
+        yield i
+        i += 1
+gen_tick_id = gen_tick_id().next
 
 
-def qqqq_contract():
-    qqqq = Contract()
-    qqqq.m_symbol = 'QQQQ'
-    qqqq.m_secType = 'STK'
-    qqqq.m_exchange = 'SMART'
-    return qqqq
+def make_contract(symbol):
+    contract = Contract()
+    contract.m_symbol = symbol
+    contract.m_secType = 'STK'
+    contract.m_exchange = 'SMART'
+    return contract
 
 
-def qqqq_order(limit_price):
+def make_order(limit_price):
     order = Order()
     order.m_minQty = 100
     order.m_lmtPrice = limit_price
@@ -72,7 +83,7 @@ def qqqq_order(limit_price):
 
 
 def exec_filter(client_id):
-    contract = qqqq_contract()
+    contract = make_contract('QQQQ')
     filt = ExecutionFilter()
     filt.m_clientId = client_id
     filt.m_symbol = contract.m_symbol
@@ -92,6 +103,38 @@ def make_msg_counter():
     return counter
 
 
+def make_error_catcher(seq):
+    def catcher(msg):
+        seq.append(msg)
+    return catcher
+
+def maybeverbose(call):
+    name = call.__name__
+    def inner(connection, options):
+        if options.verbose:
+            print 'Start function %s' % (name, ),
+        start = time()
+        v = call(connection, options)
+        finish = time()
+        if options.verbose:
+            print 'finshed in %0.3f' % (finish-start, )
+        return v
+    inner.__name__ = name
+    return inner
+
+
+def catcherrors(call):
+    def inner(connection, options):
+        errors = []
+        catcher = make_error_catcher(errors)
+        connection.register(catcher, 'Error')
+        rv = call(connection, options)
+        connection.unregister(catcher, 'Error')
+        return errors
+    inner.__name__ = call.__name__
+    return inner
+
+
 def test_000(connection, options):
     connection.setServerLogLevel(5)
     connection.reqCurrentTime()
@@ -103,26 +146,29 @@ def test_000(connection, options):
 
 
 def test_001(connection, options):
+    ticker_id = gen_tick_id()
     subscript = ScannerSubscription()
     subscript.numberOfRows(3)
     subscript.locationCode('STK.NYSE')
-    connection.reqScannerSubscription(qqqq_id(), subscript)
+    connection.reqScannerSubscription(ticker_id, subscript)
     connection.reqScannerParameters()
     short_sleep()
-    connection.cancelScannerSubscription(qqqq_id())
+    connection.cancelScannerSubscription(ticker_id)
 
 
 def test_002(connection, options):
-    connection.reqMktData(qqqq_id(), qqqq_contract(), gen_tick_keys, False)
+    ticker_id = gen_tick_id()
+    connection.reqMktData(ticker_id, make_contract('QQQQ'), gen_tick_keys, False)
     short_sleep()
-    connection.cancelMktData(qqqq_id())
+    connection.cancelMktData(ticker_id)
 
 
 def test_003(connection, options):
-    contract = qqqq_contract()
-    connection.reqMktDepth(qqqq_id(), qqqq_contract(), 10)
+    ticker_id = gen_tick_id()
+    contract = make_contract('GOOG')
+    connection.reqMktDepth(ticker_id, contract, 10)
     short_sleep()
-    connection.cancelMktDepth(qqqq_id())
+    connection.cancelMktDepth(ticker_id)
 
 
 def test_004(connection, options):
@@ -144,21 +190,22 @@ def test_006(connection, options):
                     if getattr(m, 'price', None) and m.field==2][0]
     except (IndexError, ):
         askprice = 100.0
-    order = qqqq_order(askprice)
+    order = make_order(askprice)
     if options.demo:
         connection.placeOrder(id=next_order_id(),
-                              contract=qqqq_contract(),
+                              contract=make_contract('QQQQ'),
                               order=order)
     #connection.exerciseOptions()
-    contract = qqqq_contract()
+    contract = make_contract('QQQQ')
     connection.reqContractDetails(contract)
 
 
 def test_007(connection, options):
     endtime = strftime('%Y%m%d %H:%M:%S')
+    ticker_id = gen_tick_id()
     connection.reqHistoricalData(
-            tickerId=qqqq_id(),
-            contract=qqqq_contract(),
+            tickerId=ticker_id,
+            contract=make_contract('INTC'),
             endDateTime=endtime,
             durationStr='2 D',
             barSizeSetting='30 mins',
@@ -166,7 +213,7 @@ def test_007(connection, options):
             useRTH=0,
             formatDate=1)
     short_sleep()
-    connection.cancelHistoricalData(qqqq_id())
+    connection.cancelHistoricalData(ticker_id)
 
 
 def test_008a(connection, options):
@@ -208,7 +255,8 @@ def test_008b(connection, options):
 
 
 def test_009(connection, options):
-    connection.reqRealTimeBars(qqqq_id(), qqqq_contract(), 5, 'TRADES', 0)
+    ticker_id = gen_tick_id()
+    connection.reqRealTimeBars(ticker_id, make_contract('AAPL'), 5, 'TRADES', 0)
     short_sleep()
 
 
@@ -217,36 +265,80 @@ def test_999(connection, options):
     connection.eDisconnect()
 
 
+def name_count(value):
+    if value.count(':') == 1:
+        name, count = value.split(':')
+        try:
+            count = int(count)
+        except (TypeError, ValueError, ):
+            count = 0
+    else:
+        name, count = value, 0
+    return name, count
+
+
 def main(options):
+    handler = make_msg_counter()
+    ## make_msg_counter fills in the defaults for the rec_msgs dict; now we can
+    ## print those values and exit if the option is given
+    if options.printmsgs:
+        for name in sorted(k.typeName for k in rec_msgs.keys()):
+            print name
+        return
+    ## if we're still here, we should connect
     con = ibConnection(options.host, options.port, options.clientid)
-    con.registerAll(make_msg_counter())
+    con.registerAll(handler)
     con.register(save_order_id, 'NextValidId')
     con.register(save_tick, 'TickSize', 'TickPrice')
     con.connect()
     short_sleep()
-
+    ## and if we've connected, we shoud execute all of the test functions in
+    ## the module namespace.
     calls = [v for k, v in globals().items() if k.startswith('test_')]
     for call in sorted(calls):
-        call(con, options)
+        call = maybeverbose(catcherrors(call))
+        errors = call(con, options)
+        for error in errors:
+            error_msgs[error] = call.__name__
 
     type_count = len(rec_msgs)
     seen_items = rec_msgs.items()
     seen = [(k, v) for k, v in seen_items if v]
     unseen = [(k, v) for k, v in seen_items if not v]
-    errors = [v for k, v in seen_items if k.typeName=='Error']
 
-    if errors and options.errors:
-        errors = errors[0]
-        print '\nErrors (%s):' % len(errors)
-        for err in errors:
-            print '%8s: %s' % (err.errorCode, err.errorMsg)
+    ## adjust the showmsgs option if given --show=all
+    alls = [v for v in options.showmsgs if 'all' in v.lower()]
+    if any(alls):
+        all, count = name_count(alls[0])
+        options.showmsgs = ['%s:%s' % (k.typeName, count) for k in rec_msgs.keys()]
+
+    ## ready, set, print!
+    for msg_typename in options.showmsgs:
+        msg_typename, msg_showmax = name_count(msg_typename)
+        formatter = msg_formatters.get(msg_typename, msg_formatters['default'])
+        msgs = [v for k, v in seen_items if k.typeName==msg_typename]
+        if msgs:
+            msgs = msgs[0]
+            if not msg_showmax or msg_showmax > len(msgs):
+                msg_showmax = len(msgs)
+            print '\n%s (%s of %s):' % (msg_typename, msg_showmax, len(msgs), )
+            for msg in msgs[0:msg_showmax]:
+                print formatter(msg)
+        else:
+            if msg_typename in [k.typeName for k in rec_msgs.keys()]:
+                print '\n%s (%s):' % (msg_typename, 0, )
+            else:
+                print '\nMessage type %s not recognized' % (msg_typename, )
+    ## but wait, there's more!  here we print a summary of seen message
+    ## types and associated counts.
     if seen:
         print '\nSeen Message Types (count):'
         for cls, seq in sorted(seen):
             print '    %s (%s)' % (cls.__name__, len(seq), )
     else:
         print '\nTotal failure; no messages received.'
-
+    ## but wait, there's more!  here we print a summary of unseen message
+    ## types and associated counts.
     if unseen:
         print '\nUnseen Message Types (help):'
         for cls, zero in sorted(unseen):
@@ -255,7 +347,7 @@ def main(options):
             print '    %s%s' % (name, ' (%s)' % help if help else '', )
     else:
         print '\nAll Message types received.'
-
+    ## last but not least we print the seen and unseen totals, and their ratio
     print '\nSummary:'
     args = (type_count, len(seen), len(unseen), 100*len(seen)/float(type_count))
     print '   total:%s  seen:%s  unseen:%s  coverage:%2.2f%%' % args
@@ -264,19 +356,28 @@ def main(options):
 def get_options():
     version = '%prog 0.1'
     parser = OptionParser(version=version)
-    parser.add_option('-e', '--errors', dest='errors',
-                      help='Report errors in summary.', action="store_true")
-    parser.add_option('', '--host', dest='host',
-                      help='Name or address of host for remote connection', default='localhost')
-    parser.add_option('-p', '--port', dest='port',
-                      help='Port number for remote connection', default=7496, type='int')
-    parser.add_option('-c', '--client', dest='clientid',
-                      help='Client id for remote connection', default=0, type='int')
-    parser.add_option('-d', '--demo', dest='demo',
-                      help='Server using demo account, safe for placing orders.', action='store_true')
+    add = parser.add_option
+    add('-d', '--demo', dest='demo', action='store_true',
+        help='Server using demo account, safe for placing orders.')
+    add('-m', '--messages', dest='printmsgs', action='store_true',
+        help='Print message type names and exit.')
+    add('-s', '--show', dest='showmsgs', metavar='MSG[:MAX]', action='append', default=[],
+        help='Print messages of type MSG.  May use ALL to print all messages.  May be repeated.')
+    add('-n', '--host', dest='host', default='localhost',
+        help='Name or address of remote server (default: %default)')
+    add('-p', '--port', dest='port', default=7496, type='int',
+        help='Port number for remote connection (default: %default)')
+    add('-c', '--client', dest='clientid', metavar='ID', default=0, type='int',
+        help='Client id for remote connection (default: %default)')
+    add('-v', '--verbose', default=0, action='count',
+        help='Verbose output.  May be repeated.')
     opts, args = parser.parse_args()
     return opts
 
 
 if __name__ == '__main__':
-    main(get_options())
+    try:
+        main(get_options())
+    except (KeyboardInterrupt, ):
+        pass
+
