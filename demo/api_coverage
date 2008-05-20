@@ -10,6 +10,8 @@
 #
 ##
 from functools import partial
+from logging import DEBUG, INFO, WARN, ERROR
+from logging import debug, info, warn, error, root
 from optparse import OptionParser
 from random import randint
 from time import sleep, strftime, time
@@ -19,28 +21,45 @@ from ib.ext.Contract import Contract
 from ib.ext.ExecutionFilter import ExecutionFilter
 from ib.ext.Order import Order
 from ib.ext.ScannerSubscription import ScannerSubscription
+from ib.lib.logger import logger as basicConfig
 from ib.opt import ibConnection, message
 
 
-rec_msgs = {}
-unrec_msgs = {}
 error_msgs = {}
 order_ids = [0]
+tick_msgs = []
 short_sleep = partial(sleep, 1)
 long_sleep = partial(sleep, 10)
-tick_msgs = []
-gen_tick_keys = '100,101,104,106,162,165,221,225,236'
+generic_tick_keys = '100,101,104,106,162,165,221,225,236'
+
 unseen_hints = {
-    'OpenOrder':'only works with existing order(s) before connecting',
-    'RealtimeBar':'only works during trading hours',
-    'ReceiveFA':'does not work with edemo account',
-    'UpdateNewsBulletin':'news bulletins may not be available',
-    'ConnectionClosed':'may work if TWS is closed during script',
+    'OpenOrder' : 'only works with existing order(s) before connecting',
+    'RealtimeBar' : 'only works during trading hours',
+    'ReceiveFA' : 'does not work with edemo account',
+    'UpdateNewsBulletin' : 'news bulletins may not be available',
+    'ConnectionClosed' : 'may work if TWS is closed during script',
     }
+
+verbose_levels = {
+    3 : DEBUG,
+    2 : INFO,
+    1 : WARN,
+    0 : ERROR,
+}
+
+
+def format_error(msg):
+    which = ('(in %s)' % error_msgs.get(msg)) if error_msgs.get(msg) else ''
+    return '%8s: %s %s' % (msg.errorCode, msg.errorMsg, which)
+
+
+def format_default(msg):
+    return '    %s' % msg
+
+
 msg_formatters = {
-    'default':lambda msg:'    %s' % (msg, ), # (dict(msg.items()), ),
-    'Error':lambda msg:'%8s: %s %s' % (msg.errorCode, msg.errorMsg,
-                                       ('(in %s)' % error_msgs.get(msg)) if error_msgs.get(msg) else '')
+    'default':format_default,
+    'Error':format_error,
 }
 
 
@@ -57,7 +76,7 @@ def save_tick(msg):
 
 
 def gen_tick_id():
-    i = randint(100,10000)
+    i = randint(100, 10000)
     while True:
         yield i
         i += 1
@@ -92,14 +111,14 @@ def exec_filter(client_id):
     return filt
 
 
-def make_msg_counter():
-    rec_msgs.update(dict([(c, []) for c in message.registry.values()]))
+def make_msg_counter(rec_map, unrec_map):
+    rec_map.update(dict([(c, []) for c in message.registry.values()]))
     def counter(msg):
         cls = msg.__class__
         try:
-            rec_msgs[cls].append(msg)
+            rec_map[cls].append(msg)
         except (KeyError, ):
-            unrec_msgs.setdefault(cls, []).append(msg)
+            unrec_map.setdefault(cls, []).append(msg)
     return counter
 
 
@@ -108,22 +127,21 @@ def make_error_catcher(seq):
         seq.append(msg)
     return catcher
 
-def maybeverbose(call):
+
+def maybe_verbose(call):
     name = call.__name__
     def inner(connection, options):
-        if options.verbose:
-            print 'Start function %s' % (name, ),
+        info('Start  %s', name)
         start = time()
         v = call(connection, options)
         finish = time()
-        if options.verbose:
-            print 'finshed in %0.3f' % (finish-start, )
+        info('Finish %s in %0.3f sec', name, finish-start)
         return v
     inner.__name__ = name
     return inner
 
 
-def catcherrors(call):
+def catch_errors(call):
     def inner(connection, options):
         errors = []
         catcher = make_error_catcher(errors)
@@ -158,7 +176,8 @@ def test_001(connection, options):
 
 def test_002(connection, options):
     ticker_id = gen_tick_id()
-    connection.reqMktData(ticker_id, make_contract('QQQQ'), gen_tick_keys, False)
+    contract = make_contract('QQQQ')
+    connection.reqMktData(ticker_id, contract, generic_tick_keys, False)
     short_sleep()
     connection.cancelMktData(ticker_id)
 
@@ -234,12 +253,13 @@ def test_008a(connection, options):
     leg2.m_exchange = 'NYSE'
     leg2.m_action = 'BUY'
     c.m_comboLegs = [leg1, leg2]
-    connection.reqMktData(1, c, gen_tick_keys, False)
+    connection.reqMktData(1, c, generic_tick_keys, False)
 
 
 def test_008b(connection, options):
     def cb(*a, **b):
-        print '!!', a, b
+        #print '!!', a, b
+        pass
     connection.register(cb, 'ExecDetails')
     filtr = exec_filter(options.clientid)
     connection.reqExecutions(filtr)
@@ -264,6 +284,9 @@ def test_999(connection, options):
     short_sleep()
     connection.eDisconnect()
 
+def last_wait(connection, options):
+    pass
+
 
 def name_count(value):
     if value.count(':') == 1:
@@ -277,14 +300,45 @@ def name_count(value):
     return name, count
 
 
+def get_options():
+    version = '%prog 0.1'
+    parser = OptionParser(version=version)
+    add = parser.add_option
+    add('-d', '--demo', dest='demo', action='store_true',
+        help='Server using demo account, safe for placing orders.')
+    add('-m', '--messages', dest='printmsgs', action='store_true',
+        help='Print message type names and exit.')
+    add('-s', '--show', dest='showmsgs', metavar='MSG[:MAX]', action='append',
+        help=('Print no more than MAX messages of type MSG.  May use ALL to '
+              'print all messages.  May be repeated.'), default=[])
+    add('-n', '--host', dest='host', default='localhost',
+        help='Name or address of remote server (default: %default)')
+    add('-p', '--port', dest='port', default=7496, type='int',
+        help='Port number for remote connection (default: %default)')
+    add('-c', '--client', dest='clientid', metavar='ID', default=0, type='int',
+        help='Client id for remote connection (default: %default)')
+    add('-v', '--verbose', default=0, action='count',
+        help='Verbose output.  May be repeated.')
+    opts, args = parser.parse_args()
+    return opts
+
+
 def main(options):
-    handler = make_msg_counter()
+    basicConfig()
+    root.setLevel(verbose_levels.get(options.verbose, ERROR))
+
+    rec_msgs = {}
+    unrec_msgs = {}
+
+    handler = make_msg_counter(rec_msgs, unrec_msgs)
+
     ## make_msg_counter fills in the defaults for the rec_msgs dict; now we can
     ## print those values and exit if the option is given
     if options.printmsgs:
         for name in sorted(k.typeName for k in rec_msgs.keys()):
             print name
         return
+
     ## if we're still here, we should connect
     con = ibConnection(options.host, options.port, options.clientid)
     con.registerAll(handler)
@@ -292,14 +346,15 @@ def main(options):
     con.register(save_tick, 'TickSize', 'TickPrice')
     con.connect()
     short_sleep()
+
     ## and if we've connected, we shoud execute all of the test functions in
     ## the module namespace.
     calls = [v for k, v in globals().items() if k.startswith('test_')]
     for call in sorted(calls):
-        call = maybeverbose(catcherrors(call))
+        call = maybe_verbose(catch_errors(call))
         errors = call(con, options)
-        for error in errors:
-            error_msgs[error] = call.__name__
+        for err in errors:
+            error_msgs[err] = call.__name__
 
     type_count = len(rec_msgs)
     seen_items = rec_msgs.items()
@@ -353,31 +408,8 @@ def main(options):
     print '   total:%s  seen:%s  unseen:%s  coverage:%2.2f%%' % args
 
 
-def get_options():
-    version = '%prog 0.1'
-    parser = OptionParser(version=version)
-    add = parser.add_option
-    add('-d', '--demo', dest='demo', action='store_true',
-        help='Server using demo account, safe for placing orders.')
-    add('-m', '--messages', dest='printmsgs', action='store_true',
-        help='Print message type names and exit.')
-    add('-s', '--show', dest='showmsgs', metavar='MSG[:MAX]', action='append', default=[],
-        help='Print messages of type MSG.  May use ALL to print all messages.  May be repeated.')
-    add('-n', '--host', dest='host', default='localhost',
-        help='Name or address of remote server (default: %default)')
-    add('-p', '--port', dest='port', default=7496, type='int',
-        help='Port number for remote connection (default: %default)')
-    add('-c', '--client', dest='clientid', metavar='ID', default=0, type='int',
-        help='Client id for remote connection (default: %default)')
-    add('-v', '--verbose', default=0, action='count',
-        help='Verbose output.  May be repeated.')
-    opts, args = parser.parse_args()
-    return opts
-
-
 if __name__ == '__main__':
     try:
         main(get_options())
     except (KeyboardInterrupt, ):
-        pass
-
+        print '\nKeyboard interrupt.\n'
