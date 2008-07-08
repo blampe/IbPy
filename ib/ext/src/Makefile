@@ -16,4 +16,5 @@ IBJts:
 	jar -xf $(ibsources_jar)
 
 clean:
-	@echo
+	rm $(ibsources_jar)
+	rm -rf IBJts
