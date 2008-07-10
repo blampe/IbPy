@@ -206,7 +206,7 @@ def test_005(connection, options):
 def test_006(connection, options):
     try:
         askprice = [m.price for m in tick_msgs
-                    if getattr(m, 'price', None) and m.field==2][0]
+                    if (getattr(m, 'price', None) is not None) and m.field==2][0]
     except (IndexError, ):
         askprice = 100.0
     order = make_order(askprice)
