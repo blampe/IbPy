@@ -147,3 +147,11 @@ buildMessageTypes(EWrapper, globals(), Message)
 # A (partial) method so other modules can use the same mappings we
 # have.
 wrapperMethods = partial(selectWrapperMethods, EWrapper)
+
+
+def messageTypeNames():
+    """ Builds set of message type names.
+
+    @return set of all message type names as strings
+    """
+    return set([t.typeName for t in registry.values()])
