@@ -64,7 +64,7 @@ class Message(object):
         """
         name = self.typeName
         items = str.join(', ', ['%s=%s' % item for item in self.items()])
-        return '<%s message%s>' % (name, ' ' + items if items else '')
+        return '<%s %s>' % (name, ' ' + items if items else '')
 
     def items(self):
         """ List of message (slot, slot value) pairs, as 2-tuples.
@@ -78,7 +78,7 @@ class Message(object):
 
         @return list of each slot value
         """
-        return [getattr(self, key) for key in self.keys()]
+        return [getattr(self, key, None) for key in self.keys()]
 
     def keys(self):
         """ List of instance slots.
