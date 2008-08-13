@@ -10,7 +10,7 @@ import os
 
 ##
 # Default log message formatting string.
-format = '%(name)s %(asctime)s %(levelname)-9.9s %(message)s'
+format = '%(asctime)s %(levelname)-9.9s %(message)s'
 
 ##
 # Default log date formatting string.
