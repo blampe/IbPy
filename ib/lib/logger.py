@@ -10,7 +10,7 @@ import os
 
 ##
 # Default log message formatting string.
-format = '%(asctime)s %(levelname)-9.9s %(message)s'
+format = '%(name)s %(asctime)s %(levelname)-9.9s %(message)s'
 
 ##
 # Default log date formatting string.
@@ -33,4 +33,4 @@ def logger(name='ibpy', level=level, format=format,
     @return logging instance (the module)
     """
     logging.basicConfig(level=level, format=format, datefmt=datefmt)
-    return logging
+    return logging.getLogger(name)

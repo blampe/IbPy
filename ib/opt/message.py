@@ -58,13 +58,19 @@ class Message(object):
             setattr(self, name, kwds.pop(name, None))
         assert not kwds
 
+    def __len__(self):
+        """ x.__len__() <==> len(x)
+
+        """
+        return len(self.keys())
+
     def __str__(self):
         """ x.__str__() <==> str(x)
 
         """
         name = self.typeName
         items = str.join(', ', ['%s=%s' % item for item in self.items()])
-        return '<%s %s>' % (name, ' ' + items if items else '')
+        return '<%s %s>' % (name, items)
 
     def items(self):
         """ List of message (slot, slot value) pairs, as 2-tuples.
