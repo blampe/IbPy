@@ -32,7 +32,7 @@ class EClientSocket(object):
     """ generated source for EClientSocket
 
     """
-    CLIENT_VERSION = 38
+    CLIENT_VERSION = 37
     SERVER_VERSION = 38
     EOL = 0
     BAG_SEC_TYPE = "BAG"
@@ -78,8 +78,6 @@ class EClientSocket(object):
     REQ_CURRENT_TIME = 49
     REQ_REAL_TIME_BARS = 50
     CANCEL_REAL_TIME_BARS = 51
-    REQ_FUNDAMENTAL_DATA = 52
-    CANCEL_FUNDAMENTAL_DATA = 53
     MIN_SERVER_VER_REAL_TIME_BARS = 34
     MIN_SERVER_VER_SCALE_ORDERS = 35
     MIN_SERVER_VER_SNAPSHOT_MKT_DATA = 35
@@ -87,15 +85,12 @@ class EClientSocket(object):
     MIN_SERVER_VER_WHAT_IF_ORDERS = 36
     MIN_SERVER_VER_CONTRACT_CONID = 37
     MIN_SERVER_VER_PTA_ORDERS = 39
-    MIN_SERVER_VER_FUNDAMENTAL_DATA = 40
-    MIN_SERVER_VER_UNDER_COMP = 40
-    MIN_SERVER_VER_CONTRACT_DATA_CHAIN = 40
-    MIN_SERVER_VER_SCALE_ORDERS2 = 40
     m_anyWrapper = None
+    m_socket = None
     m_dos = None
     m_connected = bool()
     m_reader = None
-    m_serverVersion = 0
+    m_serverVersion = 1
     m_TwsTime = ""
 
     def serverVersion(self):
@@ -126,7 +121,6 @@ class EClientSocket(object):
             socket = Socket(host, port)
             self.eConnect(socket, clientId)
         except (Exception, ), e:
-            self.eDisconnect()
             self.connectionError()
 
     def connectionError(self):
@@ -147,16 +141,17 @@ class EClientSocket(object):
     @eConnect.register(object, Socket, int)
     @synchronized(mlock)
     def eConnect_0(self, socket, clientId):
-        self.m_dos = DataOutputStream(socket.getOutputStream())
+        self.m_socket = socket
+        dis = DataInputStream(self.m_socket.getInputStream())
+        self.m_dos = DataOutputStream(self.m_socket.getOutputStream())
         self.send(self.CLIENT_VERSION)
-        self.m_reader = self.createReader(self, DataInputStream(socket.getInputStream()))
+        self.m_reader = self.createReader(self, dis)
         self.m_serverVersion = self.m_reader.readInt()
         debug("Server Version:  %s", self.m_serverVersion)
         if self.m_serverVersion >= 20:
             self.m_TwsTime = self.m_reader.readStr()
             debug("TWS Time at connection:  %s", self.m_TwsTime)
         if self.m_serverVersion < self.SERVER_VERSION:
-            self.eDisconnect()
             self.m_anyWrapper.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return
         if self.m_serverVersion >= 3:
@@ -166,25 +161,17 @@ class EClientSocket(object):
 
     @synchronized(mlock)
     def eDisconnect(self):
-        if self.m_dos is None:
+        if not self.m_connected:
             return
+        try:
+            if self.m_reader is not None:
+                self.m_reader.interrupt()
+            if self.m_socket is not None:
+                self.m_socket.shutdown(SHUT_RDWR)
+                self.m_socket.close()
+        except (Exception, ), e:
+            pass
         self.m_connected = False
-        self.m_serverVersion = 0
-        self.m_TwsTime = ""
-        dos = self.m_dos
-        self.m_dos = None
-        self.reader = self.m_reader
-        self.m_reader = None
-        try:
-            if self.reader is not None:
-                self.reader.interrupt()
-        except (Exception, ), e:
-            pass
-        try:
-            if dos is not None:
-                dos.close()
-        except (Exception, ), e:
-            pass
 
     @synchronized(mlock)
     def cancelScannerSubscription(self, tickerId):
@@ -267,11 +254,7 @@ class EClientSocket(object):
         if self.m_serverVersion < self.MIN_SERVER_VER_SNAPSHOT_MKT_DATA and snapshot:
             self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support snapshot market data requests.")
             return
-        if self.m_serverVersion < self.MIN_SERVER_VER_UNDER_COMP:
-            if contract.m_underComp is not None:
-                self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support delta-neutral orders.")
-                return
-        VERSION = 8
+        VERSION = 7
         try:
             self.send(self.REQ_MKT_DATA)
             self.send(VERSION)
@@ -304,15 +287,6 @@ class EClientSocket(object):
                         self.send(comboLeg.m_action)
                         self.send(comboLeg.m_exchange)
                         i += 1
-            if self.m_serverVersion >= self.MIN_SERVER_VER_UNDER_COMP:
-                if contract.m_underComp is not None:
-                    underComp = contract.m_underComp
-                    self.send(True)
-                    self.send(underComp.m_conId)
-                    self.send(underComp.m_delta)
-                    self.send(underComp.m_price)
-                else:
-                    self.send(False)
             if self.m_serverVersion >= 31:
                 self.send(genericTickList)
             if self.m_serverVersion >= self.MIN_SERVER_VER_SNAPSHOT_MKT_DATA:
@@ -448,19 +422,17 @@ class EClientSocket(object):
             self.close()
 
     @synchronized(mlock)
-    def reqContractDetails(self, reqId, contract):
+    def reqContractDetails(self, contract):
         if not self.m_connected:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
             return
         if self.m_serverVersion < 4:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return
-        VERSION = 5
+        VERSION = 4
         try:
             self.send(self.REQ_CONTRACT_DATA)
             self.send(VERSION)
-            if self.m_serverVersion >= self.MIN_SERVER_VER_CONTRACT_DATA_CHAIN:
-                self.send(reqId)
             if self.m_serverVersion >= self.MIN_SERVER_VER_CONTRACT_CONID:
                 self.send(contract.m_conId)
             self.send(contract.m_symbol)
@@ -580,7 +552,7 @@ class EClientSocket(object):
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_SCALE_ORDERS:
-            if (order.m_scaleInitLevelSize != Integer.MAX_VALUE) or (order.m_scalePriceIncrement != Double.MAX_VALUE):
+            if (order.m_scaleNumComponents != Integer.MAX_VALUE) or (order.m_scaleComponentSize != Integer.MAX_VALUE) or (order.m_scalePriceIncrement != Double.MAX_VALUE):
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support Scale orders.")
                 return
         if self.m_serverVersion < self.MIN_SERVER_VER_SSHORT_COMBO_LEGS:
@@ -598,15 +570,7 @@ class EClientSocket(object):
             if order.m_whatIf:
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support what-if orders.")
                 return
-        if self.m_serverVersion < self.MIN_SERVER_VER_UNDER_COMP:
-            if contract.m_underComp is not None:
-                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support delta-neutral orders.")
-                return
-        if self.m_serverVersion < self.MIN_SERVER_VER_SCALE_ORDERS2:
-            if (order.m_scaleSubsLevelSize != Integer.MAX_VALUE):
-                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support Subsequent Level Size for Scale orders.")
-                return
-        VERSION = 26
+        VERSION = 25
         try:
             self.send(self.PLACE_ORDER)
             self.send(VERSION)
@@ -724,25 +688,12 @@ class EClientSocket(object):
             if self.m_serverVersion >= 30:
                 self.sendMax(order.m_trailStopPrice)
             if self.m_serverVersion >= self.MIN_SERVER_VER_SCALE_ORDERS:
-                if self.m_serverVersion >= self.MIN_SERVER_VER_SCALE_ORDERS2:
-                    self.sendMax(order.m_scaleInitLevelSize)
-                    self.sendMax(order.m_scaleSubsLevelSize)
-                else:
-                    self.send("")
-                    self.sendMax(order.m_scaleInitLevelSize)
+                self.sendMax(order.m_scaleNumComponents)
+                self.sendMax(order.m_scaleComponentSize)
                 self.sendMax(order.m_scalePriceIncrement)
             if self.m_serverVersion >= self.MIN_SERVER_VER_PTA_ORDERS:
                 self.send(order.m_clearingAccount)
                 self.send(order.m_clearingIntent)
-            if self.m_serverVersion >= self.MIN_SERVER_VER_UNDER_COMP:
-                if contract.m_underComp is not None:
-                    underComp = contract.m_underComp
-                    self.send(True)
-                    self.send(underComp.m_conId)
-                    self.send(underComp.m_delta)
-                    self.send(underComp.m_price)
-                else:
-                    self.send(False)
             if self.m_serverVersion >= self.MIN_SERVER_VER_WHAT_IF_ORDERS:
                 self.send(order.m_whatIf)
         except (Exception, ), e:
@@ -959,47 +910,6 @@ class EClientSocket(object):
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQCURRTIME, str(e))
             self.close()
 
-    @synchronized(mlock)
-    def reqFundamentalData(self, reqId, contract, reportType):
-        if not self.m_connected:
-            self.error(reqId, EClientErrors.NOT_CONNECTED, "")
-            return
-        if self.m_serverVersion < self.MIN_SERVER_VER_FUNDAMENTAL_DATA:
-            self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support fundamental data requests.")
-            return
-        VERSION = 1
-        try:
-            self.send(self.REQ_FUNDAMENTAL_DATA)
-            self.send(VERSION)
-            self.send(reqId)
-            self.send(contract.m_symbol)
-            self.send(contract.m_secType)
-            self.send(contract.m_exchange)
-            self.send(contract.m_primaryExch)
-            self.send(contract.m_currency)
-            self.send(contract.m_localSymbol)
-            self.send(reportType)
-        except (Exception, ), e:
-            self.error(reqId, EClientErrors.FAIL_SEND_REQFUNDDATA, str(e))
-            self.close()
-
-    @synchronized(mlock)
-    def cancelFundamentalData(self, reqId):
-        if not self.m_connected:
-            self.error(reqId, EClientErrors.NOT_CONNECTED, "")
-            return
-        if self.m_serverVersion < self.MIN_SERVER_VER_FUNDAMENTAL_DATA:
-            self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support fundamental data requests.")
-            return
-        VERSION = 1
-        try:
-            self.send(self.CANCEL_FUNDAMENTAL_DATA)
-            self.send(VERSION)
-            self.send(reqId)
-        except (Exception, ), e:
-            self.error(reqId, EClientErrors.FAIL_SEND_CANFUNDDATA, str(e))
-            self.close()
-
     @overloaded
     @synchronized(mlock)
     def error(self, err):
@@ -1012,7 +922,7 @@ class EClientSocket(object):
 
     def close(self):
         self.eDisconnect()
-        self.wrapper().connectionClosed()
+        self.m_anyWrapper.connectionClosed()
 
     @classmethod
     def is_(cls, strval):

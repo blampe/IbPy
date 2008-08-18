@@ -39,6 +39,7 @@ outputSubs = [
 
     (r'        return strval is None or len\(\(strval\) == 0\)',
      r'        return not bool(strval)'),
+
     ]
 
 
