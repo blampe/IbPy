@@ -15,7 +15,6 @@
 
 from ib.lib.overloading import overloaded
 from ib.lib import Cloneable
-from ib.ext.UnderComp import UnderComp
 from ib.ext.Util import Util
 
 class Contract(Cloneable):
@@ -35,8 +34,8 @@ class Contract(Cloneable):
     m_primaryExch = ""
     m_includeExpired = bool()
     m_comboLegsDescrip = ""
-    m_comboLegs = []
-    m_underComp = UnderComp()
+    m_comboLegs = None
+    m_underComp = None
 
     @overloaded
     def __init__(self):
