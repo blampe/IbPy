@@ -9,7 +9,7 @@
 ##
 
 
-ibpy_ver     := 0.7.5
+ibpy_ver     := 0.7.6a
 ibpy_rev     := $(shell svnversion|cut -f 2 -d \:|cut -f 1 -d M)
 twsapi_ver   := $(shell cat ib/ext/src/IBJts/API_VersionNum.txt |cut -f 2 -d \=)
 release_num  := $(ibpy_ver)-$(twsapi_ver)

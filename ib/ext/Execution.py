@@ -30,6 +30,8 @@ class Execution(object):
     m_price = float()
     m_permId = 0
     m_liquidation = 0
+    m_cumQty = 0
+    m_avgPrice = float()
 
     @overloaded
     def __init__(self):
@@ -39,8 +41,10 @@ class Execution(object):
         self.m_price = 0
         self.m_permId = 0
         self.m_liquidation = 0
+        self.m_cumQty = 0
+        self.m_avgPrice = 0
 
-    @__init__.register(object, int, int, str, str, str, str, str, int, float, int, int)
+    @__init__.register(object, int, int, str, str, str, str, str, int, float, int, int, int, float)
     def __init___0(self, p_orderId,
                          p_clientId,
                          p_execId,
@@ -51,7 +55,9 @@ class Execution(object):
                          p_shares,
                          p_price,
                          p_permId,
-                         p_liquidation):
+                         p_liquidation,
+                         p_cumQty,
+                         p_avgPrice):
         self.m_orderId = p_orderId
         self.m_clientId = p_clientId
         self.m_execId = p_execId
@@ -63,6 +69,8 @@ class Execution(object):
         self.m_price = p_price
         self.m_permId = p_permId
         self.m_liquidation = p_liquidation
+        self.m_cumQty = p_cumQty
+        self.m_avgPrice = p_avgPrice
 
     def __eq__(self, p_other):
         l_bRetVal = False

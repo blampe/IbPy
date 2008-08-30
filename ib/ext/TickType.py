@@ -65,6 +65,7 @@ class TickType(object):
     CLOSE_EFP_COMPUTATION = 44
     LAST_TIMESTAMP = 45
     SHORTABLE = 46
+    FUNDAMENTAL_RATIOS = 47
 
     @classmethod
     def getField(cls, tickType):
@@ -162,6 +163,8 @@ class TickType(object):
             return "lastTimestamp"
         elif tickType == cls.SHORTABLE:
             return "shortable"
+        elif tickType == cls.FUNDAMENTAL_RATIOS:
+            return "fundamentals"
         else:
             return "unknown"
 

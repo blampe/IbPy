@@ -6,6 +6,7 @@
 modulePreamble = [
     'from ib.lib.overloading import overloaded',
     'from ib.lib import Cloneable',
+    'from ib.ext.UnderComp import UnderComp',
     'from ib.ext.Util import Util',
     ]
 

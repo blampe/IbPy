@@ -88,6 +88,9 @@ def make_contract(symbol):
     contract.m_symbol = symbol
     contract.m_secType = 'STK'
     contract.m_exchange = 'SMART'
+    contract.m_primaryExch = 'SMART'
+    contract.m_currency = 'USD'
+    contract.m_localSymbol = symbol
     return contract
 
 
@@ -102,7 +105,7 @@ def make_order(limit_price):
 
 
 def exec_filter(client_id):
-    contract = make_contract('QQQQ')
+    contract = make_contract('NVDA')
     filt = ExecutionFilter()
     filt.m_clientId = client_id
     filt.m_symbol = contract.m_symbol
@@ -176,7 +179,7 @@ def test_001(connection, options):
 
 def test_002(connection, options):
     ticker_id = gen_tick_id()
-    contract = make_contract('QQQQ')
+    contract = make_contract('NVDA')
     connection.reqMktData(ticker_id, contract, generic_tick_keys, False)
     short_sleep()
     connection.cancelMktData(ticker_id)
@@ -212,11 +215,11 @@ def test_006(connection, options):
     order = make_order(askprice)
     if options.demo:
         connection.placeOrder(id=next_order_id(),
-                              contract=make_contract('QQQQ'),
+                              contract=make_contract('NVDA'),
                               order=order)
     #connection.exerciseOptions()
-    contract = make_contract('QQQQ')
-    connection.reqContractDetails(contract)
+    contract = make_contract('NVDA')
+    connection.reqContractDetails(3, contract)
 
 
 def test_007(connection, options):
@@ -305,12 +308,12 @@ def get_options():
     parser = OptionParser(version=version)
     add = parser.add_option
     add('-d', '--demo', dest='demo', action='store_true',
-        help='Server using demo account, safe for placing orders.')
+        help='Server using demo account, safe for placing orders')
     add('-m', '--messages', dest='printmsgs', action='store_true',
-        help='Print message type names and exit.')
+        help='Print message type names and exit')
     add('-s', '--show', dest='showmsgs', metavar='MSG[:MAX]', action='append',
-        help=('Print no more than MAX messages of type MSG.  May use ALL to '
-              'print all messages.  May be repeated.'), default=[])
+        help=('Print no more than MAX messages of type MSG, may use ALL to '
+              'print all messages, may be repeated'), default=[])
     add('-n', '--host', dest='host', default='localhost',
         help='Name or address of remote server (default: %default)')
     add('-p', '--port', dest='port', default=7496, type='int',
@@ -318,7 +321,7 @@ def get_options():
     add('-c', '--client', dest='clientid', metavar='ID', default=0, type='int',
         help='Client id for remote connection (default: %default)')
     add('-v', '--verbose', default=0, action='count',
-        help='Verbose output.  May be repeated.')
+        help='Verbose output, may be repeated')
     opts, args = parser.parse_args()
     return opts
 

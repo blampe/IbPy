@@ -22,6 +22,7 @@ from ib.ext.Execution import Execution
 from ib.ext.Order import Order
 from ib.ext.OrderState import OrderState
 from ib.ext.TickType import TickType
+from ib.ext.UnderComp import UnderComp
 from ib.lib.logger import logger
 
 # micro optimizations
@@ -57,6 +58,8 @@ class EReader(Thread):
     TICK_EFP = 47
     CURRENT_TIME = 49
     REAL_TIME_BARS = 50
+    FUNDAMENTAL_DATA = 51
+    CONTRACT_DATA_END = 52
     m_parent = None
     m_dis = None
 
@@ -82,10 +85,10 @@ class EReader(Thread):
             while not self.isInterrupted() and self.processMsg(self.readInt()):
                 pass
         except (Exception, ), ex:
-            errmsg = ("Exception while processing message.")
-            logger().exception(errmsg)
-            self.parent().wrapper().error(ex)
-        self.m_parent.close()
+            if self.parent().isConnected():
+                self.eWrapper().error(ex)
+        if self.parent().isConnected():
+            self.m_parent.close()
 
     def processMsg(self, msgId):
         if (msgId == -1):
@@ -202,6 +205,9 @@ class EReader(Thread):
             contract.m_expiry = self.readStr()
             contract.m_strike = self.readDouble()
             contract.m_right = self.readStr()
+            if version >= 7:
+                contract.m_multiplier = self.readStr()
+                contract.m_primaryExch = self.readStr()
             contract.m_currency = self.readStr()
             if version >= 2:
                 contract.m_localSymbol = self.readStr()
@@ -218,6 +224,8 @@ class EReader(Thread):
             accountName = None
             if version >= 4:
                 accountName = self.readStr()
+            if (version == 6) and (self.m_parent.serverVersion() == 39):
+                contract.m_primaryExch = self.readStr()
             self.eWrapper().updatePortfolio(contract, position, marketPrice, marketValue, averageCost, unrealizedPNL, realizedPNL, accountName)
         elif msgId == self.ACCT_UPDATE_TIME:
             version = self.readInt()
@@ -328,12 +336,23 @@ class EReader(Thread):
                 order.m_basisPointsType = self.readInt()
                 contract.m_comboLegsDescrip = self.readStr()
             if version >= 15:
-                order.m_scaleNumComponents = self.readIntMax()
-                order.m_scaleComponentSize = self.readIntMax()
+                if version >= 20:
+                    order.m_scaleInitLevelSize = self.readIntMax()
+                    order.m_scaleSubsLevelSize = self.readIntMax()
+                else:
+                    self.readIntMax()
+                    order.m_scaleInitLevelSize = self.readIntMax()
                 order.m_scalePriceIncrement = self.readDoubleMax()
             if version >= 19:
                 order.m_clearingAccount = self.readStr()
                 order.m_clearingIntent = self.readStr()
+            if version >= 20:
+                if self.readBoolFromInt():
+                    underComp = UnderComp()
+                    underComp.m_conId = self.readInt()
+                    underComp.m_delta = self.readDouble()
+                    underComp.m_price = self.readDouble()
+                    contract.m_underComp = underComp
             orderState = OrderState()
             if version >= 16:
                 order.m_whatIf = self.readBoolFromInt()
@@ -383,6 +402,9 @@ class EReader(Thread):
             self.eWrapper().scannerDataEnd(tickerId)
         elif msgId == self.CONTRACT_DATA:
             version = self.readInt()
+            reqId = -1
+            if version >= 3:
+                reqId = self.readInt()
             contract = ContractDetails()
             contract.m_summary.m_symbol = self.readStr()
             contract.m_summary.m_secType = self.readStr()
@@ -401,9 +423,12 @@ class EReader(Thread):
             contract.m_validExchanges = self.readStr()
             if version >= 2:
                 contract.m_priceMagnifier = self.readInt()
-            self.eWrapper().contractDetails(contract)
+            self.eWrapper().contractDetails(reqId, contract)
         elif msgId == self.BOND_CONTRACT_DATA:
             version = self.readInt()
+            reqId = -1
+            if version >= 3:
+                reqId = self.readInt()
             contract = ContractDetails()
             contract.m_summary.m_symbol = self.readStr()
             contract.m_summary.m_secType = self.readStr()
@@ -431,7 +456,7 @@ class EReader(Thread):
                 contract.m_nextOptionType = self.readStr()
                 contract.m_nextOptionPartial = self.readBoolFromInt()
                 contract.m_notes = self.readStr()
-            self.eWrapper().bondContractDetails(contract)
+            self.eWrapper().bondContractDetails(reqId, contract)
         elif msgId == self.EXECUTION_DATA:
             version = self.readInt()
             orderId = self.readInt()
@@ -461,6 +486,9 @@ class EReader(Thread):
                 exec_.m_clientId = self.readInt()
             if version >= 4:
                 exec_.m_liquidation = self.readInt()
+            if version >= 6:
+                exec_.m_cumQty = self.readInt()
+                exec_.m_avgPrice = self.readDouble()
             self.eWrapper().execDetails(orderId, contract, exec_)
         elif msgId == self.MARKET_DEPTH:
             version = self.readInt()
@@ -545,6 +573,15 @@ class EReader(Thread):
             wap = self.readDouble()
             count = self.readInt()
             self.eWrapper().realtimeBar(reqId, time, open, high, low, close, volume, wap, count)
+        elif msgId == self.FUNDAMENTAL_DATA:
+            self.readInt()
+            reqId = self.readInt()
+            data = self.readStr()
+            self.eWrapper().fundamentalData(reqId, data)
+        elif msgId == self.CONTRACT_DATA_END:
+            self.readInt()
+            reqId = self.readInt()
+            self.eWrapper().contractDetailsEnd(reqId)
         else:
             self.m_parent.error(EClientErrors.NO_VALID_ID, EClientErrors.UNKNOWN_ID.code(), EClientErrors.UNKNOWN_ID.msg())
             return False

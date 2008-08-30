@@ -85,10 +85,13 @@ class EWrapper(AnyWrapper):
     def nextValidId(self, orderId):
         raise NotImplementedError()
 
-    def contractDetails(self, contractDetails):
+    def contractDetails(self, reqId, contractDetails):
         raise NotImplementedError()
 
-    def bondContractDetails(self, contractDetails):
+    def bondContractDetails(self, reqId, contractDetails):
+        raise NotImplementedError()
+
+    def contractDetailsEnd(self, reqId):
         raise NotImplementedError()
 
     def execDetails(self, orderId, contract, execution):
@@ -159,6 +162,9 @@ class EWrapper(AnyWrapper):
         raise NotImplementedError()
 
     def currentTime(self, time):
+        raise NotImplementedError()
+
+    def fundamentalData(self, reqId, data):
         raise NotImplementedError()
 
 
