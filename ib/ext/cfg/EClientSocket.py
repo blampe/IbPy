@@ -24,12 +24,8 @@ modulePreamble = [
 outputSubs = [
     (r'    m_reader = EReader\(\)', r'    m_reader = None'),
     (r'    m_anyWrapper = AnyWrapper\(\)', r'    m_anyWrapper = None'),
-    (r'    m_socket = Socket\(\)', r'    m_socket = None'),
     (r'    m_dos = DataOutputStream\(\)', r'    m_dos = None'),
     (r'(, "" \+ e)', r', str(e)'),
-
-    (r'(\s+)(self.m_socket.close\(\))',
-     r'\1self.m_socket.shutdown(SHUT_RDWR)\1\2'),
 
     (r'print "Server Version:" \+ self\.m_serverVersion',
      r'debug("Server Version:  %s", self.m_serverVersion)',),

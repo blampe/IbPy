@@ -38,9 +38,9 @@ class Sender(object):
         @return True if disconnected, False otherwise
         """
         client = self.client
-        if client and client.m_socket.isConnected():
+        if client and client.isConnected():
             client.eDisconnect()
-            return not client.m_socket.isConnected()
+            return not client.isConnected()
         return False
 
     def __getattr__(self, name):
