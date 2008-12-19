@@ -32,7 +32,7 @@ class OrderState(object):
 
     @overloaded
     def __init__(self):
-        super(OrderState, self).__init__(None, None, None, None, 0.0, 0.0, 0.0, None, None)
+        pass # super(OrderState, self).__init__(None, None, None, None, 0.0, 0.0, 0.0, None, None)
 
     @__init__.register(object, str, str, str, str, float, float, float, str, str)
     def __init___0(self, status,

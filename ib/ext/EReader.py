@@ -85,6 +85,8 @@ class EReader(Thread):
             while not self.isInterrupted() and self.processMsg(self.readInt()):
                 pass
         except (Exception, ), ex:
+            errmsg = ("Exception while processing message.  ")
+            logger().exception(errmsg)
             if self.parent().isConnected():
                 self.eWrapper().error(ex)
         if self.parent().isConnected():

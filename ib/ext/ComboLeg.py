@@ -34,7 +34,7 @@ class ComboLeg(object):
 
     @overloaded
     def __init__(self):
-        super(ComboLeg, self).__init__(0, 0, None, None, 0, 0, None)
+        pass # super(ComboLeg, self).__init__(0, 0, None, None, 0, 0, None)
 
     @__init__.register(object, int, int, str, str, int)
     def __init___0(self, p_conId,
@@ -42,7 +42,7 @@ class ComboLeg(object):
                          p_action,
                          p_exchange,
                          p_openClose):
-        super(ComboLeg, self).__init__(p_conId, p_ratio, p_action, p_exchange, p_openClose, 0, None)
+        pass # super(ComboLeg, self).__init__(p_conId, p_ratio, p_action, p_exchange, p_openClose, 0, None)
 
     @__init__.register(object, int, int, str, str, int, int, str)
     def __init___1(self, p_conId,

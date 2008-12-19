@@ -40,8 +40,12 @@ outputSubs = [
 
     (r'len\(\(strval\) == 0\)', r'(len(strval) == 0)'),
 
-    (r'(\s+)(self.parent\(\)\.wrapper\(\)\.error\(ex\))',
-     r'\1errmsg = ("Exception while processing message.")\1logger().exception(errmsg)\1\2'),
+
+    (r'(\s+)(if self\.parent\(\)\.isConnected\(\)\:\s+self\.eWrapper\(\)\.error\(ex\))',
+     r'\1errmsg = ("Exception while processing message.  ")\1logger().exception(errmsg)\1\2',),
+
+#    (r'(\s+)(self.parent\(\)\.wrapper\(\)\.error\(ex\))',
+#     r'\1errmsg = ("Exception while processing message.")\1logger().exception(errmsg)\1\2'),
 
     ]
 
