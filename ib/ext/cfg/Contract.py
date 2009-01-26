@@ -15,4 +15,6 @@ outputSubs = [
     (r'retval\.m_comboLegs\.clone\(\)', r'self.m_comboLegs[:]'),
     (r'    m_comboLegs = \[\]', r'    m_comboLegs = None'),
     (r'    m_underComp = UnderComp\(\)', r'    m_underComp = None'),
+    (r'    def __init__\(self\)\:',
+     r'    def __init__(self):\n        self.comboLegs = []'),
     ]

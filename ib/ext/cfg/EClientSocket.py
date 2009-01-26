@@ -25,6 +25,7 @@ outputSubs = [
     (r'    m_reader = EReader\(\)', r'    m_reader = None'),
     (r'    m_anyWrapper = AnyWrapper\(\)', r'    m_anyWrapper = None'),
     (r'    m_dos = DataOutputStream\(\)', r'    m_dos = None'),
+    (r'EOL = \[0\]', r'EOL = 0'),
     (r'(, "" \+ e)', r', str(e)'),
 
     (r'print "Server Version:" \+ self\.m_serverVersion',

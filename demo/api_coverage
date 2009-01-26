@@ -197,7 +197,7 @@ def test_004(connection, options):
     connection.reqAllOpenOrders()
     connection.reqAutoOpenOrders(True)
     connection.reqOpenOrders()
-    connection.reqExecutions(exec_filter(options.clientid))
+    connection.reqExecutions(0, exec_filter(options.clientid))
 
 
 def test_005(connection, options):
@@ -265,7 +265,7 @@ def test_008b(connection, options):
         pass
     connection.register(cb, 'ExecDetails')
     filtr = exec_filter(options.clientid)
-    connection.reqExecutions(filtr)
+    connection.reqExecutions(1, filtr)
     c = Contract()
     c.m_symbol = 'GOOG'
     c.m_secType = 'OPT'

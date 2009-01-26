@@ -27,6 +27,7 @@ class ContractDetails(object):
     m_priceMagnifier = 0
     m_orderTypes = ""
     m_validExchanges = ""
+    m_underConId = 0
     m_cusip = ""
     m_ratings = ""
     m_descAppend = ""
@@ -47,19 +48,22 @@ class ContractDetails(object):
     def __init__(self):
         self.m_summary = Contract()
         self.m_minTick = 0
+        self.m_underConId = 0
 
-    @__init__.register(object, Contract, str, str, float, str, str)
+    @__init__.register(object, Contract, str, str, float, str, str, int)
     def __init___0(self, p_summary,
                          p_marketName,
                          p_tradingClass,
                          p_minTick,
                          p_orderTypes,
-                         p_validExchanges):
+                         p_validExchanges,
+                         p_underConId):
         self.m_summary = p_summary
         self.m_marketName = p_marketName
         self.m_tradingClass = p_tradingClass
         self.m_minTick = p_minTick
         self.m_orderTypes = p_orderTypes
         self.m_validExchanges = p_validExchanges
+        self.m_underConId = p_underConId
 
 

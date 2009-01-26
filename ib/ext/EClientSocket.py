@@ -32,7 +32,7 @@ class EClientSocket(object):
     """ generated source for EClientSocket
 
     """
-    CLIENT_VERSION = 38
+    CLIENT_VERSION = 42
     SERVER_VERSION = 38
     EOL = 0
     BAG_SEC_TYPE = "BAG"
@@ -91,6 +91,8 @@ class EClientSocket(object):
     MIN_SERVER_VER_UNDER_COMP = 40
     MIN_SERVER_VER_CONTRACT_DATA_CHAIN = 40
     MIN_SERVER_VER_SCALE_ORDERS2 = 40
+    MIN_SERVER_VER_ALGO_ORDERS = 41
+    MIN_SERVER_VER_EXECUTION_DATA_CHAIN = 42
     m_anyWrapper = None
     m_dos = None
     m_connected = bool()
@@ -606,7 +608,11 @@ class EClientSocket(object):
             if (order.m_scaleSubsLevelSize != Integer.MAX_VALUE):
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support Subsequent Level Size for Scale orders.")
                 return
-        VERSION = 26
+        if self.m_serverVersion < self.MIN_SERVER_VER_ALGO_ORDERS:
+            if not self.IsEmpty(order.m_algoStrategy):
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support algo orders.")
+                return
+        VERSION = 27
         try:
             self.send(self.PLACE_ORDER)
             self.send(VERSION)
@@ -743,6 +749,20 @@ class EClientSocket(object):
                     self.send(underComp.m_price)
                 else:
                     self.send(False)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_ALGO_ORDERS:
+                self.send(order.m_algoStrategy)
+                if not self.IsEmpty(order.m_algoStrategy):
+                    algoParams = order.m_algoParams
+                    algoParamsCount = 0 if algoParams is None else len(algoParams)
+                    self.send(algoParamsCount)
+                    if algoParamsCount > 0:
+                        ## for-while
+                        i = 0
+                        while i < algoParamsCount:
+                            tagValue = algoParams[i]
+                            self.send(tagValue.m_tag)
+                            self.send(tagValue.m_value)
+                            i += 1
             if self.m_serverVersion >= self.MIN_SERVER_VER_WHAT_IF_ORDERS:
                 self.send(order.m_whatIf)
         except (Exception, ), e:
@@ -766,14 +786,16 @@ class EClientSocket(object):
             self.close()
 
     @synchronized(mlock)
-    def reqExecutions(self, filter):
+    def reqExecutions(self, reqId, filter):
         if not self.m_connected:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
             return
-        VERSION = 2
+        VERSION = 3
         try:
             self.send(self.REQ_EXECUTIONS)
             self.send(VERSION)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_EXECUTION_DATA_CHAIN:
+                self.send(reqId)
             if self.m_serverVersion >= 9:
                 self.send(filter.m_clientId)
                 self.send(filter.m_acctCode)
@@ -1072,6 +1094,6 @@ class EClientSocket(object):
 
     @classmethod
     def IsEmpty(cls, strval):
-        return not bool(strval)
+        return Util.StringIsEmpty(strval)
 
 

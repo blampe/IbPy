@@ -39,6 +39,7 @@ class Contract(Cloneable):
 
     @overloaded
     def __init__(self):
+        self.comboLegs = []
         self.m_conId = 0
         self.m_strike = 0
         self.m_includeExpired = False
@@ -84,8 +85,6 @@ class Contract(Cloneable):
         l_theOther = p_other
         if (self.m_conId != l_theOther.m_conId):
             return False
-        if (len(self.m_comboLegs) != len(l_theOther.m_comboLegs)):
-            return False
         if (Util.StringCompare(self.m_secType, l_theOther.m_secType) != 0):
             return False
         if (Util.StringCompare(self.m_symbol, l_theOther.m_symbol) != 0) or (Util.StringCompare(self.m_exchange, l_theOther.m_exchange) != 0) or (Util.StringCompare(self.m_primaryExch, l_theOther.m_primaryExch) != 0) or (Util.StringCompare(self.m_currency, l_theOther.m_currency) != 0):
@@ -95,25 +94,8 @@ class Contract(Cloneable):
                 return False
             if (Util.StringCompare(self.m_expiry, l_theOther.m_expiry) != 0) or (Util.StringCompare(self.m_right, l_theOther.m_right) != 0) or (Util.StringCompare(self.m_multiplier, l_theOther.m_multiplier) != 0) or (Util.StringCompare(self.m_localSymbol, l_theOther.m_localSymbol) != 0):
                 return False
-        if len(self.m_comboLegs) > 0:
-            comboLegsSize = len(self.m_comboLegs)
-            alreadyMatchedSecondLeg = [bool() for __idx0 in range(comboLegsSize)]
-            ## for-while
-            ctr1 = 0
-            while ctr1 < comboLegsSize:
-                l_thisComboLeg = self.m_comboLegs[ctr1]
-                ctr2 = 0
-                ## for-while
-                while ctr2 < comboLegsSize:
-                    if alreadyMatchedSecondLeg[ctr2]:
-                        continue
-                    if l_thisComboLeg == l_theOther.m_comboLegs[ctr2]:
-                        alreadyMatchedSecondLeg[ctr2] = True
-                        break
-                    ctr2 += 1
-                if ctr2 >= comboLegsSize:
-                    return False
-                ctr1 += 1
+        if not Util.VectorEqualsUnordered(self.m_comboLegs, l_theOther.m_comboLegs):
+            return False
         if (self.m_underComp != l_theOther.m_underComp):
             if self.m_underComp is None or l_theOther.m_underComp is None:
                 return False

@@ -60,6 +60,10 @@ class EReader(Thread):
     REAL_TIME_BARS = 50
     FUNDAMENTAL_DATA = 51
     CONTRACT_DATA_END = 52
+    OPEN_ORDER_END = 53
+    ACCT_DOWNLOAD_END = 54
+    EXECUTION_DATA_END = 55
+    DELTA_NEUTRAL_VALIDATION = 56
     m_parent = None
     m_dis = None
 
@@ -355,6 +359,20 @@ class EReader(Thread):
                     underComp.m_delta = self.readDouble()
                     underComp.m_price = self.readDouble()
                     contract.m_underComp = underComp
+            if version >= 21:
+                order.m_algoStrategy = self.readStr()
+                if not Util.StringIsEmpty(order.m_algoStrategy):
+                    algoParamsCount = self.readInt()
+                    if algoParamsCount > 0:
+                        order.m_algoParams = Vector(algoParamsCount)
+                        ## for-while
+                        i = 0
+                        while i < algoParamsCount:
+                            tagValue = TagValue()
+                            tagValue.m_tag = self.readStr()
+                            tagValue.m_value = self.readStr()
+                            order.m_algoParams.add(tagValue)
+                            i += 1
             orderState = OrderState()
             if version >= 16:
                 order.m_whatIf = self.readBoolFromInt()
@@ -425,6 +443,8 @@ class EReader(Thread):
             contract.m_validExchanges = self.readStr()
             if version >= 2:
                 contract.m_priceMagnifier = self.readInt()
+            if version >= 4:
+                contract.m_underConId = self.readInt()
             self.eWrapper().contractDetails(reqId, contract)
         elif msgId == self.BOND_CONTRACT_DATA:
             version = self.readInt()
@@ -461,6 +481,9 @@ class EReader(Thread):
             self.eWrapper().bondContractDetails(reqId, contract)
         elif msgId == self.EXECUTION_DATA:
             version = self.readInt()
+            reqId = -1
+            if version >= 7:
+                reqId = self.readInt()
             orderId = self.readInt()
             contract = Contract()
             if version >= 5:
@@ -491,7 +514,7 @@ class EReader(Thread):
             if version >= 6:
                 exec_.m_cumQty = self.readInt()
                 exec_.m_avgPrice = self.readDouble()
-            self.eWrapper().execDetails(orderId, contract, exec_)
+            self.eWrapper().execDetails(reqId, contract, exec_)
         elif msgId == self.MARKET_DEPTH:
             version = self.readInt()
             id = self.readInt()
@@ -584,6 +607,25 @@ class EReader(Thread):
             self.readInt()
             reqId = self.readInt()
             self.eWrapper().contractDetailsEnd(reqId)
+        elif msgId == self.OPEN_ORDER_END:
+            self.readInt()
+            self.eWrapper().openOrderEnd()
+        elif msgId == self.ACCT_DOWNLOAD_END:
+            self.readInt()
+            accountName = self.readStr()
+            self.eWrapper().accountDownloadEnd(accountName)
+        elif msgId == self.EXECUTION_DATA_END:
+            self.readInt()
+            reqId = self.readInt()
+            self.eWrapper().execDetailsEnd(reqId)
+        elif msgId == self.DELTA_NEUTRAL_VALIDATION:
+            self.readInt()
+            reqId = self.readInt()
+            underComp = UnderComp()
+            underComp.m_conId = self.readInt()
+            underComp.m_delta = self.readDouble()
+            underComp.m_price = self.readDouble()
+            self.eWrapper().deltaNeutralValidation(reqId, underComp)
         else:
             self.m_parent.error(EClientErrors.NO_VALID_ID, EClientErrors.UNKNOWN_ID.code(), EClientErrors.UNKNOWN_ID.msg())
             return False

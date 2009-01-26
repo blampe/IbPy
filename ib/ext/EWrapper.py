@@ -66,6 +66,9 @@ class EWrapper(AnyWrapper):
     def openOrder(self, orderId, contract, order, orderState):
         raise NotImplementedError()
 
+    def openOrderEnd(self):
+        raise NotImplementedError()
+
     def updateAccountValue(self, key, value, currency, accountName):
         raise NotImplementedError()
 
@@ -82,6 +85,9 @@ class EWrapper(AnyWrapper):
     def updateAccountTime(self, timeStamp):
         raise NotImplementedError()
 
+    def accountDownloadEnd(self, accountName):
+        raise NotImplementedError()
+
     def nextValidId(self, orderId):
         raise NotImplementedError()
 
@@ -94,7 +100,10 @@ class EWrapper(AnyWrapper):
     def contractDetailsEnd(self, reqId):
         raise NotImplementedError()
 
-    def execDetails(self, orderId, contract, execution):
+    def execDetails(self, reqId, contract, execution):
+        raise NotImplementedError()
+
+    def execDetailsEnd(self, reqId):
         raise NotImplementedError()
 
     def updateMktDepth(self, tickerId,
@@ -165,6 +174,9 @@ class EWrapper(AnyWrapper):
         raise NotImplementedError()
 
     def fundamentalData(self, reqId, data):
+        raise NotImplementedError()
+
+    def deltaNeutralValidation(self, reqId, underComp):
         raise NotImplementedError()
 
 

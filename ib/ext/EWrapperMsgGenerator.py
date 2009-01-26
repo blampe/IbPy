@@ -88,8 +88,26 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
         if contract.m_underComp is not None:
             underComp = contract.m_underComp
             msg += " underComp.conId =" + underComp.m_conId + " underComp.delta =" + underComp.m_delta + " underComp.price =" + underComp.m_price
+        if not Util.StringIsEmpty(order.m_algoStrategy):
+            msg += " algoStrategy=" + order.m_algoStrategy
+            msg += " algoParams={"
+            if order.m_algoParams is not None:
+                algoParams = order.m_algoParams
+                ## for-while
+                i = 0
+                while i < len(algoParams):
+                    param = algoParams.elementAt(i)
+                    if i > 0:
+                        msg += ","
+                    msg += param.m_tag + "=" + param.m_value
+                    i += 1
+            msg += "}"
         orderStateMsg = " status=" + orderState.m_status + " initMargin=" + orderState.m_initMargin + " maintMargin=" + orderState.m_maintMargin + " equityWithLoan=" + orderState.m_equityWithLoan + " commission=" + Util.DoubleMaxString(orderState.m_commission) + " minCommission=" + Util.DoubleMaxString(orderState.m_minCommission) + " maxCommission=" + Util.DoubleMaxString(orderState.m_maxCommission) + " commissionCurrency=" + orderState.m_commissionCurrency + " warningText=" + orderState.m_warningText
         return msg + orderStateMsg
+
+    @classmethod
+    def openOrderEnd(cls):
+        return " =============== end ==============="
 
     @classmethod
     def updateAccountValue(cls, key, value, currency, accountName):
@@ -112,6 +130,10 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
         return "updateAccountTime: " + timeStamp
 
     @classmethod
+    def accountDownloadEnd(cls, accountName):
+        return "accountDownloadEnd: " + accountName
+
+    @classmethod
     def nextValidId(cls, orderId):
         return "Next Valid Order ID: " + orderId
 
@@ -123,7 +145,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
 
     @classmethod
     def contractDetailsMsg(cls, contractDetails):
-        msg = "marketName = " + cls.contractDetails.m_marketName + "\n" + "tradingClass = " + cls.contractDetails.m_tradingClass + "\n" + "minTick = " + cls.contractDetails.m_minTick + "\n" + "price magnifier = " + cls.contractDetails.m_priceMagnifier + "\n" + "orderTypes = " + cls.contractDetails.m_orderTypes + "\n" + "validExchanges = " + cls.contractDetails.m_validExchanges + "\n"
+        msg = "marketName = " + cls.contractDetails.m_marketName + "\n" + "tradingClass = " + cls.contractDetails.m_tradingClass + "\n" + "minTick = " + cls.contractDetails.m_minTick + "\n" + "price magnifier = " + cls.contractDetails.m_priceMagnifier + "\n" + "orderTypes = " + cls.contractDetails.m_orderTypes + "\n" + "validExchanges = " + cls.contractDetails.m_validExchanges + "\n" + "underConId = " + cls.contractDetails.m_underConId + "\n"
         return msg
 
     @classmethod
@@ -142,9 +164,13 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
         return "reqId = " + reqId + " =============== end ==============="
 
     @classmethod
-    def execDetails(cls, orderId, contract, execution):
-        msg = " ---- Execution Details begin ----\n" + "orderId = " + str(orderId) + "\n" + "clientId = " + str(execution.m_clientId) + "\n" + "symbol = " + contract.m_symbol + "\n" + "secType = " + contract.m_secType + "\n" + "expiry = " + contract.m_expiry + "\n" + "strike = " + contract.m_strike + "\n" + "right = " + contract.m_right + "\n" + "contractExchange = " + contract.m_exchange + "\n" + "currency = " + contract.m_currency + "\n" + "localSymbol = " + contract.m_localSymbol + "\n" + "execId = " + execution.m_execId + "\n" + "time = " + execution.m_time + "\n" + "acctNumber = " + execution.m_acctNumber + "\n" + "executionExchange = " + execution.m_exchange + "\n" + "side = " + execution.m_side + "\n" + "shares = " + execution.m_shares + "\n" + "price = " + execution.m_price + "\n" + "permId = " + execution.m_permId + "\n" + "liquidation = " + execution.m_liquidation + "\n" + "cumQty = " + execution.m_cumQty + "\n" + "avgPrice = " + execution.m_avgPrice + "\n" + " ---- Execution Details end ----\n"
+    def execDetails(cls, reqId, contract, execution):
+        msg = " ---- Execution Details begin ----\n" + "reqId = " + reqId + "\n" + "orderId = " + execution.m_orderId + "\n" + "clientId = " + execution.m_clientId + "\n" + "symbol = " + contract.m_symbol + "\n" + "secType = " + contract.m_secType + "\n" + "expiry = " + contract.m_expiry + "\n" + "strike = " + contract.m_strike + "\n" + "right = " + contract.m_right + "\n" + "contractExchange = " + contract.m_exchange + "\n" + "currency = " + contract.m_currency + "\n" + "localSymbol = " + contract.m_localSymbol + "\n" + "execId = " + execution.m_execId + "\n" + "time = " + execution.m_time + "\n" + "acctNumber = " + execution.m_acctNumber + "\n" + "executionExchange = " + execution.m_exchange + "\n" + "side = " + execution.m_side + "\n" + "shares = " + execution.m_shares + "\n" + "price = " + execution.m_price + "\n" + "permId = " + execution.m_permId + "\n" + "liquidation = " + execution.m_liquidation + "\n" + "cumQty = " + execution.m_cumQty + "\n" + "avgPrice = " + execution.m_avgPrice + "\n" + " ---- Execution Details end ----\n"
         return msg
+
+    @classmethod
+    def execDetailsEnd(cls, reqId):
+        return "reqId = " + reqId + " =============== end ==============="
 
     @classmethod
     def updateMktDepth(cls, tickerId,
@@ -228,5 +254,9 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
     @classmethod
     def fundamentalData(cls, reqId, data):
         return "id  = " + reqId + " len = " + len(data) + '\n' + data
+
+    @classmethod
+    def deltaNeutralValidation(cls, reqId, underComp):
+        return "id = " + reqId + " underComp.conId =" + underComp.m_conId + " underComp.delta =" + underComp.m_delta + " underComp.price =" + underComp.m_price
 
 
