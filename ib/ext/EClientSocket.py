@@ -19,6 +19,7 @@ from ib.ext.AnyWrapper import AnyWrapper
 from ib.ext.ComboLeg import ComboLeg
 from ib.ext.EClientErrors import EClientErrors
 from ib.ext.EReader import EReader
+from ib.ext.Util import Util
 
 from ib.lib.overloading import overloaded
 from ib.lib import synchronized, Socket, DataInputStream, DataOutputStream

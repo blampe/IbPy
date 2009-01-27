@@ -22,7 +22,7 @@ class Util(object):
 
     @classmethod
     def StringIsEmpty(cls, strval):
-        return strval is None or len((strval) == 0)
+        return strval is None or (len(strval) == 0)
 
     @classmethod
     def NormalizeString(cls, strval):

@@ -14,6 +14,7 @@
 # WARNING: all changes to this file will be lost.
 
 from ib.ext.AnyWrapperMsgGenerator import AnyWrapperMsgGenerator
+from ib.ext.Util import Util
 
 class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
     """ generated source for EWrapperMsgGenerator

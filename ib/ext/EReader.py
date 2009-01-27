@@ -23,6 +23,8 @@ from ib.ext.Order import Order
 from ib.ext.OrderState import OrderState
 from ib.ext.TickType import TickType
 from ib.ext.UnderComp import UnderComp
+from ib.ext.Util import Util
+
 from ib.lib.logger import logger
 
 # micro optimizations

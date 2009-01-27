@@ -16,5 +16,8 @@ outputSubs = [
      r'cmp(str(lhs).lower(), str(rhs).lower())'),
 
     (r'else "" \+ value',
-     r'else str(value)')
+     r'else str(value)'),
+
+    (r'len\(\(strval\) == 0\)', r'(len(strval) == 0)'),
+
     ]

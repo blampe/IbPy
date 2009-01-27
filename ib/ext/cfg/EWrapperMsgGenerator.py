@@ -5,4 +5,5 @@
 """
 modulePreamble = [
     'from ib.ext.AnyWrapperMsgGenerator import AnyWrapperMsgGenerator',
+    'from ib.ext.Util import Util',
     ]
