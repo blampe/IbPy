@@ -179,4 +179,7 @@ class EWrapper(AnyWrapper):
     def deltaNeutralValidation(self, reqId, underComp):
         raise NotImplementedError()
 
+    def tickSnapshotEnd(self, reqId):
+        raise NotImplementedError()
+
 

@@ -24,12 +24,22 @@ if __name__ == '__main__':
     con.register(my_account_handler, 'UpdateAccountValue')
     con.register(my_tick_handler, message.TickSize, message.TickPrice)
     con.connect()
-    con.reqAccountUpdates(1, '')
 
-    qqqq = Contract()
-    qqqq.m_symbol = 'QQQQ'
-    qqqq.m_secType = 'STK'
-    qqqq.m_exchange = 'SMART'
-    con.reqMktData(1, qqqq, '', False)
+    def inner():
 
-    sleep(10)
+        con.reqAccountUpdates(1, '')
+        qqqq = Contract()
+        qqqq.m_symbol = 'QQQQ'
+        qqqq.m_secType = 'STK'
+        qqqq.m_exchange = 'SMART'
+        con.reqMktData(1, qqqq, '', False)
+
+    inner()
+    sleep(5)
+    print 'disconnected', con.disconnect()
+    sleep(3)
+    print 'reconnected', con.reconnect()
+    inner()
+    sleep(3)
+
+    print 'again disconnected', con.disconnect()

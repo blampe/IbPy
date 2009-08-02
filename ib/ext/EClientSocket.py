@@ -33,7 +33,7 @@ class EClientSocket(object):
     """ generated source for EClientSocket
 
     """
-    CLIENT_VERSION = 42
+    CLIENT_VERSION = 45
     SERVER_VERSION = 38
     EOL = 0
     BAG_SEC_TYPE = "BAG"
@@ -94,6 +94,7 @@ class EClientSocket(object):
     MIN_SERVER_VER_SCALE_ORDERS2 = 40
     MIN_SERVER_VER_ALGO_ORDERS = 41
     MIN_SERVER_VER_EXECUTION_DATA_CHAIN = 42
+    MIN_SERVER_VER_NOT_HELD = 44
     m_anyWrapper = None
     m_dos = None
     m_connected = bool()
@@ -613,7 +614,11 @@ class EClientSocket(object):
             if not self.IsEmpty(order.m_algoStrategy):
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support algo orders.")
                 return
-        VERSION = 27
+        if self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD:
+            if order.m_notHeld:
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support notHeld parameter.")
+                return
+        VERSION = 27 if self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD else 28
         try:
             self.send(self.PLACE_ORDER)
             self.send(VERSION)
@@ -741,6 +746,8 @@ class EClientSocket(object):
             if self.m_serverVersion >= self.MIN_SERVER_VER_PTA_ORDERS:
                 self.send(order.m_clearingAccount)
                 self.send(order.m_clearingIntent)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_NOT_HELD:
+                self.send(order.m_notHeld)
             if self.m_serverVersion >= self.MIN_SERVER_VER_UNDER_COMP:
                 if contract.m_underComp is not None:
                     underComp = contract.m_underComp

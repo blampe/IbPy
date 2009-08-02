@@ -97,6 +97,7 @@ class DataInputStream(object):
 
         @param stream any object with recv method
         """
+        self.stream = stream
         self.recv = stream.recv
 
     def readByte(self, unpack=struct.unpack):
@@ -357,3 +358,12 @@ class Thread(ThreadType):
         @param dis ignored
         """
         ThreadType.__init__(self, name=name)
+
+
+    def term(self):
+        def isInterrupted():
+            print 'down town'
+            return True
+        self.isInterrupted = isInterrupted
+        self.m_dis.stream.shutdown(socket.SHUT_RDWR)
+        self.m_dis.stream.close()

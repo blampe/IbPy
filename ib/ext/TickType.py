@@ -66,6 +66,7 @@ class TickType(object):
     LAST_TIMESTAMP = 45
     SHORTABLE = 46
     FUNDAMENTAL_RATIOS = 47
+    RT_VOLUME = 48
 
     @classmethod
     def getField(cls, tickType):
@@ -165,6 +166,8 @@ class TickType(object):
             return "shortable"
         elif tickType == cls.FUNDAMENTAL_RATIOS:
             return "fundamentals"
+        elif tickType == cls.RT_VOLUME:
+            return "RTVolume"
         else:
             return "unknown"
 

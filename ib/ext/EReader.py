@@ -66,6 +66,7 @@ class EReader(Thread):
     ACCT_DOWNLOAD_END = 54
     EXECUTION_DATA_END = 55
     DELTA_NEUTRAL_VALIDATION = 56
+    TICK_SNAPSHOT_END = 57
     m_parent = None
     m_dis = None
 
@@ -354,6 +355,8 @@ class EReader(Thread):
             if version >= 19:
                 order.m_clearingAccount = self.readStr()
                 order.m_clearingIntent = self.readStr()
+            if version >= 22:
+                order.m_notHeld = self.readBoolFromInt()
             if version >= 20:
                 if self.readBoolFromInt():
                     underComp = UnderComp()
@@ -447,6 +450,9 @@ class EReader(Thread):
                 contract.m_priceMagnifier = self.readInt()
             if version >= 4:
                 contract.m_underConId = self.readInt()
+            if version >= 5:
+                contract.m_longName = self.readStr()
+                contract.m_summary.m_primaryExch = self.readStr()
             self.eWrapper().contractDetails(reqId, contract)
         elif msgId == self.BOND_CONTRACT_DATA:
             version = self.readInt()
@@ -480,6 +486,8 @@ class EReader(Thread):
                 contract.m_nextOptionType = self.readStr()
                 contract.m_nextOptionPartial = self.readBoolFromInt()
                 contract.m_notes = self.readStr()
+            if version >= 4:
+                contract.m_longName = self.readStr()
             self.eWrapper().bondContractDetails(reqId, contract)
         elif msgId == self.EXECUTION_DATA:
             version = self.readInt()
@@ -628,6 +636,10 @@ class EReader(Thread):
             underComp.m_delta = self.readDouble()
             underComp.m_price = self.readDouble()
             self.eWrapper().deltaNeutralValidation(reqId, underComp)
+        elif msgId == self.TICK_SNAPSHOT_END:
+            self.readInt()
+            reqId = self.readInt()
+            self.eWrapper().tickSnapshotEnd(reqId)
         else:
             self.m_parent.error(EClientErrors.NO_VALID_ID, EClientErrors.UNKNOWN_ID.code(), EClientErrors.UNKNOWN_ID.msg())
             return False

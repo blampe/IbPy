@@ -28,9 +28,12 @@ class Sender(object):
         @keyparam clientType=EClientSocket callable producing socket client
         @return True if connected, False otherwise
         """
-        self.client = client = clientType(handler)
-        client.eConnect(host, port, clientId)
-        return client.isConnected()
+        def reconnect():
+            self.client = client = clientType(handler)
+            client.eConnect(host, port, clientId)
+            return client.isConnected()
+        self.reconnect = reconnect
+        return self.reconnect()
 
     def disconnect(self):
         """ Disconnects the client.
