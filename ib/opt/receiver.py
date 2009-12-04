@@ -11,6 +11,8 @@
 # ib.opt.message module more information.
 #
 ##
+from Queue import Queue, Empty
+
 from ib.lib.overloading import overloaded
 from ib.lib.logger import logger
 from ib.opt.message import registry, wrapperMethods
@@ -89,6 +91,28 @@ class Receiver(object):
                     errmsg = ("Exception in message dispatch.  "
                               "Handler '%s' unregistered for '%s'")
                     self.logger.exception(errmsg, self.key(listener), name)
+
+    def iterator(self, *types):
+	""" Create and return a function for iterating over messages.
+
+        @param *types zero or more message types to associate with listener
+        @return function that yields messages
+	"""
+	queue = Queue()
+	closed = []
+	def messageGenerator(block=True, timeout=0.1):
+	    while True:
+		try:
+		    yield queue.get(block=block, timeout=timeout)
+		except (Empty, ):
+		    if closed:
+			break
+	self.register(closed.append, 'ConnectionClosed')
+	if types:
+	    self.register(queue.put, *types)
+	else:
+	    self.registerAll(queue.put)
+	return messageGenerator
 
     def register(self, listener, *types):
         """ Associate listener with message types created by this Receiver.
