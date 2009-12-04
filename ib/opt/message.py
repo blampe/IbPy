@@ -70,7 +70,7 @@ class Message(object):
         """
         name = self.typeName
         items = str.join(', ', ['%s=%s' % item for item in self.items()])
-        return '<%s %s>' % (name, items)
+        return '<%s%s>' % (name, (' ' + items) if items else '')
 
     def items(self):
         """ List of message (slot, slot value) pairs, as 2-tuples.
