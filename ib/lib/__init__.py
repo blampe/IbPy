@@ -11,6 +11,7 @@
 ##
 
 import copy
+import functools
 import socket
 import struct
 import sys
@@ -37,6 +38,7 @@ def synchronized(lock):
     @return decorator that provides automatic locking
     """
     def wrapper(func):
+        @functools.wraps(func)
         def inner(*args, **kwds):
             lock.acquire()
             try:

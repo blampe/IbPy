@@ -18,6 +18,7 @@
 #
 ##
 from ib.lib.logger import logger
+from ib.opt.dispatcher import Dispatcher
 from ib.opt.receiver import Receiver
 from ib.opt.sender import Sender
 
@@ -26,7 +27,7 @@ class Connection(object):
     """ Encapsulates a connection to TWS.
 
     """
-    def __init__(self, host, port, clientId, receiver, sender):
+    def __init__(self, host, port, clientId, receiver, sender, dispatcher):
         """ Constructor.
 
         @param host name of host for connection; default is localhost
@@ -38,19 +39,23 @@ class Connection(object):
         self.clientId = clientId
         self.receiver = receiver
         self.sender = sender
+	self.dispatcher = dispatcher
 
     def __getattr__(self, name):
         """ x.__getattr__('name') <==> x.name
 
-        @return named attribute from instance receiver or sender
+        @return attribute of instance dispatcher, receiver, or sender
         """
-        try:
-            return getattr(self.receiver, name)
-        except (AttributeError, ):
-            try:
-                return getattr(self.sender, name)
-            except (AttributeError, ):
-                pass
+	try:
+	    return getattr(self.dispatcher, name)
+	except (AttributeError, ):
+	    try:
+		return getattr(self.receiver, name)
+	    except (AttributeError, ):
+		try:
+		    return getattr(self.sender, name)
+		except (AttributeError, ):
+		    pass
         raise AttributeError(name)
 
     def connect(self):
@@ -76,9 +81,9 @@ class Connection(object):
         """
         if enable:
             self.logger = logger()
-            self.receiver.registerAll(self.logMessage)
+            self.registerAll(self.logMessage)
         else:
-            self.receiver.unregisterAll(self.logMessage)
+            self.unregisterAll(self.logMessage)
         return enable
 
     def logMessage(self, message):
@@ -92,7 +97,7 @@ class Connection(object):
 
     @classmethod
     def create(cls, host='localhost', port=7496, clientId=0, receiver=None,
-               sender=None):
+               sender=None, dispatcher=None):
         """ Creates and returns Connection class (or subclass) instance.
 
         @param host name of host for connection; default is localhost
@@ -100,6 +105,7 @@ class Connection(object):
         @param clientId client identifier to send when connected
         @return Connection (or subclass) instance
         """
-        receiver = Receiver() if receiver is None else receiver
-        sender = Sender() if sender is None else sender
-        return cls(host, port, clientId, receiver, sender)
+	dispatcher = Dispatcher() if dispatcher is None else dispatcher
+        receiver = Receiver(dispatcher) if receiver is None else receiver
+        sender = Sender(dispatcher) if sender is None else sender
+        return cls(host, port, clientId, receiver, sender, dispatcher)

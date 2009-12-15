@@ -9,6 +9,7 @@
 #
 ##
 from ib.ext.EClientSocket import EClientSocket
+from ib.opt.message import registry, clientSocketMethods
 
 
 class Sender(object):
@@ -17,6 +18,14 @@ class Sender(object):
 
     """
     client = None
+
+    def __init__(self, dispatcher):
+        """ Initializer.
+
+        @param dispatcher message dispatcher instance
+        """
+	self.dispatcher = dispatcher
+	self.clientMethodNames = [m[0] for m in clientSocketMethods]
 
     def connect(self, host, port, clientId, handler, clientType=EClientSocket):
         """ Creates a TWS client socket and connects it.
@@ -51,4 +60,16 @@ class Sender(object):
 
         @return named attribute from EClientSocket object
         """
-        return getattr(self.client, name)
+	try:
+	    value = getattr(self.client, name)
+	except (AttributeError, ):
+	    raise
+	if name in self.clientMethodNames:
+            before, after = registry[name+'Before'], registry[name+'After']
+	    def wrapperMethod(*args):
+		self.dispatcher(name+'Before', dict(zip(before.__slots__, args)))
+		result = value(*args)
+		self.dispatcher(name+'After', dict(zip(after.__slots__, args)))
+		return result
+	    return wrapperMethod
+	return value

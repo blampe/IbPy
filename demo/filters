@@ -31,10 +31,20 @@ tick_handler = messagetools.bidSizeFilter(my_tick_handler)
 cash_handler = messagetools.messageFilter(my_account_handler, lambda m:m.key.lower().count('cash'))
 
 
+# try out the new before and after send messages
+def pre_req_account_updates(msg):
+    print 'pre account updates: ', msg
+
+def post_req_account_updates(msg):
+    print 'post account updates: ', msg
+
+
 if __name__ == '__main__':
     con = ibConnection()
     con.register(cash_handler, 'UpdateAccountValue')
     con.register(tick_handler, message.TickSize, message.TickPrice)
+    con.register(pre_req_account_updates, 'ReqAccountUpdatesBefore')
+    con.register(post_req_account_updates, 'ReqAccountUpdatesAfter')
     con.connect()
 
     def inner():
