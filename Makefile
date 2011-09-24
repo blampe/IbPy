@@ -40,21 +40,20 @@ $(release_dir):
 	echo [I] building release=$(release_num) version=$(ibpy_ver) revision=$(ibpy_rev) api=$(twsapi_ver).
 	echo [I] exporting source from $(svn_root) into $(release_dir).
 	svn export $(svn_root) $(release_dir) > /dev/null
-	echo [I] fixing version strings.
-	cd $(release_dir)/ib && sed -i".bak" s/api\ \=\ \"0\"/api\ \=\ \"$(twsapi_ver)\"/ __init__.py
-	cd $(release_dir)/ib && sed -i".bak" s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ __init__.py
-	cd $(release_dir)/ib && sed -i".bak" s/revision\ \=\ \"r0\"/revision\ \=\ \"r$(ibpy_rev)\"/ __init__.py
+	echo [I] fixing version strings
+	cd $(release_dir)/ib && sed -i '.bak' s/api\ \=\ \"0\"/api\ \=\ \"$(twsapi_ver)\"/ __init__.py
+	cd $(release_dir)/ib && sed -i '.bak' s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ __init__.py
+	cd $(release_dir)/ib && sed -i '.bak' s/revision\ \=\ \"r0\"/revision\ \=\ \"r$(ibpy_rev)\"/ __init__.py
 	cd $(release_dir) && mv setup.py.in setup.py
-	cd $(release_dir)/ && sed -i".bak" s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ setup.py
-	cd $(release_dir)/ && sed -i".bak" s/\:release_file\:/$(release_file)/ setup.py
+	cd $(release_dir)/ && sed -i '.bak' s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ setup.py
+	cd $(release_dir)/ && sed -i '.bak' s/\:release_file\:/$(release_file)/ setup.py
 	cd $(release_dir) && mv README.in README
-	cd $(release_dir)/ && sed -i".bak" s/\:release_num\:/$(release_num)/ README
-	cd $(release_dir)/ && sed -i".bak" s/\:release_date\:/"$(release_date)"/ README
-	cd $(release_dir)/ && sed -i".bak" s/\:twsapi_ver\:/$(twsapi_ver)/ README
-	cd $(release_dir)/ && sed -i".bak" s/\:release_file\:/$(release_file)/ README
-	cd $(release_dir)/ && sed -i".bak" s/\:release_root\:/$(release_root)/ README
-	cd $(release_dir)/ && find . -name "*.bak" | xargs rm
-	echo [I] building source distribution.
+	cd $(release_dir)/ && sed -i '.bak' s/\:release_num\:/$(release_num)/ README
+	cd $(release_dir)/ && sed -i '.bak' s/\:release_date\:/"$(release_date)"/ README
+	cd $(release_dir)/ && sed -i '.bak' s/\:twsapi_ver\:/$(twsapi_ver)/ README
+	cd $(release_dir)/ && sed -i '.bak' s/\:release_file\:/$(release_file)/ README
+	cd $(release_dir)/ && sed -i '.bak' s/\:release_root\:/$(release_root)/ README
+	echo [I] building source distribution
 	cd $(release_dir) && python setup.py sdist --formats=gztar,zip > /dev/null
 	echo [I] source distribution complete.  files in ./$(release_dir)/dist/
 	ls $(release_dir)/dist
