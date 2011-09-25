@@ -33,7 +33,7 @@ class EClientSocket(object):
     """ generated source for EClientSocket
 
     """
-    CLIENT_VERSION = 45
+    CLIENT_VERSION = 48
     SERVER_VERSION = 38
     EOL = 0
     BAG_SEC_TYPE = "BAG"
@@ -81,6 +81,11 @@ class EClientSocket(object):
     CANCEL_REAL_TIME_BARS = 51
     REQ_FUNDAMENTAL_DATA = 52
     CANCEL_FUNDAMENTAL_DATA = 53
+    REQ_CALC_IMPLIED_VOLAT = 54
+    REQ_CALC_OPTION_PRICE = 55
+    CANCEL_CALC_IMPLIED_VOLAT = 56
+    CANCEL_CALC_OPTION_PRICE = 57
+    REQ_GLOBAL_CANCEL = 58
     MIN_SERVER_VER_REAL_TIME_BARS = 34
     MIN_SERVER_VER_SCALE_ORDERS = 35
     MIN_SERVER_VER_SNAPSHOT_MKT_DATA = 35
@@ -95,6 +100,16 @@ class EClientSocket(object):
     MIN_SERVER_VER_ALGO_ORDERS = 41
     MIN_SERVER_VER_EXECUTION_DATA_CHAIN = 42
     MIN_SERVER_VER_NOT_HELD = 44
+    MIN_SERVER_VER_SEC_ID_TYPE = 45
+    MIN_SERVER_VER_PLACE_ORDER_CONID = 46
+    MIN_SERVER_VER_REQ_MKT_DATA_CONID = 47
+    MIN_SERVER_VER_REQ_CALC_IMPLIED_VOLAT = 49
+    MIN_SERVER_VER_REQ_CALC_OPTION_PRICE = 50
+    MIN_SERVER_VER_CANCEL_CALC_IMPLIED_VOLAT = 50
+    MIN_SERVER_VER_CANCEL_CALC_OPTION_PRICE = 50
+    MIN_SERVER_VER_SSHORTX_OLD = 51
+    MIN_SERVER_VER_SSHORTX = 52
+    MIN_SERVER_VER_REQ_GLOBAL_CANCEL = 53
     m_anyWrapper = None
     m_dos = None
     m_connected = bool()
@@ -275,11 +290,17 @@ class EClientSocket(object):
             if contract.m_underComp is not None:
                 self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support delta-neutral orders.")
                 return
-        VERSION = 8
+        if self.m_serverVersion < self.MIN_SERVER_VER_REQ_MKT_DATA_CONID:
+            if contract.m_conId > 0:
+                self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support conId parameter.")
+                return
+        VERSION = 9
         try:
             self.send(self.REQ_MKT_DATA)
             self.send(VERSION)
             self.send(tickerId)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_REQ_MKT_DATA_CONID:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_expiry)
@@ -459,7 +480,11 @@ class EClientSocket(object):
         if self.m_serverVersion < 4:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return
-        VERSION = 5
+        if self.m_serverVersion < self.MIN_SERVER_VER_SEC_ID_TYPE:
+            if not self.IsEmpty(contract.m_secIdType) or not self.IsEmpty(contract.m_secId):
+                self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support secIdType and secId parameters.")
+                return
+        VERSION = 6
         try:
             self.send(self.REQ_CONTRACT_DATA)
             self.send(VERSION)
@@ -479,6 +504,9 @@ class EClientSocket(object):
             self.send(contract.m_localSymbol)
             if self.m_serverVersion >= 31:
                 self.send(contract.m_includeExpired)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_SEC_ID_TYPE:
+                self.send(contract.m_secIdType)
+                self.send(contract.m_secId)
         except (Exception, ), e:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQCONTRACT, str(e))
             self.close()
@@ -618,11 +646,36 @@ class EClientSocket(object):
             if order.m_notHeld:
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support notHeld parameter.")
                 return
-        VERSION = 27 if self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD else 28
+        if self.m_serverVersion < self.MIN_SERVER_VER_SEC_ID_TYPE:
+            if not self.IsEmpty(contract.m_secIdType) or not self.IsEmpty(contract.m_secId):
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support secIdType and secId parameters.")
+                return
+        if self.m_serverVersion < self.MIN_SERVER_VER_PLACE_ORDER_CONID:
+            if contract.m_conId > 0:
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support conId parameter.")
+                return
+        if self.m_serverVersion < self.MIN_SERVER_VER_SSHORTX:
+            if (order.m_exemptCode != -1):
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support exemptCode parameter.")
+                return
+        if self.m_serverVersion < self.MIN_SERVER_VER_SSHORTX:
+            if not contract.m_comboLegs.isEmpty():
+                comboLeg = ComboLeg()
+                ## for-while
+                i = 0
+                while i < len(contract.m_comboLegs):
+                    comboLeg = contract.m_comboLegs[i]
+                    if (comboLeg.m_exemptCode != -1):
+                        self.error(id, EClientErrors.UPDATE_TWS, "  It does not support exemptCode parameter.")
+                        return
+                    i += 1
+        VERSION = 27 if self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD else 31
         try:
             self.send(self.PLACE_ORDER)
             self.send(VERSION)
             self.send(id)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_PLACE_ORDER_CONID:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_expiry)
@@ -636,6 +689,9 @@ class EClientSocket(object):
             self.send(contract.m_currency)
             if self.m_serverVersion >= 2:
                 self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_SEC_ID_TYPE:
+                self.send(contract.m_secIdType)
+                self.send(contract.m_secId)
             self.send(order.m_action)
             self.send(order.m_totalQuantity)
             self.send(order.m_orderType)
@@ -679,6 +735,8 @@ class EClientSocket(object):
                         if self.m_serverVersion >= self.MIN_SERVER_VER_SSHORT_COMBO_LEGS:
                             self.send(comboLeg.m_shortSaleSlot)
                             self.send(comboLeg.m_designatedLocation)
+                        if self.m_serverVersion >= self.MIN_SERVER_VER_SSHORTX_OLD:
+                            self.send(comboLeg.m_exemptCode)
                         i += 1
             if self.m_serverVersion >= 9:
                 self.send("")
@@ -696,6 +754,8 @@ class EClientSocket(object):
             if self.m_serverVersion >= 18:
                 self.send(order.m_shortSaleSlot)
                 self.send(order.m_designatedLocation)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_SSHORTX_OLD:
+                self.send(order.m_exemptCode)
             if self.m_serverVersion >= 19:
                 self.send(order.m_ocaType)
                 if self.m_serverVersion < 38:
@@ -1028,6 +1088,116 @@ class EClientSocket(object):
             self.send(reqId)
         except (Exception, ), e:
             self.error(reqId, EClientErrors.FAIL_SEND_CANFUNDDATA, str(e))
+            self.close()
+
+    @synchronized(mlock)
+    def calculateImpliedVolatility(self, reqId, contract, optionPrice, underPrice):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_REQ_CALC_IMPLIED_VOLAT:
+            self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate implied volatility requests.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.REQ_CALC_IMPLIED_VOLAT)
+            self.send(VERSION)
+            self.send(reqId)
+            self.send(contract.m_conId)
+            self.send(contract.m_symbol)
+            self.send(contract.m_secType)
+            self.send(contract.m_expiry)
+            self.send(contract.m_strike)
+            self.send(contract.m_right)
+            self.send(contract.m_multiplier)
+            self.send(contract.m_exchange)
+            self.send(contract.m_primaryExch)
+            self.send(contract.m_currency)
+            self.send(contract.m_localSymbol)
+            self.send(optionPrice)
+            self.send(underPrice)
+        except (Exception, ), e:
+            self.error(reqId, EClientErrors.FAIL_SEND_REQCALCIMPLIEDVOLAT, str(e))
+            self.close()
+
+    @synchronized(mlock)
+    def cancelCalculateImpliedVolatility(self, reqId):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_CANCEL_CALC_IMPLIED_VOLAT:
+            self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate implied volatility cancellation.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.CANCEL_CALC_IMPLIED_VOLAT)
+            self.send(VERSION)
+            self.send(reqId)
+        except (Exception, ), e:
+            self.error(reqId, EClientErrors.FAIL_SEND_CANCALCIMPLIEDVOLAT, str(e))
+            self.close()
+
+    @synchronized(mlock)
+    def calculateOptionPrice(self, reqId, contract, volatility, underPrice):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_REQ_CALC_OPTION_PRICE:
+            self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate option price requests.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.REQ_CALC_OPTION_PRICE)
+            self.send(VERSION)
+            self.send(reqId)
+            self.send(contract.m_conId)
+            self.send(contract.m_symbol)
+            self.send(contract.m_secType)
+            self.send(contract.m_expiry)
+            self.send(contract.m_strike)
+            self.send(contract.m_right)
+            self.send(contract.m_multiplier)
+            self.send(contract.m_exchange)
+            self.send(contract.m_primaryExch)
+            self.send(contract.m_currency)
+            self.send(contract.m_localSymbol)
+            self.send(volatility)
+            self.send(underPrice)
+        except (Exception, ), e:
+            self.error(reqId, EClientErrors.FAIL_SEND_REQCALCOPTIONPRICE, str(e))
+            self.close()
+
+    @synchronized(mlock)
+    def cancelCalculateOptionPrice(self, reqId):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_CANCEL_CALC_OPTION_PRICE:
+            self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate option price cancellation.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.CANCEL_CALC_OPTION_PRICE)
+            self.send(VERSION)
+            self.send(reqId)
+        except (Exception, ), e:
+            self.error(reqId, EClientErrors.FAIL_SEND_CANCALCOPTIONPRICE, str(e))
+            self.close()
+
+    @synchronized(mlock)
+    def reqGlobalCancel(self):
+        if not self.m_connected:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_REQ_GLOBAL_CANCEL:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support globalCancel requests.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.REQ_GLOBAL_CANCEL)
+            self.send(VERSION)
+        except (Exception, ), e:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQGLOBALCANCEL, str(e))
             self.close()
 
     @overloaded

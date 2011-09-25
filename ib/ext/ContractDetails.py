@@ -29,6 +29,13 @@ class ContractDetails(object):
     m_validExchanges = ""
     m_underConId = 0
     m_longName = ""
+    m_contractMonth = ""
+    m_industry = ""
+    m_category = ""
+    m_subcategory = ""
+    m_timeZoneId = ""
+    m_tradingHours = ""
+    m_liquidHours = ""
     m_cusip = ""
     m_ratings = ""
     m_descAppend = ""
@@ -51,7 +58,7 @@ class ContractDetails(object):
         self.m_minTick = 0
         self.m_underConId = 0
 
-    @__init__.register(object, Contract, str, str, float, str, str, int, str)
+    @__init__.register(object, Contract, str, str, float, str, str, int, str, str, str, str, str, str, str, str)
     def __init___0(self, p_summary,
                          p_marketName,
                          p_tradingClass,
@@ -59,7 +66,14 @@ class ContractDetails(object):
                          p_orderTypes,
                          p_validExchanges,
                          p_underConId,
-                         p_longName):
+                         p_longName,
+                         p_contractMonth,
+                         p_industry,
+                         p_category,
+                         p_subcategory,
+                         p_timeZoneId,
+                         p_tradingHours,
+                         p_liquidHours):
         self.m_summary = p_summary
         self.m_marketName = p_marketName
         self.m_tradingClass = p_tradingClass
@@ -68,5 +82,12 @@ class ContractDetails(object):
         self.m_validExchanges = p_validExchanges
         self.m_underConId = p_underConId
         self.m_longName = p_longName
+        self.m_contractMonth = p_contractMonth
+        self.m_industry = p_industry
+        self.m_category = p_category
+        self.m_subcategory = p_subcategory
+        self.m_timeZoneId = p_timeZoneId
+        self.m_tradingHours = p_tradingHours
+        self.m_liquidHours = p_liquidHours
 
 

@@ -24,7 +24,7 @@ src:
 
 
 $(modules):
-	j2py -i $(addprefix $(srcdir), $(addsuffix .java, $(basename $@))) -o $@ -c ib.ext.cfg -c ib.ext.cfg.$(basename $@) -s
+	j2py -i $(addprefix $(srcdir), $(addsuffix .java, $(basename $@))) -o $@ -c cfg -c cfg.$(basename $@) -s
 
 modules-clean: clean-modules
 clean-modules:

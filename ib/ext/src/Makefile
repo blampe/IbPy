@@ -1,4 +1,4 @@
-ibsources_jar := twsapi_unixmac.jar
+ibsources_jar := twsapi_unixmac_965.jar
 ibsources_url := "http://www.interactivebrokers.com/download/$(ibsources_jar)"
 
 

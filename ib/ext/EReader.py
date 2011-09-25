@@ -140,14 +140,33 @@ class EReader(Thread):
             delta = self.readDouble()
             if abs(delta) > 1:
                 delta = Double.MAX_VALUE
-            modelPrice = float()
-            pvDividend = float()
-            if (tickType == TickType.MODEL_OPTION):
-                modelPrice = self.readDouble()
+            optPrice = Double.MAX_VALUE
+            pvDividend = Double.MAX_VALUE
+            gamma = Double.MAX_VALUE
+            vega = Double.MAX_VALUE
+            theta = Double.MAX_VALUE
+            undPrice = Double.MAX_VALUE
+            if version >= 6 or (tickType == TickType.MODEL_OPTION):
+                optPrice = self.readDouble()
+                if optPrice < 0:
+                    optPrice = Double.MAX_VALUE
                 pvDividend = self.readDouble()
-            else:
-                modelPrice = pvDividend = Double.MAX_VALUE
-            self.eWrapper().tickOptionComputation(tickerId, tickType, impliedVol, delta, modelPrice, pvDividend)
+                if pvDividend < 0:
+                    pvDividend = Double.MAX_VALUE
+            if version >= 6:
+                gamma = self.readDouble()
+                if abs(gamma) > 1:
+                    gamma = Double.MAX_VALUE
+                vega = self.readDouble()
+                if abs(vega) > 1:
+                    vega = Double.MAX_VALUE
+                theta = self.readDouble()
+                if abs(theta) > 1:
+                    theta = Double.MAX_VALUE
+                undPrice = self.readDouble()
+                if undPrice < 0:
+                    undPrice = Double.MAX_VALUE
+            self.eWrapper().tickOptionComputation(tickerId, tickType, impliedVol, delta, optPrice, pvDividend, gamma, vega, theta, undPrice)
         elif msgId == self.TICK_GENERIC:
             version = self.readInt()
             tickerId = self.readInt()
@@ -304,6 +323,11 @@ class EReader(Thread):
                 order.m_settlingFirm = self.readStr()
                 order.m_shortSaleSlot = self.readInt()
                 order.m_designatedLocation = self.readStr()
+                if (self.m_parent.serverVersion() == 51):
+                    self.readInt()
+                else:
+                    if version >= 23:
+                        order.m_exemptCode = self.readInt()
                 order.m_auctionStrategy = self.readInt()
                 order.m_startingPrice = self.readDouble()
                 order.m_stockRefPrice = self.readDouble()
@@ -453,6 +477,14 @@ class EReader(Thread):
             if version >= 5:
                 contract.m_longName = self.readStr()
                 contract.m_summary.m_primaryExch = self.readStr()
+            if version >= 6:
+                contract.m_contractMonth = self.readStr()
+                contract.m_industry = self.readStr()
+                contract.m_category = self.readStr()
+                contract.m_subcategory = self.readStr()
+                contract.m_timeZoneId = self.readStr()
+                contract.m_tradingHours = self.readStr()
+                contract.m_liquidHours = self.readStr()
             self.eWrapper().contractDetails(reqId, contract)
         elif msgId == self.BOND_CONTRACT_DATA:
             version = self.readInt()

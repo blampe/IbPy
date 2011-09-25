@@ -67,6 +67,15 @@ class TickType(object):
     SHORTABLE = 46
     FUNDAMENTAL_RATIOS = 47
     RT_VOLUME = 48
+    HALTED = 49
+    BID_YIELD = 50
+    ASK_YIELD = 51
+    LAST_YIELD = 52
+    CUST_OPTION_COMPUTATION = 53
+    TRADE_COUNT = 54
+    TRADE_RATE = 55
+    VOLUME_RATE = 56
+    LAST_RTH_TRADE = 57
 
     @classmethod
     def getField(cls, tickType):
@@ -168,6 +177,24 @@ class TickType(object):
             return "fundamentals"
         elif tickType == cls.RT_VOLUME:
             return "RTVolume"
+        elif tickType == cls.HALTED:
+            return "halted"
+        elif tickType == cls.BID_YIELD:
+            return "bidYield"
+        elif tickType == cls.ASK_YIELD:
+            return "askYield"
+        elif tickType == cls.LAST_YIELD:
+            return "lastYield"
+        elif tickType == cls.CUST_OPTION_COMPUTATION:
+            return "custOptComp"
+        elif tickType == cls.TRADE_COUNT:
+            return "trades"
+        elif tickType == cls.TRADE_RATE:
+            return "trades/min"
+        elif tickType == cls.VOLUME_RATE:
+            return "volume/min"
+        elif tickType == cls.LAST_RTH_TRADE:
+            return "lastRTHTrade"
         else:
             return "unknown"
 

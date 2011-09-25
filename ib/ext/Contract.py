@@ -33,6 +33,8 @@ class Contract(Cloneable):
     m_localSymbol = ""
     m_primaryExch = ""
     m_includeExpired = bool()
+    m_secIdType = ""
+    m_secId = ""
     m_comboLegsDescrip = ""
     m_comboLegs = None
     m_underComp = None
@@ -49,7 +51,7 @@ class Contract(Cloneable):
         retval.m_comboLegs = self.m_comboLegs[:]
         return retval
 
-    @__init__.register(object, int, str, str, str, float, str, str, str, str, str, list, str, bool)
+    @__init__.register(object, int, str, str, str, float, str, str, str, str, str, list, str, bool, str, str)
     def __init___0(self, p_conId,
                          p_symbol,
                          p_secType,
@@ -62,7 +64,9 @@ class Contract(Cloneable):
                          p_localSymbol,
                          p_comboLegs,
                          p_primaryExch,
-                         p_includeExpired):
+                         p_includeExpired,
+                         p_secIdType,
+                         p_secId):
         self.m_conId = p_conId
         self.m_symbol = p_symbol
         self.m_secType = p_secType
@@ -76,6 +80,8 @@ class Contract(Cloneable):
         self.m_localSymbol = p_localSymbol
         self.m_comboLegs = p_comboLegs
         self.m_primaryExch = p_primaryExch
+        self.m_secIdType = p_secIdType
+        self.m_secId = p_secId
 
     def __eq__(self, p_other):
         if self is p_other:
@@ -94,6 +100,10 @@ class Contract(Cloneable):
                 return False
             if (Util.StringCompare(self.m_expiry, l_theOther.m_expiry) != 0) or (Util.StringCompare(self.m_right, l_theOther.m_right) != 0) or (Util.StringCompare(self.m_multiplier, l_theOther.m_multiplier) != 0) or (Util.StringCompare(self.m_localSymbol, l_theOther.m_localSymbol) != 0):
                 return False
+        if (Util.StringCompare(self.m_secIdType, l_theOther.m_secIdType) != 0):
+            return False
+        if (Util.StringCompare(self.m_secId, l_theOther.m_secId) != 0):
+            return False
         if not Util.VectorEqualsUnordered(self.m_comboLegs, l_theOther.m_comboLegs):
             return False
         if (self.m_underComp != l_theOther.m_underComp):
