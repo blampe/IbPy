@@ -30,8 +30,12 @@ class EWrapper(AnyWrapper):
                                     field,
                                     impliedVol,
                                     delta,
-                                    modelPrice,
-                                    pvDividend):
+                                    optPrice,
+                                    pvDividend,
+                                    gamma,
+                                    vega,
+                                    theta,
+                                    undPrice):
         raise NotImplementedError()
 
     def tickGeneric(self, tickerId, tickType, value):
