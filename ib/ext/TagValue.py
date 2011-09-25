@@ -14,6 +14,7 @@
 # WARNING: all changes to this file will be lost.
 
 from ib.lib.overloading import overloaded
+from ib.ext.Util import Util
 
 class TagValue(object):
     """ generated source for TagValue

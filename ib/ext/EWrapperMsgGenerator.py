@@ -15,6 +15,8 @@
 
 from ib.ext.AnyWrapperMsgGenerator import AnyWrapperMsgGenerator
 from ib.ext.Util import Util
+from ib.ext.TickType import TickType
+from ib.ext.EClientSocket import EClientSocket
 
 class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
     """ generated source for EWrapperMsgGenerator
@@ -42,7 +44,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
                                    vega,
                                    theta,
                                    undPrice):
-        toAdd = "id=" + tickerId + "  " + TickType.getField(field) + ": vol = " + Double.toString(impliedVol) if impliedVol >= 0 and (impliedVol != Double.MAX_VALUE) else "N/A" + " delta = " + Double.toString(delta) if Math.abs(delta) <= 1 else "N/A" + " gamma = " + Double.toString(gamma) if Math.abs(gamma) <= 1 else "N/A" + " vega = " + Double.toString(vega) if Math.abs(vega) <= 1 else "N/A" + " theta = " + Double.toString(theta) if Math.abs(theta) <= 1 else "N/A" + " optPrice = " + Double.toString(optPrice) if optPrice >= 0 and (optPrice != Double.MAX_VALUE) else "N/A" + " pvDividend = " + Double.toString(pvDividend) if pvDividend >= 0 and (pvDividend != Double.MAX_VALUE) else "N/A" + " undPrice = " + Double.toString(undPrice) if undPrice >= 0 and (undPrice != Double.MAX_VALUE) else "N/A"
+        toAdd = "id=" + tickerId + "  " + TickType.getField(field) + ": vol = " + (impliedVol if impliedVol >= 0 and (impliedVol != float('inf')) else "N/A") + " delta = " + (delta if abs(delta) <= 1 else "N/A") + " gamma = " + (gamma if abs(gamma) <= 1 else "N/A") + " vega = " + (vega if abs(vega) <= 1 else "N/A") + " theta = " + (theta if abs(theta) <= 1 else "N/A") + " optPrice = " + (optPrice if optPrice >= 0 and (optPrice != float('inf')) else "N/A") + " pvDividend = " + (pvDividend if pvDividend >= 0 and (pvDividend != float('inf')) else "N/A") + " undPrice = " + (undPrice if undPrice >= 0 and (undPrice != float('inf')) else "N/A")
         return toAdd
 
     @classmethod
@@ -84,7 +86,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
         if "BAG" == contract.m_secType:
             if contract.m_comboLegsDescrip is not None:
                 msg += " comboLegsDescrip=" + contract.m_comboLegsDescrip
-            if (order.m_basisPoints != Double.MAX_VALUE):
+            if (order.m_basisPoints != float('inf')):
                 msg += " basisPoints=" + order.m_basisPoints
                 msg += " basisPointsType=" + order.m_basisPointsType
         if contract.m_underComp is not None:
@@ -251,7 +253,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
 
     @classmethod
     def currentTime(cls, time):
-        return "current time = " + time + " (" + DateFormat.getDateTimeInstance().format(Date(time * 1000)) + ")"
+        return "current time = " + time
 
     @classmethod
     def fundamentalData(cls, reqId, data):
