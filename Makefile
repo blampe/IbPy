@@ -40,6 +40,9 @@ $(release_dir):
 	echo [I] building release=$(release_num) version=$(ibpy_ver) revision=$(ibpy_rev) api=$(twsapi_ver).
 	echo [I] exporting source from $(svn_root) into $(release_dir).
 	svn export $(svn_root) $(release_dir) > /dev/null
+	echo [I] overwriting ib/ and demo/ with local source
+	cp -r ib/ $(release_dir)/ib
+	cp -r demo/ $(release_dir)/demo
 	echo [I] fixing version strings
 	cd $(release_dir)/ib && sed -i '.bak' s/api\ \=\ \"0\"/api\ \=\ \"$(twsapi_ver)\"/ __init__.py
 	cd $(release_dir)/ib && sed -i '.bak' s/version\ \=\ \"0\"/version\ \=\ \"$(release_num)\"/ __init__.py
