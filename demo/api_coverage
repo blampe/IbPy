@@ -9,9 +9,10 @@
 # it an example of correct use of a programming language.
 #
 ##
+import logging
+
 from functools import partial
 from logging import DEBUG, INFO, WARN, ERROR
-from logging import debug, info, warn, error, root
 from optparse import OptionParser
 from random import randint
 from time import sleep, strftime, time
@@ -134,11 +135,11 @@ def make_error_catcher(seq):
 def maybe_verbose(call):
     name = call.__name__
     def inner(connection, options):
-        info('Start  %s', name)
+        logging.info('Start  %s', name)
         start = time()
         v = call(connection, options)
         finish = time()
-        info('Finish %s in %0.3f sec', name, finish-start)
+        logging.info('Finish %s in %0.3f sec', name, finish-start)
         return v
     inner.__name__ = name
     return inner
@@ -149,7 +150,7 @@ def catch_errors(call):
         errors = []
         catcher = make_error_catcher(errors)
         connection.register(catcher, 'Error')
-        rv = call(connection, options)
+        call(connection, options)
         connection.unregister(catcher, 'Error')
         return errors
     inner.__name__ = call.__name__
@@ -328,7 +329,7 @@ def get_options():
 
 def main(options):
     basicConfig()
-    root.setLevel(verbose_levels.get(options.verbose, ERROR))
+    logging.root.setLevel(verbose_levels.get(options.verbose, ERROR))
 
     rec_msgs = {}
     unrec_msgs = {}

@@ -27,8 +27,6 @@ from ib.ext.Util import Util
 
 from ib.lib.logger import logger
 
-# micro optimizations
-from __builtin__ import float, str, None, True, False
 
 class EReader(Thread):
     """ generated source for EReader
