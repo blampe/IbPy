@@ -24,6 +24,8 @@ from ib.ext.OrderState import OrderState
 from ib.ext.TickType import TickType
 from ib.ext.UnderComp import UnderComp
 from ib.ext.Util import Util
+from ib.ext.TagValue import TagValue
+from ib.ext.EClientErrors import EClientErrors
 
 from ib.lib.logger import logger
 
@@ -391,14 +393,14 @@ class EReader(Thread):
                 if not Util.StringIsEmpty(order.m_algoStrategy):
                     algoParamsCount = self.readInt()
                     if algoParamsCount > 0:
-                        order.m_algoParams = Vector(algoParamsCount)
+                        order.m_algoParams = list()
                         ## for-while
                         i = 0
                         while i < algoParamsCount:
                             tagValue = TagValue()
                             tagValue.m_tag = self.readStr()
                             tagValue.m_value = self.readStr()
-                            order.m_algoParams.add(tagValue)
+                            order.m_algoParams.append(tagValue)
                             i += 1
             orderState = OrderState()
             if version >= 16:

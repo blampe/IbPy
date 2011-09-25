@@ -15,7 +15,6 @@
 
 from logging import debug
 
-from ib.ext.AnyWrapper import AnyWrapper
 from ib.ext.ComboLeg import ComboLeg
 from ib.ext.EClientErrors import EClientErrors
 from ib.ext.EReader import EReader
@@ -25,7 +24,6 @@ from ib.lib.overloading import overloaded
 from ib.lib import synchronized, Socket, DataInputStream, DataOutputStream
 from ib.lib import Double, Integer
 
-from socket import SHUT_RDWR
 from threading import RLock
 mlock = RLock()
 
@@ -144,7 +142,7 @@ class EClientSocket(object):
         try:
             socket = Socket(host, port)
             self.eConnect(socket, clientId)
-        except (Exception, ), e:
+        except (Exception, ):
             self.eDisconnect()
             self.connectionError()
 
@@ -197,12 +195,12 @@ class EClientSocket(object):
         try:
             if self.reader is not None:
                 self.reader.interrupt()
-        except (Exception, ), e:
+        except (Exception, ):
             pass
         try:
             if dos is not None:
                 dos.close()
-        except (Exception, ), e:
+        except (Exception, ):
             pass
 
     @synchronized(mlock)
