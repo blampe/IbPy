@@ -45,7 +45,7 @@ verbose_levels = {
     2 : INFO,
     1 : WARN,
     0 : ERROR,
-}
+    }
 
 
 def format_error(msg):
@@ -60,7 +60,7 @@ def format_default(msg):
 msg_formatters = {
     'default':format_default,
     'Error':format_error,
-}
+    }
 
 
 def next_order_id():
@@ -387,6 +387,7 @@ def main(options):
                 print '\n%s (%s):' % (msg_typename, 0, )
             else:
                 print '\nMessage type %s not recognized' % (msg_typename, )
+
     ## but wait, there's more!  here we print a summary of seen message
     ## types and associated counts.
     if seen:
@@ -400,6 +401,7 @@ def main(options):
     if unseen:
         print '\nUnseen Message Types (help):'
         for cls, zero in sorted(unseen):
+            cls = cls[0]
             name = cls.__name__
             help = unseen_hints.get(name, '')
             print '    %s%s' % (name, ' (%s)' % help if help else '', )

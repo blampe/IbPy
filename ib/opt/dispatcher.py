@@ -38,7 +38,7 @@ class Dispatcher(object):
             listeners = self.listeners[maybeName(messageType)]
         except (KeyError, ):
             return results
-	message = messageType(**args)
+	message = messageType[0](**args)
 	for listener in listeners:
 	    try:
 		results.append(listener(message))

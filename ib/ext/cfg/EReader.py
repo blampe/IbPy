@@ -18,8 +18,6 @@ modulePreamble = [
     '',
     'from ib.lib.logger import logger',
     '',
-    '# micro optimizations',
-    'from __builtin__ import float, str, None, True, False',
     ]
 
 

@@ -69,6 +69,7 @@ class Sender(object):
 	    raise
 	if name not in self.clientMethodNames:
 	    return value
+        return value
 	typeName = toTypeName(name)
 	preName, postName = name+'Pre', name+'Post'
 	preType, postType = registry[preName], registry[postName]

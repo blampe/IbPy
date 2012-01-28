@@ -22,7 +22,7 @@ def my_tick_handler(msg):
 if __name__ == '__main__':
     con = ibConnection()
     con.register(my_account_handler, 'UpdateAccountValue')
-    con.register(my_tick_handler, message.TickSize, message.TickPrice)
+    con.register(my_tick_handler, message.tickSize, message.tickPrice)
     con.connect()
 
     def inner():
