@@ -115,7 +115,10 @@ def exec_filter(client_id):
 
 
 def make_msg_counter(rec_map, unrec_map):
-    rec_map.update(dict([(c, []) for c in message.registry.values()]))
+    for classes in message.registry.values():
+        for cls in [c for c in classes if True]:
+            if not cls.__name__.endswith('Pre') and not cls.__name__.endswith('Post'):
+                rec_map[cls] = []
     def counter(msg):
         cls = msg.__class__
         try:
@@ -261,7 +264,6 @@ def test_008a(connection, options):
 
 def test_008b(connection, options):
     def cb(*a, **b):
-        #print '!!', a, b
         pass
     connection.register(cb, 'ExecDetails')
     filtr = exec_filter(options.clientid)
@@ -338,7 +340,7 @@ def main(options):
     ## make_msg_counter fills in the defaults for the rec_msgs dict; now we can
     ## print those values and exit if the option is given
     if options.printmsgs:
-        for name in sorted(k.typeName for k in rec_msgs.keys()):
+        for name in sorted(k[0].typeName for k in rec_msgs.keys()):
             print name
         return
 
@@ -401,7 +403,6 @@ def main(options):
     if unseen:
         print '\nUnseen Message Types (help):'
         for cls, zero in sorted(unseen):
-            cls = cls[0]
             name = cls.__name__
             help = unseen_hints.get(name, '')
             print '    %s%s' % (name, ' (%s)' % help if help else '', )
