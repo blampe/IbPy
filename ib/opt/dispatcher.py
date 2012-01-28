@@ -7,46 +7,68 @@
 ##
 from Queue import Queue, Empty
 
-from ib.lib.logger import logger
-from ib.opt.message import registry
+from ib.lib import maybeName, logger
+from ib.opt import message
 
 
 class Dispatcher(object):
     """
 
     """
-    def __init__(self, listeners=None, types=None):
+    def __init__(self, listeners=None, messageTypes=None):
         """ Initializer.
 
         @param listeners=None mapping of existing listeners
         @param types=None method name to message type lookup
         """
         self.listeners = listeners if listeners else {}
-        self.types = types if types else registry
-        self.logger = logger()
+        self.messageTypes = messageTypes if messageTypes else message.registry
+        self.logger = logger.logger()
 
-    def __call__(self, name, mapping):
+    def __call__(self, name, args):
         """ Send message to each listener.
 
         @param name method name
-        @param mapping values for message instance
+        @param args arguments for message instance
         @return None
         """
+	results = []
         try:
-            messagetype = self.types[name]
-            listeners = self.listeners[self.key(messagetype)]
+            messageType = self.messageTypes[name]
+            listeners = self.listeners[maybeName(messageType)]
         except (KeyError, ):
-            pass
+            return results
+	message = messageType(**args)
+	for listener in listeners:
+	    try:
+		results.append(listener(message))
+	    except (Exception, ):
+		errmsg = ("Exception in message dispatch.  "
+			  "Handler '%s' for '%s'")
+		self.logger.exception(errmsg, maybeName(listener), name)
+		results.append(None)
+	return results
+
+    def enableLogging(self, enable=True):
+        """ Enable or disable logging of all messages.
+
+        @param enable if True (default), enables logging; otherwise disables
+        @return True if enabled, False otherwise
+        """
+        if enable:
+            self.registerAll(self.logMessage)
         else:
-            message = messagetype(**mapping)
-            for listener in listeners:
-                try:
-                    listener(message)
-                except (Exception, ):
-                    self.unregister(listener, messagetype)
-                    errmsg = ("Exception in message dispatch.  "
-                              "Handler '%s' unregistered for '%s'")
-                    self.logger.exception(errmsg, self.key(listener), name)
+            self.unregisterAll(self.logMessage)
+        return enable
+
+    def logMessage(self, message):
+        """ Format and send a message values to the logger.
+
+        @param message instance of Message
+        @return None
+        """
+        line = str.join(', ', ('%s=%s' % item for item in message.items()))
+        self.logger.debug('%s(%s)', message.typeName, line)
 
     def iterator(self, *types):
 	""" Create and return a function for iterating over messages.
@@ -79,7 +101,7 @@ class Dispatcher(object):
         """
         count = 0
         for messagetype in types:
-            key = self.key(messagetype)
+            key = maybeName(messagetype)
             listeners = self.listeners.setdefault(key, [])
             if listener not in listeners:
                 listeners.append(listener)
@@ -92,7 +114,7 @@ class Dispatcher(object):
         @param listener callable to receive messages
         @return True if associated with one or more handler; otherwise False
         """
-        return self.register(listener, *self.types.values())
+        return self.register(listener, *self.messageTypes.values())
 
     def unregister(self, listener, *types):
         """ Disassociate listener with message types created by this Dispatcher.
@@ -104,7 +126,7 @@ class Dispatcher(object):
         count = 0
         for messagetype in types:
             try:
-                listeners = self.listeners[self.key(messagetype)]
+                listeners = self.listeners[maybeName(messagetype)]
             except (KeyError, ):
                 pass
             else:
@@ -119,16 +141,4 @@ class Dispatcher(object):
         @param listener callable to no longer receive messages
         @return True if disassociated with one or more handler; otherwise False
         """
-        return self.unregister(listener, *self.types.values())
-
-    @staticmethod
-    def key(obj):
-        """ Generates lookup key for given object.
-
-        @param obj any object
-        @return obj name or string representation
-        """
-        try:
-            return obj.__name__
-        except (AttributeError, ):
-            return str(obj)
+        return self.unregister(listener, *self.messageTypes.values())

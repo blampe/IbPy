@@ -16,6 +16,21 @@ import socket
 import struct
 import sys
 
+def toTypeName(value):
+    return '%s%s' % (value[0].upper(), value[1:])
+
+
+def maybeName(obj):
+    """ Returns an object's __name__ attribute or it's string representation.
+
+    @param obj any object
+    @return obj name or string representation
+    """
+    try:
+	return obj.__name__
+    except (AttributeError, ):
+	return str(obj)
+
 
 class classmethod_(classmethod):
     """ Classmethod that provides attribute delegation.

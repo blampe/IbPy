@@ -16,36 +16,33 @@ from re import match
 from ib.ext.AnyWrapper import AnyWrapper
 from ib.ext.EWrapper import EWrapper
 from ib.ext.EClientSocket import  EClientSocket
+from ib.lib import toTypeName
 
 
 class SignatureAccumulator(NodeVisitor):
-    def __init__(self):
+    """
+
+    """
+    def __init__(self, classes):
 	NodeVisitor.__init__(self)
 	self.signatures = []
+	for filename in (getsourcefile(cls) for cls in classes):
+            self.visit(parse(open(filename).read()))
 
     def visit_FunctionDef(self, node):
 	args = [arg.id for arg in node.args.args]
 	self.signatures.append((node.name, args[1:]))
 
-    def getSignatures(self):
-	for filename in self.filenames:
-            self.visit(parse(open(filename).read()))
-	return self.filterSignatures()
-
 
 class EClientSocketAccumulator(SignatureAccumulator):
-    filenames = (getsourcefile(EClientSocket), )
-
-    def filterSignatures(self):
+    def getSignatures(self):
         for name, args in self.signatures:
 	    if match('(?i)req|cancel|place', name):
 	        yield (name, args)
 
 
 class EWrapperAccumulator(SignatureAccumulator):
-    filenames = (getsourcefile(AnyWrapper), getsourcefile(EWrapper), )
-
-    def filterSignatures(self):
+    def getSignatures(self):
         for name, args in self.signatures:
 	    if match('(?!((?i)error.*))', name):
 		yield (name, args)
@@ -57,33 +54,23 @@ class EWrapperAccumulator(SignatureAccumulator):
 registry = {}
 
 
-class MessageType(type):
-    """ MessageType -> simple metaclass to track Message subclasses
+def messageTypeNames():
+    """ Builds set of message type names.
 
-    As new Message subclasses are defined (see below), they are saved
-    to the registry mapping.
+    @return set of all message type names as strings
     """
-    def __init__(cls, name, bases, namespace):
-        """ Constructor.
-
-        @param name name of newly created type
-        @param bases tuple of base classes for new type
-        @param namespace dictionary with namespace of new type
-        """
-        setattr(cls, 'typeName', name)
-	return
-        try:
-            registry[namespace['__assoc__']] = cls
-        except (KeyError, ):
-            pass
+    def typeNames():
+	for types in registry.values():
+	    for typ in types:
+		yield typ.typeName
+    return set(typeNames())
 
 
 class Message(object):
     """ Base class for Message types.
 
     """
-    __metaclass__ = MessageType
-    __slots__ = []
+    __slots__ = ()
 
     def __init__(self, **kwds):
         """ Constructor.
@@ -136,53 +123,56 @@ class Error(Message):
     The error family of method calls can't be built programmatically,
     so we define one here.
     """
-    __assoc__ = 'error'
-    __slots__ = ['id', 'errorCode', 'errorMsg']
+    __slots__ = ('id', 'errorCode', 'errorMsg')
 
 
-def buildMessageTypes(seq, mapping, suffixes=('', ), bases=(Message, )):
+def buildMessageRegistry(seq, suffixes=[''], bases=(Message, )):
     """ Construct message types and add to given mapping.
 
     @param seq pairs of method (name, arguments)
-    @param mapping dictionary for adding new message types
     @param bases sequence of base classes for message types
     @return None
     """
-    for name, args in seq:
+    for name, args in sorted(seq):
 	for suffix in suffixes:
-	    typename = name[0].upper() + name[1:] + suffix
-	    methname = name + suffix
-	    typens = {'__slots__':args, '__assoc__':name}
-	    mapping[typename] = msgtype = type(typename, bases, typens)
-	    registry[methname] = msgtype
-
-
-##
-# Sequences for accessing the same values we use to create
-# Message types.
-wrapperMethods = list(EWrapperAccumulator().getSignatures())
-clientSocketMethods = list(EClientSocketAccumulator().getSignatures())
-
-
-# create message types in the module namespace from the EWrapper
-# abstract class
-buildMessageTypes(wrapperMethods, globals())
-
-## create message types in the module namespace from the EClientSocket
-# concrete class
-buildMessageTypes(clientSocketMethods, globals(),
-		  suffixes=('Before', 'After'))
+	    typename = toTypeName(name) + suffix
+	    typens = {'__slots__':args, '__assoc__':name, 'typeName':name}
+            msgtype = type(typename, bases, typens)
+	    if name in registry:
+		registry[name] = registry[name] + (msgtype, )
+	    else:
+		registry[name] = (msgtype, )
 
 
 
-def messageTypeNames():
-    """ Builds set of message type names.
 
-    @return set of all message type names as strings
-    """
-    return set([t.typeName for t in registry.values()])
+eWrapperAccum = EWrapperAccumulator((AnyWrapper, EWrapper))
+eClientAccum = EClientSocketAccumulator((EClientSocket, ))
+
+wrapperMethods = list(eWrapperAccum.getSignatures())
+clientSocketMethods = list(eClientAccum.getSignatures())
+errorMethods = [('error', Error.__slots__), ]
+
+buildMessageRegistry(wrapperMethods)
+buildMessageRegistry(clientSocketMethods, suffixes=('Pre', 'Post'))
+buildMessageRegistry(errorMethods)
+
+def initModule():
+    target = globals()
+    for messageTypes in registry.values():
+	for messageType in messageTypes:
+	    target[messageType.typeName] = messageType
+
+try:
+    initModule()
+except (NameError, ):
+    pass
+else:
+    del(initModule)
 
 
 del(AnyWrapper)
 del(EWrapper)
 del(EClientSocket)
+del(eWrapperAccum)
+del(eClientAccum)

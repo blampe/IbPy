@@ -8,7 +8,10 @@
 # EClientSocket member objects.
 #
 ##
+from functools import wraps
+
 from ib.ext.EClientSocket import EClientSocket
+from ib.lib import toTypeName
 from ib.opt.message import registry, clientSocketMethods
 
 
@@ -64,12 +67,19 @@ class Sender(object):
 	    value = getattr(self.client, name)
 	except (AttributeError, ):
 	    raise
-	if name in self.clientMethodNames:
-            before, after = registry[name+'Before'], registry[name+'After']
-	    def wrapperMethod(*args):
-		self.dispatcher(name+'Before', dict(zip(before.__slots__, args)))
-		result = value(*args)
-		self.dispatcher(name+'After', dict(zip(after.__slots__, args)))
-		return result
-	    return wrapperMethod
-	return value
+	if name not in self.clientMethodNames:
+	    return value
+	typeName = toTypeName(name)
+	preName, postName = name+'Pre', name+'Post'
+	preType, postType = registry[preName], registry[postName]
+	@wraps(value)
+	def wrapperMethod(*args):
+	    mapping = dict(zip(preType.__slots__, args))
+	    results = self.dispatcher(preName, mapping)
+	    if not all(results):
+		return # raise exception instead?
+	    result = value(*args)
+	    self.dispatcher(postName, mapping)
+	    return result # or results?
+	return wrapperMethod
+

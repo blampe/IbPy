@@ -15,18 +15,17 @@ from ib.lib.overloading import overloaded
 from ib.opt.message import wrapperMethods
 
 
-def messageMethod(name, argnames):
+def messageMethod(name, parameters):
     """ Creates method for dispatching messages.
 
     @param name name of method as string
-    @param argnames list of method argument names
+    @param parameters list of method argument names
     @return newly created method (as closure)
     """
-    def inner(self, *args):
-        params = dict(zip(argnames, args))
-        self.dispatcher(name, params)
-    inner.__name__ = name
-    return inner
+    def dispatchMethod(self, *arguments):
+        self.dispatcher(name, dict(zip(parameters, arguments)))
+    dispatchMethod.__name__ = name
+    return dispatchMethod
 
 
 class ReceiverType(type):
@@ -43,8 +42,8 @@ class ReceiverType(type):
         @param namespace dictionary with namespace for new type
         @return generated type
         """
-        for methodname, methodargs in wrapperMethods:
-            namespace[methodname] = messageMethod(methodname, methodargs)
+        for methodName, methodArgs in wrapperMethods:
+            namespace[methodName] = messageMethod(methodName, methodArgs)
         return type(name, bases, namespace)
 
 
