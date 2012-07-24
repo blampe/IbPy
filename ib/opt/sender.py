@@ -82,4 +82,3 @@ class Sender(object):
             self.dispatcher(postName, mapping)
             return result # or results?
         return wrapperMethod
-
