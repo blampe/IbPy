@@ -35,7 +35,7 @@ class Dispatcher(object):
 	results = []
         try:
             messageType = self.messageTypes[name]
-            listeners = self.listeners[maybeName(messageType)]
+            listeners = self.listeners[maybeName(messageType[0])]
         except (KeyError, ):
             return results
 	message = messageType[0](**args)
@@ -114,7 +114,7 @@ class Dispatcher(object):
         @param listener callable to receive messages
         @return True if associated with one or more handler; otherwise False
         """
-        return self.register(listener, *self.messageTypes.values())
+        return self.register(listener, *[maybeName(i) for v in self.messageTypes.values() for i in v])
 
     def unregister(self, listener, *types):
         """ Disassociate listener with message types created by this Dispatcher.
