@@ -3,11 +3,11 @@
 """ ib.ext.cfg.EClientSocket -> config module for EClientSocket.java.
 
 """
-modulePreamble = [
-    'from logging import debug',
-    '',
-    'from ib.ext.AnyWrapper import AnyWrapper',
-    'from ib.ext.ComboLeg import ComboLeg',
+from java2python.config.default import modulePrologueHandlers
+from java2python.mod.basic import maybeSynchronizedMethod
+from cfg import outputSubs
+
+modulePrologueHandlers += [
     'from ib.ext.EClientErrors import EClientErrors',
     'from ib.ext.EReader import EReader',
     'from ib.ext.Util import Util',
@@ -16,13 +16,21 @@ modulePreamble = [
     'from ib.lib import synchronized, Socket, DataInputStream, DataOutputStream',
     'from ib.lib import Double, Integer',
     '',
-    'from socket import SHUT_RDWR',
     'from threading import RLock',
     'mlock = RLock()',
     ]
 
+def maybeSynchronizedMLockMethod(method):
+    if 'synchronized' in method.modifiers:
+        module = method.parents(lambda x:x.isModule).next()
+        module.needsSyncHelpers = True
+        yield '@synchronized(mlock)'
 
-outputSubs = [
+methodPrologueHandlers.remove(maybeSynchronizedMethod)
+methodPrologueHandlers.append(maybeSynchronizedMLockMethod)
+
+
+outputSubs += [
     (r'    m_reader = EReader\(\)', r'    m_reader = None'),
     (r'    m_anyWrapper = AnyWrapper\(\)', r'    m_anyWrapper = None'),
     (r'    m_dos = DataOutputStream\(\)', r'    m_dos = None'),

@@ -3,6 +3,8 @@
 """ ib.ext.cfg.TagValue -> config module for TagValue.java.
 
 """
-modulePreamble = [
+from java2python.config.default import modulePrologueHandlers
+
+modulePrologueHandlers += [
     'from ib.lib.overloading import overloaded',
     ]

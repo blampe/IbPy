@@ -3,6 +3,7 @@
 """ ib.ext.cfg.Execution -> config module for Execution.java.
 
 """
-modulePreamble = [
+from java2python.config.default import modulePrologueHandlers
+modulePrologueHandlers += [
     'from ib.lib.overloading import overloaded',
     ]

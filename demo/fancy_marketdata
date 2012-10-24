@@ -34,9 +34,9 @@ if __name__ == '__main__':
     con.registerAll(watcher)
     showBidAskOnly = True  # set False to see the raw messages
     if showBidAskOnly:
-        con.unregister(watcher, message.TickSize, message.TickPrice,
-                       message.TickString, message.TickOptionComputation)
-        con.register(my_BidAsk, message.TickPrice)
+        con.unregister(watcher, message.tickSize, message.tickPrice,
+                       message.tickString, message.tickOptionComputation)
+        con.register(my_BidAsk, message.tickPrice)
     con.connect()
     sleep(1)
     tickId = 1

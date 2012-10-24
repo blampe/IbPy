@@ -1,23 +1,19 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-##
-# Translated source for TickType.
-##
-
-# Source file: TickType.java
-# Target file: TickType.py
+""" generated source for module TickType """
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
 #
 # WARNING: all changes to this file will be lost.
 
-
+# 
+#  * TickType.java
+#  *
+#  
+# package: com.ib.client
 class TickType(object):
-    """ generated source for TickType
-
-    """
+    """ generated source for class TickType """
+    #  constants - tick types
     BID_SIZE = 0
     BID = 1
     ASK = 2
@@ -79,6 +75,7 @@ class TickType(object):
 
     @classmethod
     def getField(cls, tickType):
+        """ generated source for method getField """
         if tickType == cls.BID_SIZE:
             return "bidSize"
         elif tickType == cls.BID:
@@ -197,5 +194,4 @@ class TickType(object):
             return "lastRTHTrade"
         else:
             return "unknown"
-
 

@@ -24,7 +24,7 @@ src:
 
 
 $(modules):
-	j2py -i $(addprefix $(srcdir), $(addsuffix .java, $(basename $@))) -o $@ -c cfg -c cfg.$(basename $@) -s
+	j2py -c cfg -c cfg.$(basename $@) $(addprefix $(srcdir), $(addsuffix .java, $(basename $@))) $@
 
 modules-clean: clean-modules
 clean-modules:

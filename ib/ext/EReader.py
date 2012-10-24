@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-##
-# Translated source for EReader.
-##
-
-# Source file: EReader.java
-# Target file: EReader.py
+""" generated source for module EReader """
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
@@ -18,22 +11,32 @@ from ib.lib.overloading import overloaded
 
 from ib.ext.Contract import Contract
 from ib.ext.ContractDetails import ContractDetails
+from ib.ext.ComboLeg import ComboLeg
+from ib.ext.CommissionReport import CommissionReport
+from ib.ext.EClientErrors import EClientErrors
 from ib.ext.Execution import Execution
 from ib.ext.Order import Order
+from ib.ext.OrderComboLeg import OrderComboLeg
 from ib.ext.OrderState import OrderState
+from ib.ext.TagValue import TagValue
 from ib.ext.TickType import TickType
 from ib.ext.UnderComp import UnderComp
 from ib.ext.Util import Util
-from ib.ext.TagValue import TagValue
-from ib.ext.EClientErrors import EClientErrors
 
-from ib.lib.logger import logger
+# 
+#  * EReader.java
+#  *
+#  
+# package: com.ib.client
+
+
+
+
 
 
 class EReader(Thread):
-    """ generated source for EReader
-
-    """
+    """ generated source for class EReader """
+    #  incoming msg id's
     TICK_PRICE = 1
     TICK_SIZE = 2
     ORDER_STATUS = 3
@@ -67,40 +70,48 @@ class EReader(Thread):
     EXECUTION_DATA_END = 55
     DELTA_NEUTRAL_VALIDATION = 56
     TICK_SNAPSHOT_END = 57
+    MARKET_DATA_TYPE = 58
+    COMMISSION_REPORT = 59
     m_parent = None
     m_dis = None
 
     def parent(self):
+        """ generated source for method parent """
         return self.m_parent
 
     def eWrapper(self):
+        """ generated source for method eWrapper """
         return self.parent().wrapper()
 
     @overloaded
     def __init__(self, parent, dis):
+        """ generated source for method __init__ """
         self.__init__("EReader", parent, dis)
 
     @__init__.register(object, str, object, DataInputStream)
     def __init___0(self, name, parent, dis):
+        """ generated source for method __init___0 """
         Thread.__init__(self, name, parent, dis)
         self.setName(name)
         self.m_parent = parent
         self.m_dis = dis
 
     def run(self):
+        """ generated source for method run """
         try:
+            #  loop until thread is terminated
             while not self.isInterrupted() and self.processMsg(self.readInt()):
                 pass
-        except (Exception, ), ex:
-            errmsg = ("Exception while processing message.  ")
-            logger().exception(errmsg)
+        except Exception as ex:
             if self.parent().isConnected():
                 self.eWrapper().error(ex)
         if self.parent().isConnected():
             self.m_parent.close()
 
+    #  Overridden in subclass. 
     def processMsg(self, msgId):
-        if (msgId == -1):
+        """ generated source for method processMsg """
+        if msgId == -1:
             return False
         if msgId == self.TICK_PRICE:
             version = self.readInt()
@@ -115,14 +126,21 @@ class EReader(Thread):
                 canAutoExecute = self.readInt()
             self.eWrapper().tickPrice(tickerId, tickType, price, canAutoExecute)
             if version >= 2:
+                #  not a tick
                 sizeTickType = -1
                 if tickType == 1:
+                    #  BID
                     sizeTickType = 0
+                    #  BID_SIZE
                 elif tickType == 2:
+                    #  ASK
                     sizeTickType = 3
+                    #  ASK_SIZE
                 elif tickType == 4:
+                    #  LAST
                     sizeTickType = 5
-                if (sizeTickType != -1):
+                    #  LAST_SIZE
+                if sizeTickType != -1:
                     self.eWrapper().tickSize(tickerId, sizeTickType, size)
         elif msgId == self.TICK_SIZE:
             version = self.readInt()
@@ -135,10 +153,10 @@ class EReader(Thread):
             tickerId = self.readInt()
             tickType = self.readInt()
             impliedVol = self.readDouble()
-            if impliedVol < 0:
+            if impliedVol < 0:  #  -1 is the "not yet computed" indicator
                 impliedVol = Double.MAX_VALUE
             delta = self.readDouble()
-            if abs(delta) > 1:
+            if abs(delta) > 1:  #  -2 is the "not yet computed" indicator
                 delta = Double.MAX_VALUE
             optPrice = Double.MAX_VALUE
             pvDividend = Double.MAX_VALUE
@@ -147,24 +165,25 @@ class EReader(Thread):
             theta = Double.MAX_VALUE
             undPrice = Double.MAX_VALUE
             if version >= 6 or (tickType == TickType.MODEL_OPTION):
+                #  introduced in version == 5
                 optPrice = self.readDouble()
-                if optPrice < 0:
+                if optPrice < 0:    #  -1 is the "not yet computed" indicator
                     optPrice = Double.MAX_VALUE
                 pvDividend = self.readDouble()
-                if pvDividend < 0:
+                if pvDividend < 0:  #  -1 is the "not yet computed" indicator
                     pvDividend = Double.MAX_VALUE
             if version >= 6:
                 gamma = self.readDouble()
-                if abs(gamma) > 1:
+                if abs(gamma) > 1:  #  -2 is the "not yet computed" indicator
                     gamma = Double.MAX_VALUE
                 vega = self.readDouble()
-                if abs(vega) > 1:
+                if abs(vega) > 1:   #  -2 is the "not yet computed" indicator
                     vega = Double.MAX_VALUE
                 theta = self.readDouble()
-                if abs(theta) > 1:
+                if abs(theta) > 1:  #  -2 is the "not yet computed" indicator
                     theta = Double.MAX_VALUE
                 undPrice = self.readDouble()
-                if undPrice < 0:
+                if undPrice < 0:    #  -1 is the "not yet computed" indicator
                     undPrice = Double.MAX_VALUE
             self.eWrapper().tickOptionComputation(tickerId, tickType, impliedVol, delta, optPrice, pvDividend, gamma, vega, theta, undPrice)
         elif msgId == self.TICK_GENERIC:
@@ -252,7 +271,7 @@ class EReader(Thread):
             accountName = None
             if version >= 4:
                 accountName = self.readStr()
-            if (version == 6) and (self.m_parent.serverVersion() == 39):
+            if version == 6 and self.m_parent.serverVersion() == 39:
                 contract.m_primaryExch = self.readStr()
             self.eWrapper().updatePortfolio(contract, position, marketPrice, marketValue, averageCost, unrealizedPNL, realizedPNL, accountName)
         elif msgId == self.ACCT_UPDATE_TIME:
@@ -270,9 +289,12 @@ class EReader(Thread):
                 errorMsg = self.readStr()
                 self.m_parent.error(id, errorCode, errorMsg)
         elif msgId == self.OPEN_ORDER:
+            #  read version
             version = self.readInt()
+            #  read order id
             order = Order()
             order.m_orderId = self.readInt()
+            #  read contract fields
             contract = Contract()
             if version >= 17:
                 contract.m_conId = self.readInt()
@@ -285,11 +307,18 @@ class EReader(Thread):
             contract.m_currency = self.readStr()
             if version >= 2:
                 contract.m_localSymbol = self.readStr()
+            #  read order fields
             order.m_action = self.readStr()
             order.m_totalQuantity = self.readInt()
             order.m_orderType = self.readStr()
-            order.m_lmtPrice = self.readDouble()
-            order.m_auxPrice = self.readDouble()
+            if version < 29:
+                order.m_lmtPrice = self.readDouble()
+            else:
+                order.m_lmtPrice = self.readDoubleMax()
+            if version < 30:
+                order.m_auxPrice = self.readDouble()
+            else:
+                order.m_auxPrice = self.readDoubleMax()
             order.m_tif = self.readStr()
             order.m_ocaGroup = self.readStr()
             order.m_account = self.readStr()
@@ -301,14 +330,17 @@ class EReader(Thread):
             if version >= 4:
                 order.m_permId = self.readInt()
                 if version < 18:
+                    #  will never happen
+                    #  order.m_ignoreRth = 
                     self.readBoolFromInt()
                 else:
                     order.m_outsideRth = self.readBoolFromInt()
-                order.m_hidden = (self.readInt() == 1)
+                order.m_hidden = self.readInt() == 1
                 order.m_discretionaryAmt = self.readDouble()
             if version >= 5:
                 order.m_goodAfterTime = self.readStr()
             if version >= 6:
+                #  skip deprecated sharesAllocation field
                 self.readStr()
             if version >= 7:
                 order.m_faGroup = self.readStr()
@@ -319,63 +351,124 @@ class EReader(Thread):
                 order.m_goodTillDate = self.readStr()
             if version >= 9:
                 order.m_rule80A = self.readStr()
-                order.m_percentOffset = self.readDouble()
+                order.m_percentOffset = self.readDoubleMax()
                 order.m_settlingFirm = self.readStr()
                 order.m_shortSaleSlot = self.readInt()
                 order.m_designatedLocation = self.readStr()
-                if (self.m_parent.serverVersion() == 51):
-                    self.readInt()
-                else:
-                    if version >= 23:
-                        order.m_exemptCode = self.readInt()
+                if self.m_parent.serverVersion() == 51:
+                    self.readInt()  #  exemptCode
+                elif version >= 23:
+                    order.m_exemptCode = self.readInt()
                 order.m_auctionStrategy = self.readInt()
-                order.m_startingPrice = self.readDouble()
-                order.m_stockRefPrice = self.readDouble()
-                order.m_delta = self.readDouble()
-                order.m_stockRangeLower = self.readDouble()
-                order.m_stockRangeUpper = self.readDouble()
+                order.m_startingPrice = self.readDoubleMax()
+                order.m_stockRefPrice = self.readDoubleMax()
+                order.m_delta = self.readDoubleMax()
+                order.m_stockRangeLower = self.readDoubleMax()
+                order.m_stockRangeUpper = self.readDoubleMax()
                 order.m_displaySize = self.readInt()
                 if version < 18:
+                    #  will never happen
+                    #  order.m_rthOnly = 
                     self.readBoolFromInt()
                 order.m_blockOrder = self.readBoolFromInt()
                 order.m_sweepToFill = self.readBoolFromInt()
                 order.m_allOrNone = self.readBoolFromInt()
-                order.m_minQty = self.readInt()
+                order.m_minQty = self.readIntMax()
                 order.m_ocaType = self.readInt()
                 order.m_eTradeOnly = self.readBoolFromInt()
                 order.m_firmQuoteOnly = self.readBoolFromInt()
-                order.m_nbboPriceCap = self.readDouble()
+                order.m_nbboPriceCap = self.readDoubleMax()
             if version >= 10:
                 order.m_parentId = self.readInt()
                 order.m_triggerMethod = self.readInt()
             if version >= 11:
-                order.m_volatility = self.readDouble()
+                order.m_volatility = self.readDoubleMax()
                 order.m_volatilityType = self.readInt()
-                if (version == 11):
+                if version == 11:
                     receivedInt = self.readInt()
-                    order.m_deltaNeutralOrderType = "NONE" if (receivedInt == 0) else "MKT"
+                    order.m_deltaNeutralOrderType = ("NONE" if (receivedInt == 0) else "MKT")
                 else:
+                    #  version 12 and up
                     order.m_deltaNeutralOrderType = self.readStr()
-                    order.m_deltaNeutralAuxPrice = self.readDouble()
+                    order.m_deltaNeutralAuxPrice = self.readDoubleMax()
+                    if version >= 27 and not Util.StringIsEmpty(order.m_deltaNeutralOrderType):
+                        order.m_deltaNeutralConId = self.readInt()
+                        order.m_deltaNeutralSettlingFirm = self.readStr()
+                        order.m_deltaNeutralClearingAccount = self.readStr()
+                        order.m_deltaNeutralClearingIntent = self.readStr()
                 order.m_continuousUpdate = self.readInt()
-                if (self.m_parent.serverVersion() == 26):
+                if self.m_parent.serverVersion() == 26:
                     order.m_stockRangeLower = self.readDouble()
                     order.m_stockRangeUpper = self.readDouble()
                 order.m_referencePriceType = self.readInt()
             if version >= 13:
-                order.m_trailStopPrice = self.readDouble()
+                order.m_trailStopPrice = self.readDoubleMax()
+            if version >= 30:
+                order.m_trailingPercent = self.readDoubleMax()
             if version >= 14:
-                order.m_basisPoints = self.readDouble()
-                order.m_basisPointsType = self.readInt()
+                order.m_basisPoints = self.readDoubleMax()
+                order.m_basisPointsType = self.readIntMax()
                 contract.m_comboLegsDescrip = self.readStr()
+            if version >= 29:
+                comboLegsCount = self.readInt()
+                if comboLegsCount > 0:
+                    contract.m_comboLegs = []
+                    i = 0
+                    while i < comboLegsCount:
+                        conId = self.readInt()
+                        ratio = self.readInt()
+                        action = self.readStr()
+                        exchange = self.readStr()
+                        openClose = self.readInt()
+                        shortSaleSlot = self.readInt()
+                        designatedLocation = self.readStr()
+                        exemptCode = self.readInt()
+                        comboLeg = ComboLeg(conId, ratio, action, exchange, openClose, shortSaleSlot, designatedLocation, exemptCode)
+                        contract.m_comboLegs.append(comboLeg)
+                        i += 1
+                orderComboLegsCount = self.readInt() 
+                if orderComboLegsCount > 0:
+                    order.m_orderComboLegs = []
+                    i = 0
+                    while i < orderComboLegsCount:
+                        price = self.readDoubleMax()
+                        orderComboLeg = OrderComboLeg(price)
+                        order.m_orderComboLegs.append(orderComboLeg)
+                        i += 1
+            if version >= 26:
+                smartComboRoutingParamsCount = self.readInt()
+                if smartComboRoutingParamsCount > 0:
+                    order.m_smartComboRoutingParams = []
+                    i = 0
+                    while i < smartComboRoutingParamsCount:
+                        tagValue = TagValue()
+                        tagValue.m_tag = self.readStr()
+                        tagValue.m_value = self.readStr()
+                        order.m_smartComboRoutingParams.append(tagValue)
+                        i += 1
             if version >= 15:
                 if version >= 20:
                     order.m_scaleInitLevelSize = self.readIntMax()
                     order.m_scaleSubsLevelSize = self.readIntMax()
                 else:
+                    #  int notSuppScaleNumComponents = 
                     self.readIntMax()
                     order.m_scaleInitLevelSize = self.readIntMax()
                 order.m_scalePriceIncrement = self.readDoubleMax()
+            if version >= 28 and order.m_scalePriceIncrement > 0.0 and order.m_scalePriceIncrement != Double.MAX_VALUE:
+                order.m_scalePriceAdjustValue = self.readDoubleMax()
+                order.m_scalePriceAdjustInterval = self.readIntMax()
+                order.m_scaleProfitOffset = self.readDoubleMax()
+                order.m_scaleAutoReset = self.readBoolFromInt()
+                order.m_scaleInitPosition = self.readIntMax()
+                order.m_scaleInitFillQty = self.readIntMax()
+                order.m_scaleRandomPercent = self.readBoolFromInt()
+            if version >= 24:
+                order.m_hedgeType = self.readStr()
+                if not Util.StringIsEmpty(order.m_hedgeType):
+                    order.m_hedgeParam = self.readStr()
+            if version >= 25:
+                order.m_optOutSmartRouting = self.readBoolFromInt()
             if version >= 19:
                 order.m_clearingAccount = self.readStr()
                 order.m_clearingIntent = self.readStr()
@@ -393,8 +486,7 @@ class EReader(Thread):
                 if not Util.StringIsEmpty(order.m_algoStrategy):
                     algoParamsCount = self.readInt()
                     if algoParamsCount > 0:
-                        order.m_algoParams = list()
-                        ## for-while
+                        order.m_algoParams = []
                         i = 0
                         while i < algoParamsCount:
                             tagValue = TagValue()
@@ -424,7 +516,6 @@ class EReader(Thread):
             version = self.readInt()
             tickerId = self.readInt()
             numberOfElements = self.readInt()
-            ## for-while
             ctr = 0
             while ctr < numberOfElements:
                 rank = self.readInt()
@@ -485,6 +576,20 @@ class EReader(Thread):
                 contract.m_timeZoneId = self.readStr()
                 contract.m_tradingHours = self.readStr()
                 contract.m_liquidHours = self.readStr()
+            if version >= 8:
+                contract.m_evRule = self.readStr()
+                contract.m_evMultiplier = self.readDouble()
+            if version >= 7:
+                secIdListCount = self.readInt()
+                if secIdListCount > 0:
+                    contract.m_secIdList = []
+                    i = 0
+                    while i < secIdListCount:
+                        tagValue = TagValue()
+                        tagValue.m_tag = self.readStr()
+                        tagValue.m_value = self.readStr()
+                        contract.m_secIdList.append(tagValue)
+                        i += 1
             self.eWrapper().contractDetails(reqId, contract)
         elif msgId == self.BOND_CONTRACT_DATA:
             version = self.readInt()
@@ -520,6 +625,20 @@ class EReader(Thread):
                 contract.m_notes = self.readStr()
             if version >= 4:
                 contract.m_longName = self.readStr()
+            if version >= 6:
+                contract.m_evRule = self.readStr()
+                contract.m_evMultiplier = self.readDouble()
+            if version >= 5:
+                secIdListCount = self.readInt()
+                if secIdListCount > 0:
+                    contract.m_secIdList = []
+                    i = 0
+                    while i < secIdListCount:
+                        tagValue = TagValue()
+                        tagValue.m_tag = self.readStr()
+                        tagValue.m_value = self.readStr()
+                        contract.m_secIdList.append(tagValue)
+                        i += 1
             self.eWrapper().bondContractDetails(reqId, contract)
         elif msgId == self.EXECUTION_DATA:
             version = self.readInt()
@@ -528,6 +647,7 @@ class EReader(Thread):
                 reqId = self.readInt()
             orderId = self.readInt()
             contract = Contract()
+            #  read contract fields
             if version >= 5:
                 contract.m_conId = self.readInt()
             contract.m_symbol = self.readStr()
@@ -535,6 +655,8 @@ class EReader(Thread):
             contract.m_expiry = self.readStr()
             contract.m_strike = self.readDouble()
             contract.m_right = self.readStr()
+            if version >= 9:
+                contract.m_multiplier = self.readStr()
             contract.m_exchange = self.readStr()
             contract.m_currency = self.readStr()
             contract.m_localSymbol = self.readStr()
@@ -556,6 +678,11 @@ class EReader(Thread):
             if version >= 6:
                 exec_.m_cumQty = self.readInt()
                 exec_.m_avgPrice = self.readDouble()
+            if version >= 8:
+                exec_.m_orderRef = self.readStr()
+            if version >= 9:
+                exec_.m_evRule = self.readStr()
+                exec_.m_evMultiplier = self.readDouble()
             self.eWrapper().execDetails(reqId, contract, exec_)
         elif msgId == self.MARKET_DEPTH:
             version = self.readInt()
@@ -603,7 +730,6 @@ class EReader(Thread):
                 endDateStr = self.readStr()
                 completedIndicator += "-" + startDateStr + "-" + endDateStr
             itemCount = self.readInt()
-            ## for-while
             ctr = 0
             while ctr < itemCount:
                 date = self.readStr()
@@ -619,16 +745,19 @@ class EReader(Thread):
                     barCount = self.readInt()
                 self.eWrapper().historicalData(reqId, date, open, high, low, close, volume, barCount, WAP, Boolean.valueOf(hasGaps).booleanValue())
                 ctr += 1
+            #  send end of dataset marker
             self.eWrapper().historicalData(reqId, completedIndicator, -1, -1, -1, -1, -1, -1, -1, False)
         elif msgId == self.SCANNER_PARAMETERS:
             version = self.readInt()
             xml = self.readStr()
             self.eWrapper().scannerParameters(xml)
         elif msgId == self.CURRENT_TIME:
+            # int version =
             self.readInt()
             time = self.readLong()
             self.eWrapper().currentTime(time)
         elif msgId == self.REAL_TIME_BARS:
+            # int version =
             self.readInt()
             reqId = self.readInt()
             time = self.readLong()
@@ -641,26 +770,32 @@ class EReader(Thread):
             count = self.readInt()
             self.eWrapper().realtimeBar(reqId, time, open, high, low, close, volume, wap, count)
         elif msgId == self.FUNDAMENTAL_DATA:
+            # int version =
             self.readInt()
             reqId = self.readInt()
             data = self.readStr()
             self.eWrapper().fundamentalData(reqId, data)
         elif msgId == self.CONTRACT_DATA_END:
+            # int version =
             self.readInt()
             reqId = self.readInt()
             self.eWrapper().contractDetailsEnd(reqId)
         elif msgId == self.OPEN_ORDER_END:
+            # int version =
             self.readInt()
             self.eWrapper().openOrderEnd()
         elif msgId == self.ACCT_DOWNLOAD_END:
+            # int version =
             self.readInt()
             accountName = self.readStr()
             self.eWrapper().accountDownloadEnd(accountName)
         elif msgId == self.EXECUTION_DATA_END:
+            # int version =
             self.readInt()
             reqId = self.readInt()
             self.eWrapper().execDetailsEnd(reqId)
         elif msgId == self.DELTA_NEUTRAL_VALIDATION:
+            # int version =
             self.readInt()
             reqId = self.readInt()
             underComp = UnderComp()
@@ -669,46 +804,71 @@ class EReader(Thread):
             underComp.m_price = self.readDouble()
             self.eWrapper().deltaNeutralValidation(reqId, underComp)
         elif msgId == self.TICK_SNAPSHOT_END:
+            # int version =
             self.readInt()
             reqId = self.readInt()
             self.eWrapper().tickSnapshotEnd(reqId)
+        elif msgId == self.MARKET_DATA_TYPE:
+            # int version =
+            self.readInt()
+            reqId = self.readInt()
+            marketDataType = self.readInt()
+            self.eWrapper().marketDataType(reqId, marketDataType)
+        elif msgId == self.COMMISSION_REPORT:
+            # int version =
+            self.readInt()
+            commissionReport = CommissionReport()
+            commissionReport.m_execId = self.readStr()
+            commissionReport.m_commission = self.readDouble()
+            commissionReport.m_currency = self.readStr()
+            commissionReport.m_realizedPNL = self.readDouble()
+            commissionReport.m_yield = self.readDouble()
+            commissionReport.m_yieldRedemptionDate = self.readInt()
+            self.eWrapper().commissionReport(commissionReport)
         else:
             self.m_parent.error(EClientErrors.NO_VALID_ID, EClientErrors.UNKNOWN_ID.code(), EClientErrors.UNKNOWN_ID.msg())
             return False
         return True
 
     def readStr(self):
+        """ generated source for method readStr """
         buf = StringBuffer()
         while True:
             c = self.m_dis.readByte()
-            if (c == 0):
+            if c == 0:
                 break
             buf.append(c)
+
         strval = str(buf)
-        return None if strval == 0 else strval
+        return None if 0 == len(strval) else strval
 
     def readBoolFromInt(self):
+        """ generated source for method readBoolFromInt """
         strval = self.readStr()
         return False if strval is None else (Integer.parseInt(strval) != 0)
 
     def readInt(self):
+        """ generated source for method readInt """
         strval = self.readStr()
         return 0 if strval is None else Integer.parseInt(strval)
 
     def readIntMax(self):
+        """ generated source for method readIntMax """
         strval = self.readStr()
-        return Integer.MAX_VALUE if strval is None or (len(strval) == 0) else Integer.parseInt(strval)
+        return Integer.MAX_VALUE if (strval is None or 0 == len(strval)) else Integer.parseInt(strval)
 
     def readLong(self):
+        """ generated source for method readLong """
         strval = self.readStr()
         return 0l if strval is None else Long.parseLong(strval)
 
     def readDouble(self):
+        """ generated source for method readDouble """
         strval = self.readStr()
         return 0 if strval is None else Double.parseDouble(strval)
 
     def readDoubleMax(self):
+        """ generated source for method readDoubleMax """
         strval = self.readStr()
-        return Double.MAX_VALUE if strval is None or (len(strval) == 0) else Double.parseDouble(strval)
-
+        return Double.MAX_VALUE if (strval is None or 0 == len(strval)) else Double.parseDouble(strval)
 

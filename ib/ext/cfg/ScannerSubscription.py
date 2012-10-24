@@ -3,7 +3,9 @@
 """ ib.ext.cfg.ScannerSubscription -> config module for ScannerSubscription.java.
 
 """
-modulePreamble = [
+from java2python.config.default import modulePrologueHandlers
+
+modulePrologueHandlers += [
     'from ib.lib import Double, Integer',
     'from ib.lib.overloading import overloaded',
     ]
