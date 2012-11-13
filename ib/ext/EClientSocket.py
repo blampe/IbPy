@@ -209,6 +209,7 @@ class EClientSocket(object):
     m_reader = None #  thread which reads msgs from socket
     m_serverVersion = 0
     m_TwsTime = ""
+    m_socket = None
 
     def serverVersion(self):
         """ generated source for method serverVersion """
@@ -243,8 +244,8 @@ class EClientSocket(object):
         if host is None:
             return
         try:
-            socket = Socket(host, port)
-            self.eConnect(socket, clientId)
+            self.m_socket = Socket(host, port)
+            self.eConnect(self.m_socket, clientId)
         except Exception as e:
             self.eDisconnect()
             self.connectionError()
@@ -303,10 +304,11 @@ class EClientSocket(object):
         self.m_connected = False
         self.m_serverVersion = 0
         self.m_TwsTime = ""
-        dos = self.m_dos
         self.m_dos = None
         reader = self.m_reader
         self.m_reader = None
+        socket = self.m_socket
+        self.m_socket = None
         try:
             #  stop reader thread
             if reader is not None:
@@ -315,8 +317,8 @@ class EClientSocket(object):
             pass
         try:
             #  close socket
-            if dos is not None:
-                dos.close()
+            if socket is not None:
+                socket.disconnect()
         except Exception as e:
             pass
 

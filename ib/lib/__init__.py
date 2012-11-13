@@ -225,6 +225,10 @@ class Socket(socket.socket):
 
         """
         return self
+    
+    def disconnect(self):
+        self.shutdown(socket.SHUT_RDWR)
+        self.close()
 
     def isConnected(self):
         try:
@@ -232,7 +236,7 @@ class Socket(socket.socket):
             return True
         except (socket.error, ), ex:
             return False
-
+        
 
 class StringBuffer(list):
     """ Partial implementation of the Java StringBuffer type
