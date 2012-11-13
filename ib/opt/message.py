@@ -24,28 +24,28 @@ class SignatureAccumulator(NodeVisitor):
 
     """
     def __init__(self, classes):
-	NodeVisitor.__init__(self)
-	self.signatures = []
-	for filename in (getsourcefile(cls) for cls in classes):
+        NodeVisitor.__init__(self)
+        self.signatures = []
+        for filename in (getsourcefile(cls) for cls in classes):
             self.visit(parse(open(filename).read()))
 
     def visit_FunctionDef(self, node):
-	args = [arg.id for arg in node.args.args]
-	self.signatures.append((node.name, args[1:]))
+        args = [arg.id for arg in node.args.args]
+        self.signatures.append((node.name, args[1:]))
 
 
 class EClientSocketAccumulator(SignatureAccumulator):
     def getSignatures(self):
         for name, args in self.signatures:
-	    if match('(?i)req|cancel|place', name):
-	        yield (name, args)
+            if match('(?i)req|cancel|place', name):
+                yield (name, args)
 
 
 class EWrapperAccumulator(SignatureAccumulator):
     def getSignatures(self):
         for name, args in self.signatures:
-	    if match('(?!((?i)error.*))', name):
-		yield (name, args)
+            if match('(?!((?i)error.*))', name):
+                yield (name, args)
 
 
 ##
@@ -60,9 +60,9 @@ def messageTypeNames():
     @return set of all message type names as strings
     """
     def typeNames():
-	for types in registry.values():
-	    for typ in types:
-		yield typ.typeName
+        for types in registry.values():
+            for typ in types:
+                yield typ.typeName
     return set(typeNames())
 
 
@@ -134,14 +134,14 @@ def buildMessageRegistry(seq, suffixes=[''], bases=(Message, )):
     @return None
     """
     for name, args in sorted(seq):
-	for suffix in suffixes:
-	    typename = toTypeName(name) + suffix
-	    typens = {'__slots__':args, '__assoc__':name, 'typeName':name}
+        for suffix in suffixes:
+            typename = toTypeName(name) + suffix
+            typens = {'__slots__':args, '__assoc__':name, 'typeName':name}
             msgtype = type(typename, bases, typens)
-	    if name in registry:
-		registry[name] = registry[name] + (msgtype, )
-	    else:
-		registry[name] = (msgtype, )
+            if name in registry:
+                registry[name] = registry[name] + (msgtype, )
+            else:
+                registry[name] = (msgtype, )
 
 
 
@@ -160,8 +160,8 @@ buildMessageRegistry(errorMethods)
 def initModule():
     target = globals()
     for messageTypes in registry.values():
-	for messageType in messageTypes:
-	    target[messageType.typeName] = messageType
+        for messageType in messageTypes:
+            target[messageType.typeName] = messageType
 
 try:
     initModule()

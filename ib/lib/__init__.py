@@ -27,9 +27,9 @@ def maybeName(obj):
     @return obj name or string representation
     """
     try:
-	return obj.__name__
+        return obj.__name__
     except (AttributeError, ):
-	return str(obj)
+        return str(obj)
 
 
 class classmethod_(classmethod):
