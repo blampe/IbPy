@@ -38,11 +38,11 @@ mlock = RLock()
 class EClientSocket(object):
     """ generated source for class EClientSocket """
     #  Client version history
-    # 
-    #  	6 = Added parentId to orderStatus
-    #  	7 = The new execDetails event returned for an order filled status and reqExecDetails
-    #      Also market depth is available.
-    #  	8 = Added lastFillPrice to orderStatus() event and permId to execution details
+    #
+    #   6 = Added parentId to orderStatus
+    #   7 = The new execDetails event returned for an order filled status and reqExecDetails
+    #       Also market depth is available.
+    #   8 = Added lastFillPrice to orderStatus() event and permId to execution details
     #   9 = Added 'averageCost', 'unrealizedPNL', and 'unrealizedPNL' to updatePortfolio event
     #  10 = Added 'serverId' to the 'open order' & 'order status' events.
     #       We send back all the API open orders upon connection.
@@ -464,13 +464,13 @@ class EClientSocket(object):
                 else:
                     self.send(False)
             if self.m_serverVersion >= 31:
-                # 
+                #
                 # * Note: Even though SHORTABLE tick type supported only
                 # *       starting server version 33 it would be relatively
                 # *       expensive to expose this restriction here.
-                # *       
+                # *
                 # *       Therefore we are relying on TWS doing validation.
-                #             	 
+                #
                 self.send(genericTickList)
             if self.m_serverVersion >= self.MIN_SERVER_VER_SNAPSHOT_MKT_DATA:
                 self.send(snapshot)

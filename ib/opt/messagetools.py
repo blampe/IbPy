@@ -10,17 +10,17 @@ from ib.ext.TickType import TickType
 # To programmatically generate the TickType filters, use something like this sketch:
 #
 # vs = [(name, value) for name, value in [(name, getattr(TickType, name))
-# 					for name in dir(TickType)] if type(value)==int]
+#                                         for name in dir(TickType)] if type(value)==int]
 # titlevalues = [(title[0].lower()+title[1:], value)
-# 	       for title in [''.join([part.title() for part in name.split('_')])
-# 			     for name, value in vs]]
+#                for title in [''.join([part.title() for part in name.split('_')])
+#                              for name, value in vs]]
 
 
 def messageFilter(function, predicate=lambda msg:True):
     @wraps(function)
     def inner(msg):
-	if predicate(msg):
-	    return function(msg)
+        if predicate(msg):
+            return function(msg)
     return inner
 
 
