@@ -7,16 +7,12 @@ modules correspond (1-1) to input java files.  The individual modules
 allow for per-file transformation settings.
 
 """
+from java2python.config.default import modulePrologueHandlers
+
 indent = 4
 
 
-modulePreamble = [
-    '##',
-    lambda m:'# Translated source for %s.' % m.outfile[:-3],
-    '##',
-    '',
-    lambda m:'# Source file: %s' % m.infile,
-    lambda m:'# Target file: %s' % m.outfile,
+modulePrologueHandlers += [
     '#',
     '# Original file copyright original author(s).',
     '# This file copyright Troy Melhase, troy@gci.net.',
@@ -25,17 +21,14 @@ modulePreamble = [
     '',
 ]
 
-
-modifierDecoratorMap = {
-    'synchronized':'@synchronized(mlock)'
-}
-
-
 outputSubs = [
     (r'if self == p_other:', r'if self is p_other:'),
     (r'if \(self == p_other\):', r'if self is p_other:'),
     (r'(\w+)(\.compareToIgnoreCase\((.*?)\))', r'cmp(\1.lower(), \3.lower())'),
     (r'Integer\.toString', 'str'),
+    (r'Double\.toString', 'str'),
+    (r'String\.valueOf\(', 'str\('),
+    (r'Math\.', ''),
     ]
 
 

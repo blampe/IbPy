@@ -3,20 +3,26 @@
 """ ib.ext.cfg.EReader -> config module for EReader.java.
 
 """
-modulePreamble = [
+from java2python.config.default import modulePrologueHandlers
+from cfg import outputSubs
+
+modulePrologueHandlers += [
     'from ib.lib import Boolean, Double, DataInputStream, Integer, Long, StringBuffer, Thread',
     'from ib.lib.overloading import overloaded',
     '',
     'from ib.ext.Contract import Contract',
     'from ib.ext.ContractDetails import ContractDetails',
+    'from ib.ext.ComboLeg import ComboLeg',
+    'from ib.ext.CommissionReport import CommissionReport',
+    'from ib.ext.EClientErrors import EClientErrors',
     'from ib.ext.Execution import Execution',
     'from ib.ext.Order import Order',
     'from ib.ext.OrderState import OrderState',
+    'from ib.ext.TagValue import TagValue',
     'from ib.ext.TickType import TickType',
     'from ib.ext.UnderComp import UnderComp',
     'from ib.ext.Util import Util',
     '',
-    'from ib.lib.logger import logger',
     '',
     ]
 

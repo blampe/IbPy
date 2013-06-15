@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-##
-# Translated source for AnyWrapperMsgGenerator.
-##
-
-# Source file: AnyWrapperMsgGenerator.java
-# Target file: AnyWrapperMsgGenerator.py
+""" generated source for module AnyWrapperMsgGenerator """
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
@@ -15,25 +8,25 @@
 
 from ib.lib import classmethod_ as classmethod
 from ib.lib.overloading import overloaded
-
+# package: com.ib.client
 class AnyWrapperMsgGenerator(object):
-    """ generated source for AnyWrapperMsgGenerator
-
-    """
-
+    """ generated source for class AnyWrapperMsgGenerator """
     @classmethod
     @overloaded
     def error(cls, ex):
-        return "Error - " + ex.message
+        """ generated source for method error """
+        return "Error - " + ex
 
     @classmethod
-    @error.register(type, str)
+    @error.register(object, str)
     def error_0(cls, strval):
+        """ generated source for method error_0 """
         return strval
 
     @classmethod
-    @error.register(type, int, int, str)
+    @error.register(object, int, int, str)
     def error_1(cls, id, errorCode, errorMsg):
+        """ generated source for method error_1 """
         err = str(id)
         err += " | "
         err += str(errorCode)
@@ -43,6 +36,6 @@ class AnyWrapperMsgGenerator(object):
 
     @classmethod
     def connectionClosed(cls):
+        """ generated source for method connectionClosed """
         return "Connection Closed"
-
 

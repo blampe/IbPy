@@ -32,29 +32,29 @@ class Connection(object):
         @param host name of host for connection; default is localhost
         @param port port number for connection; default is 7496
         @param clientId client identifier to send when connected
-	@param receiver instance for reading from the connected socket
-	@param sender instance for writing to the connected socket
-	@param dispatcher instance for dispatching socket messages
+        @param receiver instance for reading from the connected socket
+        @param sender instance for writing to the connected socket
+        @param dispatcher instance for dispatching socket messages
         """
         self.host = host
         self.port = port
         self.clientId = clientId
         self.receiver = receiver
         self.sender = sender
-	self.dispatcher = dispatcher
+        self.dispatcher = dispatcher
 
     def __getattr__(self, name):
         """ x.__getattr__('name') <==> x.name
 
         @return attribute of instance dispatcher, receiver, or sender
         """
-	for obj in (self.dispatcher, self.receiver, self.sender):
-	    try:
-		return getattr(obj, name)
-	    except (AttributeError, ):
-		pass
-	err = "'%s' object has no attribute '%s'"
-	raise AttributeError(err % (self.__class__.__name__, name))
+        for obj in (self.dispatcher, self.receiver, self.sender):
+            try:
+                return getattr(obj, name)
+            except (AttributeError, ):
+                pass
+        err = "'%s' object has no attribute '%s'"
+        raise AttributeError(err % (self.__class__.__name__, name))
 
     def connect(self):
         """ Establish a connection to TWS with instance attributes.
@@ -66,7 +66,7 @@ class Connection(object):
 
     @classmethod
     def create(cls, host='localhost', port=7496, clientId=0,
-	       receiver=None, sender=None, dispatcher=None):
+               receiver=None, sender=None, dispatcher=None):
         """ Creates and returns Connection class (or subclass) instance.
 
         For the receiver, sender, and dispatcher parameters, pass in
@@ -77,13 +77,13 @@ class Connection(object):
         @param port port number for connection; default is 7496
         @param clientId client identifier to send when connected
 
-	@param receiver=None object for reading messages
+        @param receiver=None object for reading messages
         @param sender=None object for writing requests
         @param dispatcher=None object for dispatching messages
 
         @return Connection (or subclass) instance
         """
-	dispatcher = Dispatcher() if dispatcher is None else dispatcher
+        dispatcher = Dispatcher() if dispatcher is None else dispatcher
         receiver = Receiver(dispatcher) if receiver is None else receiver
         sender = Sender(dispatcher) if sender is None else sender
         return cls(host, port, clientId, receiver, sender, dispatcher)

@@ -1,189 +1,161 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-##
-# Translated source for EWrapper.
-##
-
-# Source file: EWrapper.java
-# Target file: EWrapper.py
+""" generated source for module EWrapper """
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
 #
 # WARNING: all changes to this file will be lost.
+from abc import ABCMeta, abstractmethod
 
 from ib.ext.AnyWrapper import AnyWrapper
-
+# 
+#  * EWrapper.java
+#  *
+#  
+# package: com.ib.client
 class EWrapper(AnyWrapper):
-    """ generated source for EWrapper
-
-    """
-
+    """ generated source for interface EWrapper """
+    __metaclass__ = ABCMeta
+    # /////////////////////////////////////////////////////////////////////
+    #  Interface methods
+    # /////////////////////////////////////////////////////////////////////
+    @abstractmethod
     def tickPrice(self, tickerId, field, price, canAutoExecute):
-        raise NotImplementedError()
+        """ generated source for method tickPrice """
 
+    @abstractmethod
     def tickSize(self, tickerId, field, size):
-        raise NotImplementedError()
+        """ generated source for method tickSize """
 
-    def tickOptionComputation(self, tickerId,
-                                    field,
-                                    impliedVol,
-                                    delta,
-                                    optPrice,
-                                    pvDividend,
-                                    gamma,
-                                    vega,
-                                    theta,
-                                    undPrice):
-        raise NotImplementedError()
+    @abstractmethod
+    def tickOptionComputation(self, tickerId, field, impliedVol, delta, optPrice, pvDividend, gamma, vega, theta, undPrice):
+        """ generated source for method tickOptionComputation """
 
+    @abstractmethod
     def tickGeneric(self, tickerId, tickType, value):
-        raise NotImplementedError()
+        """ generated source for method tickGeneric """
 
+    @abstractmethod
     def tickString(self, tickerId, tickType, value):
-        raise NotImplementedError()
+        """ generated source for method tickString """
 
-    def tickEFP(self, tickerId,
-                      tickType,
-                      basisPoints,
-                      formattedBasisPoints,
-                      impliedFuture,
-                      holdDays,
-                      futureExpiry,
-                      dividendImpact,
-                      dividendsToExpiry):
-        raise NotImplementedError()
+    @abstractmethod
+    def tickEFP(self, tickerId, tickType, basisPoints, formattedBasisPoints, impliedFuture, holdDays, futureExpiry, dividendImpact, dividendsToExpiry):
+        """ generated source for method tickEFP """
 
-    def orderStatus(self, orderId,
-                          status,
-                          filled,
-                          remaining,
-                          avgFillPrice,
-                          permId,
-                          parentId,
-                          lastFillPrice,
-                          clientId,
-                          whyHeld):
-        raise NotImplementedError()
+    @abstractmethod
+    def orderStatus(self, orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld):
+        """ generated source for method orderStatus """
 
+    @abstractmethod
     def openOrder(self, orderId, contract, order, orderState):
-        raise NotImplementedError()
+        """ generated source for method openOrder """
 
+    @abstractmethod
     def openOrderEnd(self):
-        raise NotImplementedError()
+        """ generated source for method openOrderEnd """
 
+    @abstractmethod
     def updateAccountValue(self, key, value, currency, accountName):
-        raise NotImplementedError()
+        """ generated source for method updateAccountValue """
 
-    def updatePortfolio(self, contract,
-                              position,
-                              marketPrice,
-                              marketValue,
-                              averageCost,
-                              unrealizedPNL,
-                              realizedPNL,
-                              accountName):
-        raise NotImplementedError()
+    @abstractmethod
+    def updatePortfolio(self, contract, position, marketPrice, marketValue, averageCost, unrealizedPNL, realizedPNL, accountName):
+        """ generated source for method updatePortfolio """
 
+    @abstractmethod
     def updateAccountTime(self, timeStamp):
-        raise NotImplementedError()
+        """ generated source for method updateAccountTime """
 
+    @abstractmethod
     def accountDownloadEnd(self, accountName):
-        raise NotImplementedError()
+        """ generated source for method accountDownloadEnd """
 
+    @abstractmethod
     def nextValidId(self, orderId):
-        raise NotImplementedError()
+        """ generated source for method nextValidId """
 
+    @abstractmethod
     def contractDetails(self, reqId, contractDetails):
-        raise NotImplementedError()
+        """ generated source for method contractDetails """
 
+    @abstractmethod
     def bondContractDetails(self, reqId, contractDetails):
-        raise NotImplementedError()
+        """ generated source for method bondContractDetails """
 
+    @abstractmethod
     def contractDetailsEnd(self, reqId):
-        raise NotImplementedError()
+        """ generated source for method contractDetailsEnd """
 
+    @abstractmethod
     def execDetails(self, reqId, contract, execution):
-        raise NotImplementedError()
+        """ generated source for method execDetails """
 
+    @abstractmethod
     def execDetailsEnd(self, reqId):
-        raise NotImplementedError()
+        """ generated source for method execDetailsEnd """
 
-    def updateMktDepth(self, tickerId,
-                             position,
-                             operation,
-                             side,
-                             price,
-                             size):
-        raise NotImplementedError()
+    @abstractmethod
+    def updateMktDepth(self, tickerId, position, operation, side, price, size):
+        """ generated source for method updateMktDepth """
 
-    def updateMktDepthL2(self, tickerId,
-                               position,
-                               marketMaker,
-                               operation,
-                               side,
-                               price,
-                               size):
-        raise NotImplementedError()
+    @abstractmethod
+    def updateMktDepthL2(self, tickerId, position, marketMaker, operation, side, price, size):
+        """ generated source for method updateMktDepthL2 """
 
+    @abstractmethod
     def updateNewsBulletin(self, msgId, msgType, message, origExchange):
-        raise NotImplementedError()
+        """ generated source for method updateNewsBulletin """
 
+    @abstractmethod
     def managedAccounts(self, accountsList):
-        raise NotImplementedError()
+        """ generated source for method managedAccounts """
 
+    @abstractmethod
     def receiveFA(self, faDataType, xml):
-        raise NotImplementedError()
+        """ generated source for method receiveFA """
 
-    def historicalData(self, reqId,
-                             date,
-                             open,
-                             high,
-                             low,
-                             close,
-                             volume,
-                             count,
-                             WAP,
-                             hasGaps):
-        raise NotImplementedError()
+    @abstractmethod
+    def historicalData(self, reqId, date, open, high, low, close, volume, count, WAP, hasGaps):
+        """ generated source for method historicalData """
 
+    @abstractmethod
     def scannerParameters(self, xml):
-        raise NotImplementedError()
+        """ generated source for method scannerParameters """
 
-    def scannerData(self, reqId,
-                          rank,
-                          contractDetails,
-                          distance,
-                          benchmark,
-                          projection,
-                          legsStr):
-        raise NotImplementedError()
+    @abstractmethod
+    def scannerData(self, reqId, rank, contractDetails, distance, benchmark, projection, legsStr):
+        """ generated source for method scannerData """
 
+    @abstractmethod
     def scannerDataEnd(self, reqId):
-        raise NotImplementedError()
+        """ generated source for method scannerDataEnd """
 
-    def realtimeBar(self, reqId,
-                          time,
-                          open,
-                          high,
-                          low,
-                          close,
-                          volume,
-                          wap,
-                          count):
-        raise NotImplementedError()
+    @abstractmethod
+    def realtimeBar(self, reqId, time, open, high, low, close, volume, wap, count):
+        """ generated source for method realtimeBar """
 
+    @abstractmethod
     def currentTime(self, time):
-        raise NotImplementedError()
+        """ generated source for method currentTime """
 
+    @abstractmethod
     def fundamentalData(self, reqId, data):
-        raise NotImplementedError()
+        """ generated source for method fundamentalData """
 
+    @abstractmethod
     def deltaNeutralValidation(self, reqId, underComp):
-        raise NotImplementedError()
+        """ generated source for method deltaNeutralValidation """
 
+    @abstractmethod
     def tickSnapshotEnd(self, reqId):
-        raise NotImplementedError()
+        """ generated source for method tickSnapshotEnd """
 
+    @abstractmethod
+    def marketDataType(self, reqId, marketDataType):
+        """ generated source for method marketDataType """
+
+    @abstractmethod
+    def commissionReport(self, commissionReport):
+        """ generated source for method commissionReport """
 

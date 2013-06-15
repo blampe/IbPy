@@ -32,22 +32,22 @@ class Dispatcher(object):
         @param args arguments for message instance
         @return None
         """
-	results = []
+        results = []
         try:
             messageType = self.messageTypes[name]
-            listeners = self.listeners[maybeName(messageType)]
+            listeners = self.listeners[maybeName(messageType[0])]
         except (KeyError, ):
             return results
-	message = messageType[0](**args)
-	for listener in listeners:
-	    try:
-		results.append(listener(message))
-	    except (Exception, ):
-		errmsg = ("Exception in message dispatch.  "
-			  "Handler '%s' for '%s'")
-		self.logger.exception(errmsg, maybeName(listener), name)
-		results.append(None)
-	return results
+        message = messageType[0](**args)
+        for listener in listeners:
+            try:
+                results.append(listener(message))
+            except (Exception, ):
+                errmsg = ("Exception in message dispatch.  "
+                          "Handler '%s' for '%s'")
+                self.logger.exception(errmsg, maybeName(listener), name)
+                results.append(None)
+        return results
 
     def enableLogging(self, enable=True):
         """ Enable or disable logging of all messages.
@@ -71,26 +71,26 @@ class Dispatcher(object):
         self.logger.debug('%s(%s)', message.typeName, line)
 
     def iterator(self, *types):
-	""" Create and return a function for iterating over messages.
+        """ Create and return a function for iterating over messages.
 
         @param *types zero or more message types to associate with listener
         @return function that yields messages
-	"""
-	queue = Queue()
-	closed = []
-	def messageGenerator(block=True, timeout=0.1):
-	    while True:
-		try:
-		    yield queue.get(block=block, timeout=timeout)
-		except (Empty, ):
-		    if closed:
-			break
-	self.register(closed.append, 'ConnectionClosed')
-	if types:
-	    self.register(queue.put, *types)
-	else:
-	    self.registerAll(queue.put)
-	return messageGenerator
+        """
+        queue = Queue()
+        closed = []
+        def messageGenerator(block=True, timeout=0.1):
+            while True:
+                try:
+                    yield queue.get(block=block, timeout=timeout)
+                except (Empty, ):
+                    if closed:
+                        break
+        self.register(closed.append, 'ConnectionClosed')
+        if types:
+            self.register(queue.put, *types)
+        else:
+            self.registerAll(queue.put)
+        return messageGenerator
 
     def register(self, listener, *types):
         """ Associate listener with message types created by this Dispatcher.
@@ -114,7 +114,7 @@ class Dispatcher(object):
         @param listener callable to receive messages
         @return True if associated with one or more handler; otherwise False
         """
-        return self.register(listener, *self.messageTypes.values())
+        return self.register(listener, *[maybeName(i) for v in self.messageTypes.values() for i in v])
 
     def unregister(self, listener, *types):
         """ Disassociate listener with message types created by this Dispatcher.

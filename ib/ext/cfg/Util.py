@@ -3,12 +3,15 @@
 """ ib.ext.cfg.Util -> config module for Util.java.
 
 """
-modulePreamble = [
+from java2python.config.default import modulePrologueHandlers
+from cfg import outputSubs
+
+modulePrologueHandlers += [
     'from ib.lib import Double, Integer',
     ]
 
 
-outputSubs = [
+outputSubs += [
     (r'cls\.NormalizeString\(lhs\)\.compareTo\(cls\.NormalizeString\(rhs\)\)',
      r'cmp(str(lhs), str(rhs))'),
 

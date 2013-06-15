@@ -1,38 +1,37 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-##
-# Translated source for AnyWrapper.
-##
-
-# Source file: AnyWrapper.java
-# Target file: AnyWrapper.py
+""" generated source for module AnyWrapper """
 #
 # Original file copyright original author(s).
 # This file copyright Troy Melhase, troy@gci.net.
 #
 # WARNING: all changes to this file will be lost.
 
+from abc import ABCMeta, abstractmethod
 from ib.lib.overloading import overloaded
-
+# 
+#  * AnyWrapper.java
+#  *
+#  
+# package: com.ib.client
 class AnyWrapper(object):
-    """ generated source for AnyWrapper
-
-    """
-
+    """ generated source for interface AnyWrapper """
+    __metaclass__ = ABCMeta
+    @abstractmethod
     @overloaded
     def error(self, e):
-        raise NotImplementedError()
+        """ generated source for method error """
 
+    @abstractmethod
     @error.register(object, str)
     def error_0(self, strval):
-        raise NotImplementedError()
+        """ generated source for method error_0 """
 
+    @abstractmethod
     @error.register(object, int, int, str)
     def error_1(self, id, errorCode, errorMsg):
-        raise NotImplementedError()
+        """ generated source for method error_1 """
 
+    @abstractmethod
     def connectionClosed(self):
-        raise NotImplementedError()
-
+        """ generated source for method connectionClosed """
 

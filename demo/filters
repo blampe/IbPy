@@ -51,7 +51,7 @@ if __name__ == '__main__':
     con = ibConnection()
     #con.enableLogging()
     con.register(cash_handler, 'UpdateAccountValue')
-    con.register(tick_handler, message.TickSize, message.TickPrice)
+    con.register(tick_handler, message.tickSize, message.tickPrice)
     con.register(pre_req_account_updates, 'ReqAccountUpdatesPre')
     con.register(post_req_account_updates, 'PostReqAccountUpdatesPost')
     con.connect()

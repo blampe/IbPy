@@ -60,7 +60,7 @@ class Receiver(object):
 
         @param dispatcher message dispatcher instance
         """
-	self.dispatcher = dispatcher
+        self.dispatcher = dispatcher
 
     @overloaded
     def error(self, e):
