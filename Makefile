@@ -19,13 +19,18 @@ release_root := IbPy-$(release_num)
 release_file := $(release_root).tar.gz
 svn_root     := http://ibpy.googlecode.com/svn/trunk
 
-.PHONY: all clean
+.PHONY: all clean test
 
 
 .SILENT: clean $(release_dir)
 
 
 all: dist
+
+test:
+	PYTHONPATH=. ./demo/api_coverage
+
+tests: test
 
 
 clean:

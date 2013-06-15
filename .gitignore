@@ -1,0 +1,6 @@
+release-*
+*.py[oc]
+*.sw[nop]
+*~
+._*
+.DS_Store
