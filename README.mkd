@@ -14,7 +14,7 @@ submit orders for stocks and futures, and more.
 What's new in this release?
 ------------------------------------------------------------------------------
 
-  * TWS API version 9.65 now supported
+  * TWS API version 9.67 now supported
   * Over 60% test coverage and growing
   * Fixed outstanding bugs in EReader generated source
   * Module ib.opt.logger moved to ib.lib.logger
@@ -102,7 +102,7 @@ with IB.
 IbPy is installed with distutils. Refer to the Python distutils documentation
 for more information. The digest version is:
 
-    $ tar xzf IbPy-0.8.0-9.65.tar.gz
+    $ tar xzf IbPy-0.8.0-9.67.tar.gz
     $ cd :release_root:
     $ python setup.py install
 
