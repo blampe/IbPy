@@ -10,6 +10,7 @@
 #
 ##
 import logging
+import sys
 
 from functools import partial
 from logging import DEBUG, INFO, WARN, ERROR
@@ -81,7 +82,10 @@ def gen_tick_id():
     while True:
         yield i
         i += 1
-gen_tick_id = gen_tick_id().__next__
+if sys.version_info[0] < 3:
+    gen_tick_id = gen_tick_id().next
+else:
+    gen_tick_id = gen_tick_id().__next__
 
 
 def make_contract(symbol):
