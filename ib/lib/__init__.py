@@ -147,6 +147,8 @@ class DataOutputStream(object):
             send(eol)
         else:
             for char in data:
+                if sys.version_info[0] > 2:
+                    char = char.encode('utf-8')
                 send(pack('!c', char))
 
 

@@ -36,7 +36,7 @@ Python 2.5 is required due to the use of predicates any() and all().
 
 """
 
-import new
+from types import MethodType as instancemethod
 
 # Make the environment more like Python 3.0
 __metaclass__ = type
@@ -55,7 +55,7 @@ class overloaded:
     def __get__(self, obj, type=None):
         if obj is None:
             return self
-        return new.instancemethod(self, obj)
+        return instancemethod(self, obj)
 
     def register(self, *types):
         """Decorator to register an implementation for a specific set of types.
