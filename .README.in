@@ -22,6 +22,7 @@ What's new in this release?
   * Added script to filter TWS log files; see `demo/log_filter`
   * Added ib.sym package to hold various symbolic constants
   * Many small enhancements to ib.opt package
+  * Python 3 support
 
 
 Where can I get IbPy?

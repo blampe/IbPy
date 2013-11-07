@@ -12,11 +12,11 @@ from ib.opt import ibConnection, message
 
 
 def my_account_handler(msg):
-    print msg
+    print(msg)
 
 
 def my_tick_handler(msg):
-    print msg
+    print(msg)
 
 
 if __name__ == '__main__':
@@ -36,10 +36,10 @@ if __name__ == '__main__':
 
     inner()
     sleep(5)
-    print 'disconnected', con.disconnect()
+    print('disconnected', con.disconnect())
     sleep(3)
-    print 'reconnected', con.reconnect()
+    print('reconnected', con.reconnect())
     inner()
     sleep(3)
 
-    print 'again disconnected', con.disconnect()
+    print('again disconnected', con.disconnect())
