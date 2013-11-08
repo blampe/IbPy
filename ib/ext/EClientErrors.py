@@ -49,10 +49,11 @@ class EClientErrors(object):
 
     NO_VALID_ID = -1
     
+    NOT_CONNECTED = CodeMsgPair(504, "Not connected")
+    UPDATE_TWS = CodeMsgPair(503, "The TWS is out of date and must be upgraded.")
     ALREADY_CONNECTED = CodeMsgPair(501, "Already connected.")
     CONNECT_FAIL = CodeMsgPair(502, "Couldn't connect to TWS.  Confirm that \"Enable ActiveX and Socket Clients\" is enabled on the TWS \"Configure->API\" menu.")
-    UPDATE_TWS = CodeMsgPair(503, "The TWS is out of date and must be upgraded.")
-    NOT_CONNECTED = CodeMsgPair(504, "Not connected")
+    FAIL_SEND = CodeMsgPair(509, "Failed to send message - ")
     UNKNOWN_ID = CodeMsgPair(505, "Fatal Error: Unknown message id.")
     FAIL_SEND_REQMKT = CodeMsgPair(510, "Request Market Data Sending Error - ")
     FAIL_SEND_CANMKT = CodeMsgPair(511, "Cancel Market Data Sending Error - ")
@@ -84,5 +85,7 @@ class EClientErrors(object):
     FAIL_SEND_CANCALCOPTIONPRICE = CodeMsgPair(537, "Cancel Calculate Option Price Sending Error - ")
     FAIL_SEND_REQGLOBALCANCEL = CodeMsgPair(538, "Request Global Cancel Sending Error - ")
     FAIL_SEND_REQMARKETDATATYPE = CodeMsgPair(539, "Request Market Data Type Sending Error - ")
-
-
+    FAIL_SEND_REQPOSITIONS = CodeMsgPair(540, "Request Positions Sending Error - ")
+    FAIL_SEND_CANPOSITIONS = CodeMsgPair(541, "Cancel Positions Sending Error - ")
+    FAIL_SEND_REQACCOUNTDATA = CodeMsgPair(542, "Request Account Data Sending Error - ")
+    FAIL_SEND_CANACCOUNTDATA = CodeMsgPair(543, "Cancel Account Data Sending Error - ")

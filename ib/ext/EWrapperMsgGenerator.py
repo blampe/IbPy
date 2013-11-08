@@ -79,9 +79,18 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
         msg = "open order: orderId=" + str(orderId) \
               + " action=" + str(order.m_action) \
               + " quantity=" + str(order.m_totalQuantity) \
+              + " conid=" + str(contract.m_conId) \
               + " symbol=" + str(contract.m_symbol) \
-              + " exchange=" + str(contract.m_exchange) \
               + " secType=" + str(contract.m_secType) \
+              + " expiry=" + str(contract.m_expiry) \
+              + " strike=" + str(contract.m_strike) \
+              + " right=" + str(contract.m_right) \
+              + " multiplier=" + str(contract.m_multiplier) \
+              + " exchange=" + str(contract.m_exchange) \
+              + " primaryExch=" + str(contract.m_primaryExch) \
+              + " currency=" + str(contract.m_currency) \
+              + " localSymbol=" + str(contract.m_localSymbol) \
+              + " tradingClass=" + str(contract.m_tradingClass) \
               + " type=" + str(order.m_orderType) \
               + " lmtPrice=" + Util.DoubleMaxString(order.m_lmtPrice) \
               + " auxPrice=" + Util.DoubleMaxString(order.m_auxPrice) \
@@ -128,6 +137,10 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
               + " deltaNeutralSettlingFirm=" + str(order.m_deltaNeutralSettlingFirm) \
               + " deltaNeutralClearingAccount=" + str(order.m_deltaNeutralClearingAccount) \
               + " deltaNeutralClearingIntent=" + str(order.m_deltaNeutralClearingIntent) \
+              + " deltaNeutralOpenClose=" + str(order.m_deltaNeutralOpenClose) \
+              + " deltaNeutralShortSale=" + str(order.m_deltaNeutralShortSale) \
+              + " deltaNeutralShortSaleSlot=" + str(order.m_deltaNeutralShortSaleSlot) \
+              + " deltaNeutralDesignatedLocation=" + str(order.m_deltaNeutralDesignatedLocation) \
               + " continuousUpdate=" + str(order.m_continuousUpdate) \
               + " referencePriceType=" + str(order.m_referencePriceType) \
               + " trailStopPrice=" + Util.DoubleMaxString(order.m_trailStopPrice) \
@@ -263,7 +276,6 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
     def contractDetailsMsg(cls, contractDetails):
         """ generated source for method contractDetailsMsg """
         msg = "marketName = " + str(contractDetails.m_marketName) + "\n" \
-              + "tradingClass = " + str(contractDetails.m_tradingClass) + "\n" \
               + "minTick = " + str(contractDetails.m_minTick) + "\n" \
               + "price magnifier = " + str(contractDetails.m_priceMagnifier) + "\n" \
               + "orderTypes = " + str(contractDetails.m_orderTypes) + "\n" \
@@ -295,7 +307,8 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
               + "exchange = " + str(contract.m_exchange) + "\n" \
               + "primaryExch = " + str(contract.m_primaryExch) + "\n" \
               + "currency = " + str(contract.m_currency) + "\n" \
-              + "localSymbol = " + str(contract.m_localSymbol) + "\n"
+              + "localSymbol = " + str(contract.m_localSymbol) + "\n" \
+              + "tradingClass = " + str(contract.m_tradingClass) + "\n"
         return msg
 
     @classmethod
@@ -320,7 +333,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
               + "exchange = " + str(contract.m_exchange) + "\n" \
               + "currency = " + str(contract.m_currency) + "\n" \
               + "marketName = " + str(contractDetails.m_marketName) + "\n" \
-              + "tradingClass = " + str(contractDetails.m_tradingClass) + "\n" \
+              + "tradingClass = " + str(contract.m_tradingClass) + "\n" \
               + "conid = " + str(contract.m_conId) + "\n" \
               + "minTick = " + str(contractDetails.m_minTick) + "\n" \
               + "orderTypes = " + str(contractDetails.m_orderTypes) + "\n" \
@@ -364,15 +377,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
               + "reqId = " + str(reqId) + "\n" \
               + "orderId = " + str(execution.m_orderId) + "\n" \
               + "clientId = " + str(execution.m_clientId) + "\n" \
-              + "symbol = " + str(contract.m_symbol) + "\n" \
-              + "secType = " + str(contract.m_secType) + "\n" \
-              + "expiry = " + str(contract.m_expiry) + "\n" \
-              + "strike = " + str(contract.m_strike) + "\n" \
-              + "right = " + str(contract.m_right) + "\n" \
-              + "multiplier = " + str(contract.m_multiplier) + "\n" \
-              + "contractExchange = " + str(contract.m_exchange) + "\n" \
-              + "currency = " + str(contract.m_currency) + "\n" \
-              + "localSymbol = " + str(contract.m_localSymbol) + "\n" \
+              + cls.contractMsg(contract) \
               + "execId = " + str(execution.m_execId) + "\n" \
               + "time = " + str(execution.m_time) + "\n" \
               + "acctNumber = " + str(execution.m_acctNumber) + "\n" \
@@ -387,7 +392,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
               + "orderRef = " + str(execution.m_orderRef) + "\n" \
               + "evRule = " + str(execution.m_evRule) + "\n" \
               + "evMultiplier = " + str(execution.m_evMultiplier) + "\n" \
-              + " ---- Execution Details end ----\n"
+              " ---- Execution Details end ----\n"
         return msg
 
     @classmethod
@@ -467,7 +472,7 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
                + " currency=" + str(contract.m_currency) \
                + " localSymbol=" + str(contract.m_localSymbol) \
                + " marketName=" + str(contractDetails.m_marketName) \
-               + " tradingClass=" + str(contractDetails.m_tradingClass) \
+               + " tradingClass=" + str(contract.m_tradingClass) \
                + " distance=" + distance \
                + " benchmark=" + benchmark \
                + " projection=" + projection \
@@ -516,3 +521,35 @@ class EWrapperMsgGenerator(AnyWrapperMsgGenerator):
               + Util.IntMaxString(commissionReport.m_yieldRedemptionDate)
         return msg
 
+    @classmethod
+    def position(cls, account, contract, position, avgCost):
+        """ generated source for method position """
+        msg = " ---- Position begin ----\n" \
+              + "account = " + str(account) + "\n" \
+              + cls.contractMsg(contract) \
+              + "position = " + Util.IntMaxString(position) + "\n" \
+              + "avgCost = " + Util.DoubleMaxString(avgCost) + "\n" + \
+              " ---- Position end ----\n"
+        return msg
+
+    @classmethod
+    def positionEnd(cls):
+        """ generated source for method positionEnd """
+        return " =============== end ==============="
+
+    @classmethod
+    def accountSummary(cls, reqId, account, tag, value, currency):
+        """ generated source for method accountSummary """
+        msg = " ---- Account Summary begin ----\n" \
+              + "reqId = " + str(reqId) + "\n" \
+              + "account = " + str(account) + "\n" \
+              + "tag = " + str(tag) + "\n" \
+              + "value = " + str(value) + "\n" \
+              + "currency = " + str(currency) + "\n" \
+              + " ---- Account Summary end ----\n"
+        return msg
+
+    @classmethod
+    def accountSummaryEnd(cls, reqId):
+        """ generated source for method accountSummaryEnd """
+        return "id=" + str(reqId) + " =============== end ==============="

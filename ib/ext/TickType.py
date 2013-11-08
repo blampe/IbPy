@@ -72,6 +72,7 @@ class TickType(object):
     TRADE_RATE = 55
     VOLUME_RATE = 56
     LAST_RTH_TRADE = 57
+    REGULATORY_IMBALANCE = 61
 
     @classmethod
     def getField(cls, tickType):
@@ -192,6 +193,8 @@ class TickType(object):
             return "volume/min"
         elif tickType == cls.LAST_RTH_TRADE:
             return "lastRTHTrade"
+        elif tickType == cls.REGULATORY_IMBALANCE:
+            return "regulatoryImbalance"
         else:
             return "unknown"
 

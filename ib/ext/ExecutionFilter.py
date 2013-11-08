@@ -14,7 +14,7 @@ from ib.lib.overloading import overloaded
 # package: com.ib.client
 class ExecutionFilter(object):
     """ generated source for class ExecutionFilter """
-    m_clientId = 0
+    m_clientId = 0  # zero means no filtering on this field
     m_acctCode = ""
     m_time = ""
     m_symbol = ""

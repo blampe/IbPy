@@ -146,6 +146,17 @@ class ReferenceWrapper(EWrapper):
     def commissionReport(self, commissionReport):
         showmessage('commissionReport', vars())
 
+    def position(self, account, contract, pos, avgCost):
+        showmessage('position', vars())
+
+    def positionEnd(self):
+        showmessage('positionEnd', vars())
+
+    def accountSummary(self, reqId, account, tag, value, currency):
+        showmessage('accountSummary', vars())
+
+    def accountSummaryEnd(self, reqId):
+        showmessage('accountSummaryEnd', vars())
 
 allMethods = []
 def ref(method):

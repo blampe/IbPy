@@ -112,7 +112,12 @@ class EClientSocket(object):
     #  58 = can receive CUSIP/ISIN/etc. in contractDescription/bondContractDescription
     #  59 = can receive evRule, evMultiplier in contractDescription/bondContractDescription/executionDetails
     #       can receive multiplier in executionDetails
-    CLIENT_VERSION = 59
+    #  60 = can receive deltaNeutralOpenClose, deltaNeutralShortSale, deltaNeutralShortSaleSlot and deltaNeutralDesignatedLocation in openOrder
+    #  61 = can receive multiplier in openOrder
+    #       can receive tradingClass in openOrder, updatePortfolio, execDetails and position
+    #  62 = can receive avgCost in position message
+
+    CLIENT_VERSION = 62
     SERVER_VERSION = 38
     EOL = 0
     BAG_SEC_TYPE = "BAG"
@@ -170,6 +175,10 @@ class EClientSocket(object):
     CANCEL_CALC_OPTION_PRICE = 57
     REQ_GLOBAL_CANCEL = 58
     REQ_MARKET_DATA_TYPE = 59
+    REQ_POSITIONS = 61
+    REQ_ACCOUNT_SUMMARY = 62
+    CANCEL_ACCOUNT_SUMMARY = 63
+    CANCEL_POSITIONS = 64
     MIN_SERVER_VER_REAL_TIME_BARS = 34
     MIN_SERVER_VER_SCALE_ORDERS = 35
     MIN_SERVER_VER_SNAPSHOT_MKT_DATA = 35
@@ -202,6 +211,9 @@ class EClientSocket(object):
     MIN_SERVER_VER_SCALE_ORDERS3 = 60
     MIN_SERVER_VER_ORDER_COMBO_LEGS_PRICE = 61
     MIN_SERVER_VER_TRAILING_PERCENT = 62
+    MIN_SERVER_VER_DELTA_NEUTRAL_OPEN_CLOSE = 66
+    MIN_SERVER_VER_ACCT_SUMMARY = 67
+    MIN_SERVER_VER_TRADING_CLASS = 68
     
     m_anyWrapper = None #  msg handler
     m_dos = None    #  the socket output stream
@@ -327,7 +339,7 @@ class EClientSocket(object):
         """ generated source for method cancelScannerSubscription """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < 24:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support API scanner subscription.")
@@ -347,7 +359,7 @@ class EClientSocket(object):
         """ generated source for method reqScannerParameters """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < 24:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support API scanner subscription.")
@@ -365,7 +377,7 @@ class EClientSocket(object):
         """ generated source for method reqScannerSubscription """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < 24:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support API scanner subscription.")
@@ -394,7 +406,7 @@ class EClientSocket(object):
             self.sendMax(subscription.couponRateBelow())
             self.send(subscription.excludeConvertible())
             if self.m_serverVersion >= 25:
-                self.send(subscription.averageOptionVolumeAbove())
+                self.sendMax(subscription.averageOptionVolumeAbove())
                 self.send(subscription.scannerSettingPairs())
             if self.m_serverVersion >= 27:
                 self.send(subscription.stockTypeFilter())
@@ -419,7 +431,11 @@ class EClientSocket(object):
             if contract.m_conId > 0:
                 self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support conId parameter.")
                 return
-        VERSION = 9
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if not self.IsEmpty(contract.m_tradingClass):
+                self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support tradingClass parameter in reqMarketData.")
+                return
+        VERSION = 10
         try:
             #  send req mkt data msg
             self.send(self.REQ_MKT_DATA)
@@ -441,6 +457,8 @@ class EClientSocket(object):
             self.send(contract.m_currency)
             if self.m_serverVersion >= 2:
                 self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             if self.m_serverVersion >= 8 and self.BAG_SEC_TYPE.lower() == contract.m_secType.lower():
                 if contract.m_comboLegs is None:
                     self.send(0)
@@ -483,7 +501,7 @@ class EClientSocket(object):
         """ generated source for method cancelHistoricalData """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < 24:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support historical data query cancellation.")
@@ -502,7 +520,7 @@ class EClientSocket(object):
         """ generated source for method cancelRealTimeBars """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_REAL_TIME_BARS:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support realtime bar data query cancellation.")
@@ -517,22 +535,29 @@ class EClientSocket(object):
             self.error(tickerId, EClientErrors.FAIL_SEND_CANRTBARS, str(e))
             self.close()
 
+    #  Note that formatData parameter affects intra-day bars only; 1-day bars always return with date in YYYYMMDD format. 
     @synchronized(mlock)
     def reqHistoricalData(self, tickerId, contract, endDateTime, durationStr, barSizeSetting, whatToShow, useRTH, formatDate):
         """ generated source for method reqHistoricalData """
         #  not connected?
         if not self.m_connected:
-            self.error(tickerId, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
-        VERSION = 4
+        VERSION = 5
         try:
             if self.m_serverVersion < 16:
                 self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support historical data backfill.")
                 return
+            if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+                if not self.IsEmpty(contract.m_tradingClass) or (contract.m_conId > 0):
+                    self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support conId and trade parameters in reqHistroricalData.")                                                                
+                    return
             self.send(self.REQ_HISTORICAL_DATA)
             self.send(VERSION)
             self.send(tickerId)
             #  send contract fields
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_expiry)
@@ -543,6 +568,8 @@ class EClientSocket(object):
             self.send(contract.m_primaryExch)
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             if self.m_serverVersion >= 31:
                 self.send(1 if contract.m_includeExpired else 0)
             if self.m_serverVersion >= 20:
@@ -575,18 +602,24 @@ class EClientSocket(object):
         """ generated source for method reqRealTimeBars """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_REAL_TIME_BARS:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support real time bars.")
             return
-        VERSION = 1
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if not self.IsEmpty(contract.m_tradingClass) or (contract.m_conId > 0):
+                self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support conId and tradingClass parameters in reqRealTimeBars.")
+                return
+        VERSION = 2
         try:
             #  send req mkt data msg
             self.send(self.REQ_REAL_TIME_BARS)
             self.send(VERSION)
             self.send(tickerId)
             #  send contract fields
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_expiry)
@@ -597,7 +630,10 @@ class EClientSocket(object):
             self.send(contract.m_primaryExch)
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             self.send(barSize)
+            #  this parameter is not currently used
             self.send(whatToShow)
             self.send(useRTH)
         except Exception as e:
@@ -609,7 +645,7 @@ class EClientSocket(object):
         """ generated source for method reqContractDetails """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         #  This feature is only available for versions of TWS >=4
         if self.m_serverVersion < 4:
@@ -619,7 +655,11 @@ class EClientSocket(object):
             if not self.IsEmpty(contract.m_secIdType) or not self.IsEmpty(contract.m_secId):
                 self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support secIdType and secId parameters.")
                 return
-        VERSION = 6
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if not self.IsEmpty(contract.m_tradingClass):
+                self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support tradingClass parameter in reqContractDetails.")
+                return
+        VERSION = 7
         try:
             #  send req mkt data msg
             self.send(self.REQ_CONTRACT_DATA)
@@ -639,6 +679,8 @@ class EClientSocket(object):
             self.send(contract.m_exchange)
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             if self.m_serverVersion >= 31:
                 self.send(contract.m_includeExpired)
             if self.m_serverVersion >= self.MIN_SERVER_VER_SEC_ID_TYPE:
@@ -653,19 +695,25 @@ class EClientSocket(object):
         """ generated source for method reqMktDepth """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         #  This feature is only available for versions of TWS >=6
         if self.m_serverVersion < 6:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS.code(), EClientErrors.UPDATE_TWS.msg())
             return
-        VERSION = 3
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if not self.IsEmpty(contract.m_tradingClass) or (contract.m_conId > 0):
+                self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support conId and tradingClass parameters in reqMktDepth.")
+                return
+        VERSION = 4
         try:
             #  send req mkt data msg
             self.send(self.REQ_MKT_DEPTH)
             self.send(VERSION)
             self.send(tickerId)
             #  send contract fields
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_expiry)
@@ -676,6 +724,8 @@ class EClientSocket(object):
             self.send(contract.m_exchange)
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             if self.m_serverVersion >= 19:
                 self.send(numRows)
         except Exception as e:
@@ -687,7 +737,7 @@ class EClientSocket(object):
         """ generated source for method cancelMktData """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send cancel mkt data msg
@@ -704,7 +754,7 @@ class EClientSocket(object):
         """ generated source for method cancelMktDepth """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         #  This feature is only available for versions of TWS >=6
         if self.m_serverVersion < 6:
@@ -725,17 +775,23 @@ class EClientSocket(object):
         """ generated source for method exerciseOptions """
         #  not connected?
         if not self.m_connected:
-            self.error(tickerId, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
-        VERSION = 1
+        VERSION = 2
         try:
             if self.m_serverVersion < 21:
                 self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support options exercise from the API.")
                 return
+            if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+                if not self.IsEmpty(contract.m_tradingClass) or (contract.m_conId > 0):
+                    self.error(tickerId, EClientErrors.UPDATE_TWS, "  It does not support conId and tradingClass parameters in exerciseOptions.")
+                    return
             self.send(self.EXERCISE_OPTIONS)
             self.send(VERSION)
             self.send(tickerId)
             #  send contract fields
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_expiry)
@@ -745,6 +801,8 @@ class EClientSocket(object):
             self.send(contract.m_exchange)
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             self.send(exerciseAction)
             self.send(exerciseQuantity)
             self.send(account)
@@ -758,7 +816,7 @@ class EClientSocket(object):
         """ generated source for method placeOrder """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_SCALE_ORDERS:
             if (order.m_scaleInitLevelSize != Integer.MAX_VALUE) or (order.m_scalePriceIncrement != Double.MAX_VALUE):
@@ -826,6 +884,10 @@ class EClientSocket(object):
             if order.m_deltaNeutralConId > 0 or not self.IsEmpty(order.m_deltaNeutralSettlingFirm) or not self.IsEmpty(order.m_deltaNeutralClearingAccount) or not self.IsEmpty(order.m_deltaNeutralClearingIntent):
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support deltaNeutral parameters: ConId, SettlingFirm, ClearingAccount, ClearingIntent")
                 return
+        if self.m_serverVersion < self.MIN_SERVER_VER_DELTA_NEUTRAL_OPEN_CLOSE:
+            if not self.IsEmpty(order.m_deltaNeutralOpenClose) or order.m_deltaNeutralShortSale or order.m_deltaNeutralShortSaleSlot > 0 or not self.IsEmpty(order.m_deltaNeutralDesignatedLocation):
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support deltaNeutral parameters: OpenClose, ShortSale, ShortSaleSlot, DesignatedLocation")
+                return
         if self.m_serverVersion < self.MIN_SERVER_VER_SCALE_ORDERS3:
             if order.m_scalePriceIncrement > 0 and order.m_scalePriceIncrement != Double.MAX_VALUE:
                 if order.m_scalePriceAdjustValue != Double.MAX_VALUE or order.m_scalePriceAdjustInterval != Integer.MAX_VALUE or order.m_scaleProfitOffset != Double.MAX_VALUE or order.m_scaleAutoReset or order.m_scaleInitPosition != Integer.MAX_VALUE or order.m_scaleInitFillQty != Integer.MAX_VALUE or order.m_scaleRandomPercent:
@@ -844,7 +906,11 @@ class EClientSocket(object):
             if order.m_trailingPercent != Double.MAX_VALUE:
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support trailing percent parameter")
                 return
-        VERSION = 27 if (self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD) else 38
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if not self.IsEmpty(contract.m_tradingClass):
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support tradingClass parameters in placeOrder.")
+                return
+        VERSION = 27 if (self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD) else 40
         #  send place order msg
         try:
             self.send(self.PLACE_ORDER)
@@ -866,6 +932,8 @@ class EClientSocket(object):
             self.send(contract.m_currency)
             if self.m_serverVersion >= 2:
                 self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             if self.m_serverVersion >= self.MIN_SERVER_VER_SEC_ID_TYPE:
                 self.send(contract.m_secIdType)
                 self.send(contract.m_secId)
@@ -1005,6 +1073,11 @@ class EClientSocket(object):
                         self.send(order.m_deltaNeutralSettlingFirm)
                         self.send(order.m_deltaNeutralClearingAccount)
                         self.send(order.m_deltaNeutralClearingIntent)
+                    if self.m_serverVersion >= self.MIN_SERVER_VER_DELTA_NEUTRAL_OPEN_CLOSE and not self.IsEmpty(order.m_deltaNeutralOrderType):
+                        self.send(order.m_deltaNeutralOpenClose)
+                        self.send(order.m_deltaNeutralShortSale)
+                        self.send(order.m_deltaNeutralShortSaleSlot)
+                        self.send(order.m_deltaNeutralDesignatedLocation)
                 self.send(order.m_continuousUpdate)
                 if self.m_serverVersion == 26:
                     #  Volatility orders had specific watermark price attribs in server version 26
@@ -1078,7 +1151,7 @@ class EClientSocket(object):
         """ generated source for method reqAccountUpdates """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 2
         #  send cancel order msg
@@ -1098,7 +1171,7 @@ class EClientSocket(object):
         """ generated source for method reqExecutions """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 3
         #  send cancel order msg
@@ -1126,7 +1199,7 @@ class EClientSocket(object):
         """ generated source for method cancelOrder """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send cancel order msg
@@ -1143,7 +1216,7 @@ class EClientSocket(object):
         """ generated source for method reqOpenOrders """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send cancel order msg
@@ -1159,7 +1232,7 @@ class EClientSocket(object):
         """ generated source for method reqIds """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         try:
@@ -1175,7 +1248,7 @@ class EClientSocket(object):
         """ generated source for method reqNewsBulletins """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         try:
@@ -1191,7 +1264,7 @@ class EClientSocket(object):
         """ generated source for method cancelNewsBulletins """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send cancel order msg
@@ -1207,7 +1280,7 @@ class EClientSocket(object):
         """ generated source for method setServerLogLevel """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send the set server logging level message
@@ -1224,7 +1297,7 @@ class EClientSocket(object):
         """ generated source for method reqAutoOpenOrders """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send req open orders msg
@@ -1241,7 +1314,7 @@ class EClientSocket(object):
         """ generated source for method reqAllOpenOrders """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send req all open orders msg
@@ -1257,7 +1330,7 @@ class EClientSocket(object):
         """ generated source for method reqManagedAccts """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         VERSION = 1
         #  send req FA managed accounts msg
@@ -1273,7 +1346,7 @@ class EClientSocket(object):
         """ generated source for method requestFA """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         #  This feature is only available for versions of TWS >= 13
         if self.m_serverVersion < 13:
@@ -1293,7 +1366,7 @@ class EClientSocket(object):
         """ generated source for method replaceFA """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         #  This feature is only available for versions of TWS >= 13
         if self.m_serverVersion < 13:
@@ -1314,7 +1387,7 @@ class EClientSocket(object):
         """ generated source for method reqCurrentTime """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         #  This feature is only available for versions of TWS >= 33
         if self.m_serverVersion < 33:
@@ -1331,19 +1404,26 @@ class EClientSocket(object):
     @synchronized(mlock)
     def reqFundamentalData(self, reqId, contract, reportType):
         """ generated source for method reqFundamentalData """
+        # not connected?
         if not self.m_connected:
-            self.error(reqId, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_FUNDAMENTAL_DATA:
             self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support fundamental data requests.")
             return
-        VERSION = 1
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if contract.m_conId > 0:
+                self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support conId parameter in reqFundamentalData.")
+                return
+        VERSION = 2
         try:
             #  send req fund data msg
             self.send(self.REQ_FUNDAMENTAL_DATA)
             self.send(VERSION)
             self.send(reqId)
             #  send contract fields
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_conId)
             self.send(contract.m_symbol)
             self.send(contract.m_secType)
             self.send(contract.m_exchange)
@@ -1358,8 +1438,9 @@ class EClientSocket(object):
     @synchronized(mlock)
     def cancelFundamentalData(self, reqId):
         """ generated source for method cancelFundamentalData """
+        # not connected?
         if not self.m_connected:
-            self.error(reqId, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_FUNDAMENTAL_DATA:
             self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support fundamental data requests.")
@@ -1377,13 +1458,18 @@ class EClientSocket(object):
     @synchronized(mlock)
     def calculateImpliedVolatility(self, reqId, contract, optionPrice, underPrice):
         """ generated source for method calculateImpliedVolatility """
+        # not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_REQ_CALC_IMPLIED_VOLAT:
             self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate implied volatility requests.")
             return
-        VERSION = 1
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if not self.IsEmpty(contract.m_tradingClass):
+                self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support tradingClass parameter in calculateImpliedVolatility.")
+                return
+        VERSION = 2
         try:
             #  send calculate implied volatility msg
             self.send(self.REQ_CALC_IMPLIED_VOLAT)
@@ -1401,6 +1487,8 @@ class EClientSocket(object):
             self.send(contract.m_primaryExch)
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             self.send(optionPrice)
             self.send(underPrice)
         except Exception as e:
@@ -1410,8 +1498,9 @@ class EClientSocket(object):
     @synchronized(mlock)
     def cancelCalculateImpliedVolatility(self, reqId):
         """ generated source for method cancelCalculateImpliedVolatility """
+        #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_CANCEL_CALC_IMPLIED_VOLAT:
             self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate implied volatility cancellation.")
@@ -1429,13 +1518,18 @@ class EClientSocket(object):
     @synchronized(mlock)
     def calculateOptionPrice(self, reqId, contract, volatility, underPrice):
         """ generated source for method calculateOptionPrice """
+        #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_REQ_CALC_OPTION_PRICE:
             self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate option price requests.")
             return
-        VERSION = 1
+        if self.m_serverVersion < self.MIN_SERVER_VER_TRADING_CLASS:
+            if not self.IsEmpty(contract.m_tradingClass):
+                self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support tradingClass parameter in calculateOptionPrice.")
+                return
+        VERSION = 2
         try:
             #  send calculate option price msg
             self.send(self.REQ_CALC_OPTION_PRICE)
@@ -1453,6 +1547,8 @@ class EClientSocket(object):
             self.send(contract.m_primaryExch)
             self.send(contract.m_currency)
             self.send(contract.m_localSymbol)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_TRADING_CLASS:
+                self.send(contract.m_tradingClass)
             self.send(volatility)
             self.send(underPrice)
         except Exception as e:
@@ -1462,8 +1558,9 @@ class EClientSocket(object):
     @synchronized(mlock)
     def cancelCalculateOptionPrice(self, reqId):
         """ generated source for method cancelCalculateOptionPrice """
+        # not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_CANCEL_CALC_OPTION_PRICE:
             self.error(reqId, EClientErrors.UPDATE_TWS, "  It does not support calculate option price cancellation.")
@@ -1483,7 +1580,7 @@ class EClientSocket(object):
         """ generated source for method reqGlobalCancel """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_REQ_GLOBAL_CANCEL:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support globalCancel requests.")
@@ -1502,7 +1599,7 @@ class EClientSocket(object):
         """ generated source for method reqMarketDataType """
         #  not connected?
         if not self.m_connected:
-            self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")
+            self.notConnected()
             return
         if self.m_serverVersion < self.MIN_SERVER_VER_REQ_MARKET_DATA_TYPE:
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support marketDataType requests.")
@@ -1517,6 +1614,79 @@ class EClientSocket(object):
             self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQMARKETDATATYPE, str(e))
             self.close()
 
+    @synchronized(mlock)
+    def reqPositions(self):
+        """ generated source for method reqPositions """
+        #  not connected?
+        if not self.m_connected:
+            self.notConnected()
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_ACCT_SUMMARY:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support position requests.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.REQ_POSITIONS)
+            self.send(VERSION)
+        except Exception as e:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQPOSITIONS, "" + e)
+
+    @synchronized(mlock)
+    def cancelPositions(self):
+        """ generated source for method cancelPositions """
+        #  not connected?
+        if not self.m_connected:
+            self.notConnected()
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_ACCT_SUMMARY:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support position cancellation.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.CANCEL_POSITIONS)
+            self.send(VERSION)
+        except Exception as e:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CANPOSITIONS, "" + e)
+
+    @synchronized(mlock)
+    def reqAccountSummary(self, reqId, group, tags):
+        """ generated source for method reqAccountSummary """
+        #  not connected?
+        if not self.m_connected:
+            self.notConnected()
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_ACCT_SUMMARY:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support account summary requests.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.REQ_ACCOUNT_SUMMARY)
+            self.send(VERSION)
+            self.send(reqId)
+            self.send(group)
+            self.send(tags)
+        except Exception as e:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_REQACCOUNTDATA, "" + e)
+
+    @synchronized(mlock)
+    def cancelAccountSummary(self, reqId):
+        """ generated source for method cancelAccountSummary """
+        #  not connected?
+        if not self.m_connected:
+            self.notConnected()
+            return
+        if self.m_serverVersion < self.MIN_SERVER_VER_ACCT_SUMMARY:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.UPDATE_TWS, "  It does not support account summary cancellation.")
+            return
+        VERSION = 1
+        try:
+            self.send(self.CANCEL_ACCOUNT_SUMMARY)
+            self.send(VERSION)
+            self.send(reqId)
+        except Exception as e:
+            self.error(EClientErrors.NO_VALID_ID, EClientErrors.FAIL_SEND_CANACCOUNTDATA, "" + e)
+
+    #  @deprecated, never called. 
     @overloaded
     @synchronized(mlock)
     def error(self, err):
@@ -1557,7 +1727,7 @@ class EClientSocket(object):
         #  write string to data buffer; writer thread will
         #  write it to socket
         if not self.IsEmpty(strval):
-            self.m_dos.write(strval.getBytes())
+            self.m_dos.write(strval)
         self.sendEOL()
 
     def sendEOL(self):
@@ -1611,3 +1781,6 @@ class EClientSocket(object):
         """ generated source for method IsEmpty """
         return Util.StringIsEmpty(strval)
 
+    def notConnected(self):
+        """ generated source for method notConnected """
+        self.error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED, "")

@@ -32,7 +32,7 @@ order_ids = [0]
 tick_msgs = []
 short_sleep = partial(sleep, 1)
 long_sleep = partial(sleep, 10)
-generic_tick_keys = '100,101,104,106,162,165,221,225,236'
+generic_tick_keys = '100,101,104,106,165,221,225,236'
 
 unseen_hints = {
     'OpenOrder' : 'only works with existing order(s) before connecting',
@@ -288,6 +288,19 @@ def test_009(connection, options):
     ticker_id = gen_tick_id()
     connection.reqRealTimeBars(ticker_id, make_contract('AAPL'), 5, 'TRADES', 0)
     short_sleep()
+
+
+def test_010(connection, options):
+    connection.reqPositions()
+    short_sleep()
+    connection.cancelPositions()
+
+
+def test_011(connection, options):
+    reqId = gen_tick_id()
+    connection.reqAccountSummary(reqId, 'All', 'AccountType,NetLiquidation')
+    short_sleep()
+    connection.cancelAccountSummary(reqId)
 
 
 def test_999(connection, options):

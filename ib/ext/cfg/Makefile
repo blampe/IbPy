@@ -1,4 +1,4 @@
-configs := $(addsuffix .py, $(notdir $(basename $(wildcard ../src/IBJts/com/ib/client/*.java))))
+configs := $(addsuffix .py, $(notdir $(basename $(wildcard ../src/IBJts/source/JavaClient/com/ib/client/*.java))))
 
 .PHONY: all clean
 

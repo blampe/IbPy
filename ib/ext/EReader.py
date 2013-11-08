@@ -72,6 +72,10 @@ class EReader(Thread):
     TICK_SNAPSHOT_END = 57
     MARKET_DATA_TYPE = 58
     COMMISSION_REPORT = 59
+    POSITION = 61
+    POSITION_END = 62
+    ACCOUNT_SUMMARY = 63
+    ACCOUNT_SUMMARY_END = 64
     m_parent = None
     m_dis = None
 
@@ -107,6 +111,11 @@ class EReader(Thread):
                 self.eWrapper().error(ex)
         if self.parent().isConnected():
             self.m_parent.close()
+        try:
+            self.m_dis.close()
+            self.m_dis = None
+        except Exception as e:
+            pass
 
     #  Overridden in subclass. 
     def processMsg(self, msgId):
@@ -148,6 +157,42 @@ class EReader(Thread):
             tickType = self.readInt()
             size = self.readInt()
             self.eWrapper().tickSize(tickerId, tickType, size)
+        elif msgId==self.POSITION:
+            version = self.readInt()
+            account = self.readStr()
+            contract = Contract()
+            contract.m_conId = self.readInt()
+            contract.m_symbol = self.readStr()
+            contract.m_secType = self.readStr()
+            contract.m_expiry = self.readStr()
+            contract.m_strike = self.readDouble()
+            contract.m_right = self.readStr()
+            contract.m_multiplier = self.readStr()
+            contract.m_exchange = self.readStr()
+            contract.m_currency = self.readStr()
+            contract.m_localSymbol = self.readStr()
+            if version >= 2:
+                contract.m_tradingClass = self.readStr()
+            pos = self.readInt()
+            avgCost = 0
+            if version >= 3:
+                avgCost = self.readDouble()
+            self.eWrapper().position(account, contract, pos, avgCost)
+        elif msgId==self.POSITION_END:
+            version = self.readInt()
+            self.eWrapper().positionEnd()
+        elif msgId==self.ACCOUNT_SUMMARY:
+            version = self.readInt()
+            reqId = self.readInt()
+            account = self.readStr()
+            tag = self.readStr()
+            value = self.readStr()
+            currency = self.readStr()
+            self.eWrapper().accountSummary(reqId, account, tag, value, currency)
+        elif msgId==self.ACCOUNT_SUMMARY_END:
+            version = self.readInt()
+            reqId = self.readInt()
+            self.eWrapper().accountSummaryEnd(reqId)
         elif msgId == self.TICK_OPTION_COMPUTATION:
             version = self.readInt()
             tickerId = self.readInt()
@@ -258,6 +303,8 @@ class EReader(Thread):
             contract.m_currency = self.readStr()
             if version >= 2:
                 contract.m_localSymbol = self.readStr()
+            if version >= 8:
+                contract.m_tradingClass = self.readStr()
             position = self.readInt()
             marketPrice = self.readDouble()
             marketValue = self.readDouble()
@@ -303,10 +350,14 @@ class EReader(Thread):
             contract.m_expiry = self.readStr()
             contract.m_strike = self.readDouble()
             contract.m_right = self.readStr()
+            if version >= 32:
+                contract.m_multiplier = self.readStr()
             contract.m_exchange = self.readStr()
             contract.m_currency = self.readStr()
             if version >= 2:
                 contract.m_localSymbol = self.readStr()
+            if version >= 32:
+                contract.m_tradingClass = self.readStr()
             #  read order fields
             order.m_action = self.readStr()
             order.m_totalQuantity = self.readInt()
@@ -396,6 +447,11 @@ class EReader(Thread):
                         order.m_deltaNeutralSettlingFirm = self.readStr()
                         order.m_deltaNeutralClearingAccount = self.readStr()
                         order.m_deltaNeutralClearingIntent = self.readStr()
+                    if version >= 31 and not Util.StringIsEmpty(order.m_deltaNeutralOrderType):
+                        order.m_deltaNeutralOpenClose = self.readStr()
+                        order.m_deltaNeutralShortSale = self.readBoolFromInt()
+                        order.m_deltaNeutralShortSaleSlot = self.readInt()
+                        order.m_deltaNeutralDesignatedLocation = self.readStr()
                 order.m_continuousUpdate = self.readInt()
                 if self.m_parent.serverVersion() == 26:
                     order.m_stockRangeLower = self.readDouble()
@@ -530,7 +586,7 @@ class EReader(Thread):
                 contract.m_summary.m_currency = self.readStr()
                 contract.m_summary.m_localSymbol = self.readStr()
                 contract.m_marketName = self.readStr()
-                contract.m_tradingClass = self.readStr()
+                contract.m_summary.m_tradingClass = self.readStr()
                 distance = self.readStr()
                 benchmark = self.readStr()
                 projection = self.readStr()
@@ -555,7 +611,7 @@ class EReader(Thread):
             contract.m_summary.m_currency = self.readStr()
             contract.m_summary.m_localSymbol = self.readStr()
             contract.m_marketName = self.readStr()
-            contract.m_tradingClass = self.readStr()
+            contract.m_summary.m_tradingClass = self.readStr()
             contract.m_summary.m_conId = self.readInt()
             contract.m_minTick = self.readDouble()
             contract.m_summary.m_multiplier = self.readStr()
@@ -613,7 +669,7 @@ class EReader(Thread):
             contract.m_summary.m_exchange = self.readStr()
             contract.m_summary.m_currency = self.readStr()
             contract.m_marketName = self.readStr()
-            contract.m_tradingClass = self.readStr()
+            contract.m_summary.m_tradingClass = self.readStr()
             contract.m_summary.m_conId = self.readInt()
             contract.m_minTick = self.readDouble()
             contract.m_orderTypes = self.readStr()
@@ -660,6 +716,8 @@ class EReader(Thread):
             contract.m_exchange = self.readStr()
             contract.m_currency = self.readStr()
             contract.m_localSymbol = self.readStr()
+            if version >= 10:
+                contract.m_tradingClass = self.readStr()
             exec_ = Execution()
             exec_.m_orderId = orderId
             exec_.m_execId = self.readStr()

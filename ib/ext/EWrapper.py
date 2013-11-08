@@ -159,3 +159,18 @@ class EWrapper(AnyWrapper):
     def commissionReport(self, commissionReport):
         """ generated source for method commissionReport """
 
+    @abstractmethod
+    def position(self, account, contract, pos, avgCost):
+        """ generated source for method position """
+
+    @abstractmethod
+    def positionEnd(self):
+        """ generated source for method positionEnd """
+
+    @abstractmethod
+    def accountSummary(self, reqId, account, tag, value, currency):
+        """ generated source for method accountSummary """
+
+    @abstractmethod
+    def accountSummaryEnd(self, reqId):
+        """ generated source for method accountSummaryEnd """

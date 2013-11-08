@@ -19,7 +19,6 @@ class ContractDetails(object):
     """ generated source for class ContractDetails """
     m_summary = None
     m_marketName = ""
-    m_tradingClass = ""
     m_minTick = float()
     m_priceMagnifier = 0
     m_orderTypes = ""
@@ -64,11 +63,10 @@ class ContractDetails(object):
         self.m_evMultiplier = 0
 
     @__init__.register(object, Contract, str, str, float, str, str, int, str, str, str, str, str, str, str, str, str, float)
-    def __init___0(self, p_summary, p_marketName, p_tradingClass, p_minTick, p_orderTypes, p_validExchanges, p_underConId, p_longName, p_contractMonth, p_industry, p_category, p_subcategory, p_timeZoneId, p_tradingHours, p_liquidHours, p_evRule, p_evMultiplier):
+    def __init___0(self, p_summary, p_marketName, p_minTick, p_orderTypes, p_validExchanges, p_underConId, p_longName, p_contractMonth, p_industry, p_category, p_subcategory, p_timeZoneId, p_tradingHours, p_liquidHours, p_evRule, p_evMultiplier):
         """ generated source for method __init___0 """
         self.m_summary = p_summary
         self.m_marketName = p_marketName
-        self.m_tradingClass = p_tradingClass
         self.m_minTick = p_minTick
         self.m_orderTypes = p_orderTypes
         self.m_validExchanges = p_validExchanges

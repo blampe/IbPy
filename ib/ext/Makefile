@@ -1,4 +1,4 @@
-srcdir := ./src/IBJts/java/com/ib/client/
+srcdir := ./src/IBJts/source/JavaClient/com/ib/client/
 modules := $(addsuffix .py, $(notdir $(basename $(wildcard $(srcdir)*.java))))
 
 
