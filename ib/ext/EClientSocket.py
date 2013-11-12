@@ -214,6 +214,7 @@ class EClientSocket(object):
     MIN_SERVER_VER_DELTA_NEUTRAL_OPEN_CLOSE = 66
     MIN_SERVER_VER_ACCT_SUMMARY = 67
     MIN_SERVER_VER_TRADING_CLASS = 68
+    MIN_SERVER_VER_SCALE_TABLE = 69
     
     m_anyWrapper = None #  msg handler
     m_dos = None    #  the socket output stream
@@ -910,7 +911,11 @@ class EClientSocket(object):
             if not self.IsEmpty(contract.m_tradingClass):
                 self.error(id, EClientErrors.UPDATE_TWS, "  It does not support tradingClass parameters in placeOrder.")
                 return
-        VERSION = 27 if (self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD) else 40
+        if self.m_serverVersion < self.MIN_SERVER_VER_SCALE_TABLE:
+            if not self.IsEmpty(order.m_scaleTable) or not self.IsEmpty(order.m_activeStartTime) or not self.IsEmpty(order.m_activeStopTime):
+                self.error(id, EClientErrors.UPDATE_TWS, "  It does not support scaleTable, activeStartTime and activeStopTime parameters.")
+                return
+        VERSION = 27 if (self.m_serverVersion < self.MIN_SERVER_VER_NOT_HELD) else 41
         #  send place order msg
         try:
             self.send(self.PLACE_ORDER)
@@ -1107,6 +1112,10 @@ class EClientSocket(object):
                 self.sendMax(order.m_scaleInitPosition)
                 self.sendMax(order.m_scaleInitFillQty)
                 self.send(order.m_scaleRandomPercent)
+            if self.m_serverVersion >= self.MIN_SERVER_VER_SCALE_TABLE:
+                self.send(order.m_scaleTable)
+                self.send(order.m_activeStartTime)
+                self.send(order.m_activeStopTime)
             if self.m_serverVersion >= self.MIN_SERVER_VER_HEDGE_ORDERS:
                 self.send(order.m_hedgeType)
                 if not self.IsEmpty(order.m_hedgeType):
