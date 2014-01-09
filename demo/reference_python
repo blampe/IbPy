@@ -98,6 +98,53 @@ class ReferenceWrapper(EWrapper):
     def scannerData(self, reqId, rank, contractDetails, distance, benchmark, projection):
         showmessage('scannerData', vars())
 
+    def accountDownloadEnd(self, accountName):
+        showmessage('acountDownloadEnd', vars())
+
+    def commissionReport(self, commissionReport):
+        showmessage('commissionReport', vars())
+
+    def contractDetailsEnd(self, reqId):
+        showmessage('contractDetailsEnd', vars())
+
+    def currentTime(self, time):
+        showmessage('currentTime', vars())
+
+    def deltaNeutralValidation(self, reqId, underComp):
+        showmessage('deltaNeutralValidation', vars())
+
+    def execDetailsEnd(self, reqId):
+        showmessage('execDetailsEnd', vars())
+
+    def fundamentalData(self, reqId, data):
+        showmessage('fundamentalData', vars())
+
+    def marketDataType(self, reqId, marketDataType):
+        showmessage('marketDataType', vars())
+
+    def openOrderEnd(self):
+        showmessage('openOrderEnd', vars())
+
+    def realtimeBar(self, reqId, time, open, high, low, close, volume, wap, count):
+        showmessage('realtimeBar', vars())
+
+    def scannerDataEnd(self, reqId):
+        showmessage('scannerDataEnd', vars())
+
+    def tickEFP(self, tickerId, tickType, basisPoints, formattedBasisPoints, impliedFuture, holdDays, futureExpiry, dividendImpact, dividendsToExpiry):
+        showmessage('tickEFP', vars())
+
+    def tickGeneric(self, tickerId, tickType, value):
+        showmessage('tickGeneric', vars())
+
+    def tickSnapshotEnd(self, reqId):
+        showmessage('tickSnapshotEnd', vars())
+
+    def error_0(self, strval):
+        showmessage('error_0', vars())
+
+    def error_1(self, id, errorCode, errorMsg):
+        showmessage('error_1', vars())
 
 allMethods = []
 def ref(method):
