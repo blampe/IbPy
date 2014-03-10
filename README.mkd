@@ -13,8 +13,8 @@ submit orders for stocks and futures, and more.
 
 What's new in this release?
 ------------------------------------------------------------------------------
-
-  * TWS API version 9.67 now supported
+ 
+  * TWS API version 9.70 now supported
   * Over 60% test coverage and growing
   * Fixed outstanding bugs in EReader generated source
   * Module ib.opt.logger moved to ib.lib.logger
