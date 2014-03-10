@@ -170,6 +170,18 @@ class ReferenceWrapper(EWrapper):
     def error_1(self, id, errorCode, errorMsg):
         showmessage('error_1', vars())
 
+    def position(self, account, contract, pos, avgCost):
+        showmessage('position', vars())
+
+    def positionEnd(self):
+        showmessage('positionEnd', vars())
+
+    def accountSummary(self, reqId, account, tag, value, currency):
+        showmessage('accountSummary', vars())
+
+    def accountSummaryEnd(self, reqId):
+        showmessage('accountSummaryEnd', vars())
+
 allMethods = []
 def ref(method):
     allMethods.append(method.__name__)
@@ -199,7 +211,7 @@ class ReferenceApp:
     @ref
     def reqExecutions(self):
         filt = ExecutionFilter()
-        self.connection.reqExecutions(filt)
+        self.connection.reqExecutions(0, filt)
 
     @ref
     def reqIds(self):
