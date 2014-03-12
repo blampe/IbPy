@@ -1,5 +1,5 @@
-ibsources_jar := twsapi_unixmac_967.jar
-ibsources_url := "http://www.interactivebrokers.com/download/$(ibsources_jar)"
+ibsources_jar := twsapi_unixmac_969.02.jar
+ibsources_url := "http://interactivebrokers.github.io/downloads/$(ibsources_jar)"
 
 
 .PHONY: all clean

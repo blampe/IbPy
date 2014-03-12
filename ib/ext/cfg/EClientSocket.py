@@ -4,6 +4,7 @@
 
 """
 from java2python.config.default import modulePrologueHandlers
+from java2python.config.default import methodPrologueHandlers
 from java2python.mod.basic import maybeSynchronizedMethod
 from cfg import outputSubs
 

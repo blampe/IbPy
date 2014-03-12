@@ -29,6 +29,7 @@ class Contract(Cloneable):
     
     m_currency = ""
     m_localSymbol = ""
+    m_tradingClass = ""
     m_primaryExch = ""  #  pick a non-aggregate (ie not the SMART exchange) exchange that the contract trades on.  DO NOT SET TO SMART.
     m_includeExpired = bool()   #  can not be set to true for orders.
 
@@ -56,8 +57,8 @@ class Contract(Cloneable):
         retval.m_comboLegs = self.m_comboLegs[:]
         return retval
 
-    @__init__.register(object, int, str, str, str, float, str, str, str, str, str, list, str, bool, str, str)
-    def __init___0(self, p_conId, p_symbol, p_secType, p_expiry, p_strike, p_right, p_multiplier, p_exchange, p_currency, p_localSymbol, p_comboLegs, p_primaryExch, p_includeExpired, p_secIdType, p_secId):
+    @__init__.register(object, int, str, str, str, float, str, str, str, str, str, str, list, str, bool, str, str)
+    def __init___0(self, p_conId, p_symbol, p_secType, p_expiry, p_strike, p_right, p_multiplier, p_exchange, p_currency, p_localSymbol, p_tradingClass, p_comboLegs, p_primaryExch, p_includeExpired, p_secIdType, p_secId):
         """ generated source for method __init___0 """
         super(Contract, self).__init__()
         self.m_conId = p_conId
@@ -71,6 +72,7 @@ class Contract(Cloneable):
         self.m_currency = p_currency
         self.m_includeExpired = p_includeExpired
         self.m_localSymbol = p_localSymbol
+        self.m_tradingClass = p_tradingClass
         self.m_comboLegs = p_comboLegs
         self.m_primaryExch = p_primaryExch
         self.m_secIdType = p_secIdType
@@ -92,7 +94,7 @@ class Contract(Cloneable):
         if not Util.NormalizeString(self.m_secType) == "BOND":
             if self.m_strike != l_theOther.m_strike:
                 return False
-            if (Util.StringCompare(self.m_expiry, l_theOther.m_expiry) != 0) or (Util.StringCompare(self.m_right, l_theOther.m_right) != 0) or (Util.StringCompare(self.m_multiplier, l_theOther.m_multiplier) != 0) or (Util.StringCompare(self.m_localSymbol, l_theOther.m_localSymbol) != 0):
+            if (Util.StringCompare(self.m_expiry, l_theOther.m_expiry) != 0) or (Util.StringCompare(self.m_right, l_theOther.m_right) != 0) or (Util.StringCompare(self.m_multiplier, l_theOther.m_multiplier) != 0) or (Util.StringCompare(self.m_localSymbol, l_theOther.m_localSymbol) != 0) or (Util.StringCompare(self.m_tradingClass, l_theOther.m_tradingClass) != 0):
                 return False
         if Util.StringCompare(self.m_secIdType, l_theOther.m_secIdType) != 0:
             return False

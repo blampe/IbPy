@@ -28,7 +28,12 @@ Topic :: Software Development :: Libraries :: Python Modules
 doclines = __doc__.split('\n')
 
 
-setup(
+try:  # Python 3
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:  # Python 2
+    from distutils.command.build_py import build_py
+
+setup(cmdclass = {'build_py': build_py},
     name = 'IbPy',
     version = "0", # make value
     description = doclines[0],

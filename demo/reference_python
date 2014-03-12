@@ -21,11 +21,11 @@ def showmessage(message, mapping):
         del(mapping['self'])
     except (KeyError, ):
         pass
-    items = mapping.items()
+    items = list(mapping.items())
     items.sort()
-    print '### %s' % (message, )
+    print(('### %s' % (message, )))
     for k, v in items:
-        print '    %s:%s' % (k, v)
+        print(('    %s:%s' % (k, v)))
 
 
 class ReferenceWrapper(EWrapper):
@@ -35,11 +35,17 @@ class ReferenceWrapper(EWrapper):
     def tickSize(self, tickerId, field, size):
         showmessage('tickSize', vars())
 
+    def tickOptionComputation(self, tickerId, field, impliedVol, delta, optPrice, pvDividend, gamma, vega, theta, undPrice):
+        showmessage('tickOptionComputation', vars())
+
+    def tickGeneric(self, tickerId, tickType, value):
+        showmessage('tickGeneric', vars())
+
     def tickString(self, tickerId, tickType, value):
         showmessage('tickString', vars())
 
-    def tickOptionComputation(self, tickerId, field, impliedVolatility, delta):
-        showmessage('tickOptionComputation', vars())
+    def tickEFP(self, tickerId, tickType, basisPoints, formattedBasisPoints, impliedFuture, holdDays, futureExpiry, dividendImpact, dividendsToExpiry):
+        showmessage('tickEFP', vars())
 
     def orderStatus(self, orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeId):
         showmessage('orderStatus', vars())
@@ -47,8 +53,8 @@ class ReferenceWrapper(EWrapper):
     def openOrder(self, orderId, contract, order, state):
         showmessage('openOrder', vars())
 
-    def connectionClosed(self):
-        showmessage('connectionClosed', {})
+    def openOrderEnd(self):
+        showmessage('openOrderEnd', vars())
 
     def updateAccountValue(self, key, value, currency, accountName):
         showmessage('updateAccountValue', vars())
@@ -59,20 +65,38 @@ class ReferenceWrapper(EWrapper):
     def updateAccountTime(self, timeStamp):
         showmessage('updateAccountTime', vars())
 
+    def accountDownloadEnd(self, accountName):
+        showmessage('accountDownloadEnd', vars())
+
     def nextValidId(self, orderId):
         showmessage('nextValidId', vars())
 
-    def contractDetails(self, contractDetails):
+    def contractDetails(self, reqId, contractDetails):
         showmessage('contractDetails', vars())
 
-    def bondContractDetails(self, contractDetails):
+    def contractDetailsEnd(self, reqId):
+        showmessage('contractDetailsEnd', vars())
+
+    def bondContractDetails(self, reqId, contractDetails):
         showmessage('bondContractDetails', vars())
 
-    def execDetails(self, orderId, contract, execution):
+    def execDetails(self, reqId, contract, execution):
         showmessage('execDetails', vars())
+
+    def execDetailsEnd(self, reqId):
+        showmessage('execDetailsEnd', vars())
+
+    def connectionClosed(self):
+        showmessage('connectionClosed', {})
 
     def error(self, id=None, errorCode=None, errorMsg=None):
         showmessage('error', vars())
+
+    def error_0(self, strvalue=None):
+        showmessage('error_0', vars())
+
+    def error_1(self, id=None, errorCode=None, errorMsg=None):
+        showmessage('error_1', vars())
 
     def updateMktDepth(self, tickerId, position, operation, side, price, size):
         showmessage('updateMktDepth', vars())
@@ -95,7 +119,7 @@ class ReferenceWrapper(EWrapper):
     def scannerParameters(self, xml):
         showmessage('scannerParameters', vars())
 
-    def scannerData(self, reqId, rank, contractDetails, distance, benchmark, projection):
+    def scannerData(self, reqId, rank, contractDetails, distance, benchmark, projection, legsStr):
         showmessage('scannerData', vars())
 
     def accountDownloadEnd(self, accountName):
@@ -146,6 +170,18 @@ class ReferenceWrapper(EWrapper):
     def error_1(self, id, errorCode, errorMsg):
         showmessage('error_1', vars())
 
+    def position(self, account, contract, pos, avgCost):
+        showmessage('position', vars())
+
+    def positionEnd(self):
+        showmessage('positionEnd', vars())
+
+    def accountSummary(self, reqId, account, tag, value, currency):
+        showmessage('accountSummary', vars())
+
+    def accountSummaryEnd(self, reqId):
+        showmessage('accountSummaryEnd', vars())
+
 allMethods = []
 def ref(method):
     allMethods.append(method.__name__)
@@ -175,7 +211,7 @@ class ReferenceApp:
     @ref
     def reqExecutions(self):
         filt = ExecutionFilter()
-        self.connection.reqExecutions(filt)
+        self.connection.reqExecutions(0, filt)
 
     @ref
     def reqIds(self):
@@ -212,9 +248,10 @@ class ReferenceApp:
     @ref
     def reqMktData(self):
         contract = Contract() #
-        contract.m_symbol = 'QQQQ'
-        contract.m_secType = 'STK'
-        contract.m_exchange = 'SMART'
+        contract.m_symbol = 'AUD'
+        contract.m_currency = 'USD'
+        contract.m_secType = 'CASH'
+        contract.m_exchange = 'IDEALPRO'
         self.connection.reqMktData(1, contract, '', False)
 
     @ref
@@ -253,13 +290,13 @@ if __name__ == '__main__':
     if 'eDisconnect' not in methods:
         methods.append('eDisconnect')
 
-    print '### calling functions:', str.join(', ', methods)
+    print(('### calling functions:', str.join(', ', methods)))
     for mname in methods:
         call = getattr(app, mname, None)
         if call is None:
-            print '### warning: no call %s' % (mname, )
+            print(('### warning: no call %s' % (mname, )))
         else:
-            print '## calling', call.im_func.func_name
+            print(('## calling', call.__func__.__name__))
             call()
-            print '## called', call.im_func.func_name
+            print(('## called', call.__func__.__name__))
 

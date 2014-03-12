@@ -9,6 +9,7 @@
 # that the Receiver class then uses to determine message types.
 ##
 
+import sys
 from ast import NodeVisitor, parse
 from inspect import getsourcefile
 from re import match
@@ -30,7 +31,10 @@ class SignatureAccumulator(NodeVisitor):
             self.visit(parse(open(filename).read()))
 
     def visit_FunctionDef(self, node):
-        args = [arg.id for arg in node.args.args]
+        if sys.version_info[0] < 3:
+            args = [arg.id for arg in node.args.args]
+        else:
+            args = [arg.arg for arg in node.args.args]
         self.signatures.append((node.name, args[1:]))
 
 
