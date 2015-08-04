@@ -141,4 +141,4 @@ class Dispatcher(object):
         @param listener callable to no longer receive messages
         @return True if disassociated with one or more handler; otherwise False
         """
-        return self.unregister(listener, *self.messageTypes.values())
+        return self.unregister(listener, *[maybeName(i) for v in list(self.messageTypes.values()) for i in v])
