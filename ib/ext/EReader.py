@@ -471,15 +471,15 @@ class EReader(Thread):
                     contract.m_comboLegs = []
                     i = 0
                     while i < comboLegsCount:
-                        conId = self.readInt()
-                        ratio = self.readInt()
-                        action = self.readStr()
-                        exchange = self.readStr()
-                        openClose = self.readInt()
-                        shortSaleSlot = self.readInt()
-                        designatedLocation = self.readStr()
-                        exemptCode = self.readInt()
-                        comboLeg = ComboLeg(conId, ratio, action, exchange, openClose, shortSaleSlot, designatedLocation, exemptCode)
+                        comboLeg = ComboLeg()
+                        comboLeg.m_conId = self.readInt()
+                        comboLeg.m_ratio = self.readInt()
+                        comboLeg.m_action = self.readStr()
+                        comboLeg.m_exchange = self.readStr()
+                        comboLeg.m_openClose = self.readInt()
+                        comboLeg.m_shortSaleSlot = self.readInt()
+                        comboLeg.m_designatedLocation = self.readStr()
+                        comboLeg.m_exemptCode = self.readInt()
                         contract.m_comboLegs.append(comboLeg)
                         i += 1
                 orderComboLegsCount = self.readInt() 
