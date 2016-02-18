@@ -7,11 +7,15 @@
 # WARNING: all changes to this file will be lost.
 
 from ib.lib import Double, Integer
-# 
+#
 #  * Util.java
-#  
+#
 # package: com.ib.client
 
+
+# Making sure this works in python3 as well
+def cmp(a, b):
+    return (a > b) - (a < b)
 
 class Util(object):
     """ generated source for class Util """
@@ -53,7 +57,7 @@ class Util(object):
             rhsIdx = 0
             while rhsIdx < rhsCount:
                 if matchedRhsElems[rhsIdx]:
-                    continue 
+                    continue
                 if lhsElem == rhs[rhsIdx]:
                     matchedRhsElems[rhsIdx] = True
                     break
@@ -73,4 +77,3 @@ class Util(object):
     def DoubleMaxString(cls, value):
         """ generated source for method DoubleMaxString """
         return "" if (value == Double.MAX_VALUE) else str(value)
-
