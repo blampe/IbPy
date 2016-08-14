@@ -12,10 +12,10 @@ def watcher(msg):
 # show Bid and Ask quotes
 def my_BidAsk(msg):
     if msg.field == 1:
-        print '%s:%s: bid: %s' % (contractTuple[0],
-                       contractTuple[6], msg.price)
+        print ('%s:%s: bid: %s' % (contractTuple[0],
+                       contractTuple[6], msg.price))
     elif msg.field == 2:
-        print '%s:%s: ask: %s' % (contractTuple[0], contractTuple[6], msg.price)
+        print ('%s:%s: ask: %s' % (contractTuple[0], contractTuple[6], msg.price))
 
 def makeStkContract(contractTuple):
     newContract = Contract()
@@ -26,7 +26,7 @@ def makeStkContract(contractTuple):
     newContract.m_expiry = contractTuple[4]
     newContract.m_strike = contractTuple[5]
     newContract.m_right = contractTuple[6]
-    print 'Contract Values:%s,%s,%s,%s,%s,%s,%s:' % contractTuple
+    print ('Contract Values:%s,%s,%s,%s,%s,%s,%s:' % contractTuple)
     return newContract
 
 if __name__ == '__main__':
@@ -48,10 +48,10 @@ if __name__ == '__main__':
     #contractTuple = ('ES', 'FOP', 'GLOBEX', 'USD', '20070920', 1460.0, 'CALL')
     #contractTuple = ('EUR', 'CASH', 'IDEALPRO', 'USD', '', 0.0, '')
     stkContract = makeStkContract(contractTuple)
-    print '* * * * REQUESTING MARKET DATA * * * *'
+    print ('* * * * REQUESTING MARKET DATA * * * *')
     con.reqMktData(tickId, stkContract, '', False)
     sleep(15)
-    print '* * * * CANCELING MARKET DATA * * * *'
+    print ('* * * * CANCELING MARKET DATA * * * *')
     con.cancelMktData(tickId)
     sleep(1)
     con.disconnect()
