@@ -1152,7 +1152,7 @@ class EClientSocket(object):
             if self.m_serverVersion >= self.MIN_SERVER_VER_WHAT_IF_ORDERS:
                 self.send(order.m_whatIf)
         except Exception as e:
-            self.error(id, EClientErrors.FAIL_SEND_ORDER, str(e))
+            self.error_0(id, EClientErrors.FAIL_SEND_ORDER, str(e))
             self.close()
 
     @synchronized(mlock)
