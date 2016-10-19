@@ -6,9 +6,6 @@
 #
 ##
 
-# these values substituted during release build.
-api = "0"
-version = "0"
-revision = "r0"
+__version__ = '0.8.0'
 
 
