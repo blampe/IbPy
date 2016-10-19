@@ -7,6 +7,8 @@ Interactive Brokers on-line trading system.  IbPy implements functionality
 that the Python programmer can use to connect to IB, request stock ticker
 data, submit orders for stocks and options, and more.
 """
+import os
+import re
 from distutils.core import setup
 
 
@@ -27,23 +29,27 @@ Topic :: Software Development :: Libraries :: Python Modules
 
 doclines = __doc__.split('\n')
 
+# Version Number
+with open(os.path.join(os.path.dirname(__file__), 'ib', '__init__.py')) as f:
+    version = re.compile(r".*__version__ = '(.*?)'", re.S).match(f.read()).group(1)
+
 
 try:  # Python 3
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:  # Python 2
     from distutils.command.build_py import build_py
 
-setup(cmdclass = {'build_py': build_py},
-    name = 'IbPy',
-    version = "0", # make value
-    description = doclines[0],
-    author = 'Troy Melhase',
-    author_email = 'troy@gci.net',
-    url = 'http://code.google.com/p/ibpy/',
-    license = 'BSD License',
-    packages = ['ib', 'ib/lib', 'ib/ext', 'ib/opt', 'ib/sym'],
-    classifiers = filter(None, classifiers.split('\n')),
-    long_description = '\n'.join(doclines[2:]),
-    platforms = ['any'],
-    download_url = 'http://ibpy.googlecode.com/files/:release_file:',
+setup(
+    cmdclass={'build_py': build_py},
+    name='IbPy2',
+    version=version,
+    description=doclines[0],
+    author='Troy Melhase',
+    author_email='troy@gci.net',
+    url='https://github.com/blampe/IbPy',
+    license='BSD License',
+    packages=['ib', 'ib/lib', 'ib/ext', 'ib/opt', 'ib/sym'],
+    classifiers=filter(None, classifiers.split('\n')),
+    long_description='\n'.join(doclines[2:]),
+    platforms=['any']
 )
