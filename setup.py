@@ -12,8 +12,7 @@ import re
 from distutils.core import setup
 
 
-classifiers = """
-Development Status :: 5 - Production/Stable
+classifiers = """Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
 License :: OSI Approved :: BSD License
 Natural Language :: English
@@ -23,8 +22,7 @@ Topic :: Office/Business :: Financial
 Topic :: Office/Business :: Financial :: Investment
 Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator
 Topic :: Software Development :: Libraries
-Topic :: Software Development :: Libraries :: Python Modules
-"""
+Topic :: Software Development :: Libraries :: Python Modules"""
 
 
 doclines = __doc__.split('\n')
@@ -44,12 +42,12 @@ setup(
     name='IbPy2',
     version=version,
     description=doclines[0],
-    author='Troy Melhase',
-    author_email='troy@gci.net',
+    maintainer='Felix Zumstein',
+    maintainer_email='felix.zumstein@zoomeranalytics.com',
     url='https://github.com/blampe/IbPy',
     license='BSD License',
     packages=['ib', 'ib/lib', 'ib/ext', 'ib/opt', 'ib/sym'],
-    classifiers=filter(None, classifiers.split('\n')),
+    classifiers=classifiers.split('\n'),
     long_description='\n'.join(doclines[2:]),
     platforms=['any']
 )
