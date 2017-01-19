@@ -1,5 +1,12 @@
 # IbPy - Interactive Brokers Python API
 
+## NOTE
+
+Beginning with release 9.73, InteractiveBrokers is now officially supporting a new Python API client (Python 3 only).
+This should make this repo superfluous except for Python 2.
+
+For more info: https://interactivebrokers.github.io/tws-api/#gsc.tab=0
+
 ## What is IbPy?
 
 IbPy is a third-party implementation of the API used for accessing the
